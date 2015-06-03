@@ -83,12 +83,11 @@ use std::cmp::Ordering;
 use std::cmp;
 use std::fmt;
 use std::hash;
-use std::iter::{Chain, Enumerate, Repeat, Skip, Take, repeat, Cloned};
+use std::iter::{Chain, Enumerate, Repeat, Skip, Take, repeat};
 use std::iter::FromIterator;
 use std::slice;
 use std::{u8, usize};
 
-pub type Blocks<'a, B> = Cloned<slice::Iter<'a, B>>;
 type MutBlocks<'a, B> = slice::IterMut<'a, B>;
 type MatchWords<'a, B> = Chain<Enumerate<Blocks<'a, B>>, Skip<Take<Enumerate<Repeat<B>>>>>;
 
@@ -255,7 +254,7 @@ impl<B: BitBlock> BitVec<B> {
     /// Iterator over the underlying blocks of data
     pub fn blocks(&self) -> Blocks<B> {
         // (2)
-        self.storage.iter().cloned()
+        Blocks{iter: self.storage.iter()}
     }
 
     /// Exposes the raw block storage of this BitVec
@@ -1226,3 +1225,31 @@ impl<'a, B: BitBlock> IntoIterator for &'a BitVec<B> {
         self.iter()
     }
 }
+
+/// An iterator over the blocks of a `BitVec`.
+#[derive(Clone)]
+pub struct Blocks<'a, B: 'a> {
+    iter: slice::Iter<'a, B>,
+}
+
+impl<'a, B: BitBlock> Iterator for Blocks<'a, B> {
+    type Item = B;
+
+    #[inline]
+    fn next(&mut self) -> Option<B> {
+        self.iter.next().cloned()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+}
+
+impl<'a, B: BitBlock> DoubleEndedIterator for Blocks<'a, B> {
+    #[inline]
+    fn next_back(&mut self) -> Option<B> {
+        self.iter.next_back().cloned()
+    }
+}
+
+impl<'a, B: BitBlock> ExactSizeIterator for Blocks<'a, B> {}
