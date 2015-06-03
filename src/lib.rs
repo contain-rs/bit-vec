@@ -8,8 +8,6 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![feature(core)]
-
 // FIXME(Gankro): BitVec and BitSet are very tightly coupled. Ideally (for
 // maintenance), they should be in separate files/modules, with BitSet only
 // using BitVec's public API. This will be hard for performance though, because
@@ -86,7 +84,7 @@ use std::cmp;
 use std::fmt;
 use std::hash;
 use std::iter::{Chain, Enumerate, Repeat, Skip, Take, repeat, Cloned};
-use std::iter::{self, FromIterator};
+use std::iter::FromIterator;
 use std::slice;
 use std::{u8, usize};
 
@@ -852,7 +850,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     pub fn eq_vec(&self, v: &[bool]) -> bool {
         assert_eq!(self.nbits, v.len());
-        iter::order::eq(self.iter(), v.iter().cloned())
+        self.iter().zip(v.iter().cloned()).all(|(b1, b2)| b1 == b2)
     }
 
     /// Shortens a `BitVec`, dropping excess elements.
@@ -1124,14 +1122,26 @@ impl<B: BitBlock> Clone for BitVec<B> {
 impl<B: BitBlock> PartialOrd for BitVec<B> {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        iter::order::partial_cmp(self.iter(), other.iter())
+        Some(self.cmp(other))
     }
 }
 
 impl<B: BitBlock> Ord for BitVec<B> {
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
-        iter::order::cmp(self.iter(), other.iter())
+        let mut a = self.iter();
+        let mut b = other.iter();
+        loop {
+            match (a.next(), b.next()) {
+                (Some(x), Some(y)) => match x.cmp(&y) {
+                    Ordering::Equal => {}
+                    otherwise => return otherwise,
+                },
+                (None, None) => return Ordering::Equal,
+                (None, _) => return Ordering::Less,
+                (_, None) => return Ordering::Greater,
+            }
+        }
     }
 }
 
