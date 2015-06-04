@@ -38,57 +38,59 @@
 //! [sieve]: http://en.wikipedia.org/wiki/Sieve_of_Eratosthenes
 //!
 //! ```
-//! # #![feature(collections, core, step_by)]
-//! use std::collections::{BitSet, BitVec};
-//! use std::iter;
+//! use bit_vec::BitVec;
 //!
 //! let max_prime = 10000;
 //!
-//! // Store the primes as a BitSet
+//! // Store the primes as a BitVec
 //! let primes = {
 //!     // Assume all numbers are prime to begin, and then we
 //!     // cross off non-primes progressively
-//!     let mut bv = BitVec::from_elem(max_prime, true);
+//!     let mut bv = BitVec::<u32>::from_elem(max_prime, true);
 //!
 //!     // Neither 0 nor 1 are prime
 //!     bv.set(0, false);
 //!     bv.set(1, false);
 //!
-//!     for i in iter::range_inclusive(2, (max_prime as f64).sqrt() as usize) {
+//!     for i in 2.. 1 + (max_prime as f64).sqrt() as usize {
 //!         // if i is a prime
 //!         if bv[i] {
 //!             // Mark all multiples of i as non-prime (any multiples below i * i
 //!             // will have been marked as non-prime previously)
-//!             for j in (i * i..max_prime).step_by(i) { bv.set(j, false) }
+//!             for j in i.. {
+//!                 if i * j >= max_prime {
+//!                     break;
+//!                 }
+//!                 bv.set(i * j, false)
+//!             }
 //!         }
 //!     }
-//!     BitSet::from_bit_vec(bv)
+//!     bv
 //! };
 //!
 //! // Simple primality tests below our max bound
 //! let print_primes = 20;
 //! print!("The primes below {} are: ", print_primes);
 //! for x in 0..print_primes {
-//!     if primes.contains(&x) {
+//!     if primes.get(x).unwrap_or(false) {
 //!         print!("{} ", x);
 //!     }
 //! }
 //! println!("");
 //!
-//! // We can manipulate the internal BitVec
-//! let num_primes = primes.get_ref().iter().filter(|x| *x).count();
+//! let num_primes = primes.iter().filter(|x| *x).count();
 //! println!("There are {} primes below {}", num_primes, max_prime);
+//! assert_eq!(num_primes, 1_229);
 //! ```
 use std::cmp::Ordering;
 use std::cmp;
 use std::fmt;
 use std::hash;
-use std::iter::{Chain, Enumerate, Repeat, Skip, Take, repeat, Cloned};
+use std::iter::{Chain, Enumerate, Repeat, Skip, Take, repeat};
 use std::iter::FromIterator;
 use std::slice;
 use std::{u8, usize};
 
-pub type Blocks<'a, B> = Cloned<slice::Iter<'a, B>>;
 type MutBlocks<'a, B> = slice::IterMut<'a, B>;
 type MatchWords<'a, B> = Chain<Enumerate<Blocks<'a, B>>, Skip<Take<Enumerate<Repeat<B>>>>>;
 
@@ -160,10 +162,9 @@ static FALSE: bool = false;
 /// # Examples
 ///
 /// ```
-/// # #![feature(collections)]
-/// use std::collections::BitVec;
+/// use bit_vec::BitVec;
 ///
-/// let mut bv = BitVec::from_elem(10, false);
+/// let mut bv = BitVec::<u32>::from_elem(10, false);
 ///
 /// // insert all primes less than 10
 /// bv.set(2, true);
@@ -255,7 +256,7 @@ impl<B: BitBlock> BitVec<B> {
     /// Iterator over the underlying blocks of data
     pub fn blocks(&self) -> Blocks<B> {
         // (2)
-        self.storage.iter().cloned()
+        Blocks{iter: self.storage.iter()}
     }
 
     /// Exposes the raw block storage of this BitVec
@@ -289,9 +290,8 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
-    /// let mut bv = BitVec::new();
+    /// use bit_vec::BitVec;
+    /// let mut bv = BitVec::<u32>::new();
     /// ```
     pub fn new() -> Self {
         BitVec { storage: Vec::new(), nbits: 0 }
@@ -303,10 +303,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::from_elem(10, false);
+    /// let mut bv = BitVec::<u32>::from_elem(10, false);
     /// assert_eq!(bv.len(), 10);
     /// for x in bv.iter() {
     ///     assert_eq!(x, false);
@@ -343,10 +342,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let bv = BitVec::from_bytes(&[0b10100000, 0b00010010]);
+    /// let bv = BitVec::<u32>::from_bytes(&[0b10100000, 0b00010010]);
     /// assert!(bv.eq_vec(&[true, false, true, false,
     ///                     false, false, false, false,
     ///                     false, false, false, true,
@@ -387,10 +385,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let bv = BitVec::from_fn(5, |i| { i % 2 == 0 });
+    /// let bv = BitVec::<u32>::from_fn(5, |i| { i % 2 == 0 });
     /// assert!(bv.eq_vec(&[true, false, true, false, true]));
     /// ```
     pub fn from_fn<F>(len: usize, mut f: F) -> Self
@@ -408,10 +405,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let bv = BitVec::from_bytes(&[0b01100000]);
+    /// let bv = BitVec::<u32>::from_bytes(&[0b01100000]);
     /// assert_eq!(bv.get(0), Some(false));
     /// assert_eq!(bv.get(1), Some(true));
     /// assert_eq!(bv.get(100), None);
@@ -440,10 +436,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::from_elem(5, false);
+    /// let mut bv = BitVec::<u32>::from_elem(5, false);
     /// bv.set(3, true);
     /// assert_eq!(bv[3], true);
     /// ```
@@ -463,15 +458,14 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
     /// let before = 0b01100000;
     /// let after  = 0b11111111;
     ///
-    /// let mut bv = BitVec::from_bytes(&[before]);
+    /// let mut bv = BitVec::<u32>::from_bytes(&[before]);
     /// bv.set_all();
-    /// assert_eq!(bv, BitVec::from_bytes(&[after]));
+    /// assert_eq!(bv, BitVec::<u32>::from_bytes(&[after]));
     /// ```
     #[inline]
     pub fn set_all(&mut self) {
@@ -484,15 +478,14 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
     /// let before = 0b01100000;
     /// let after  = 0b10011111;
     ///
-    /// let mut bv = BitVec::from_bytes(&[before]);
+    /// let mut bv = BitVec::<u32>::from_bytes(&[before]);
     /// bv.negate();
-    /// assert_eq!(bv, BitVec::from_bytes(&[after]));
+    /// assert_eq!(bv, BitVec::<u32>::from_bytes(&[after]));
     /// ```
     #[inline]
     pub fn negate(&mut self) {
@@ -513,18 +506,17 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
     /// let a   = 0b01100100;
     /// let b   = 0b01011010;
     /// let res = 0b01111110;
     ///
-    /// let mut a = BitVec::from_bytes(&[a]);
-    /// let b = BitVec::from_bytes(&[b]);
+    /// let mut a = BitVec::<u32>::from_bytes(&[a]);
+    /// let b = BitVec::<u32>::from_bytes(&[b]);
     ///
     /// assert!(a.union(&b));
-    /// assert_eq!(a, BitVec::from_bytes(&[res]));
+    /// assert_eq!(a, BitVec::<u32>::from_bytes(&[res]));
     /// ```
     #[inline]
     pub fn union(&mut self, other: &Self) -> bool {
@@ -544,14 +536,13 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
     /// let a   = 0b01100100;
     /// let b   = 0b01011010;
     /// let res = 0b01000000;
     ///
-    /// let mut a = BitVec::from_bytes(&[a]);
+    /// let mut a = BitVec::<u32>::from_bytes(&[a]);
     /// let b = BitVec::from_bytes(&[b]);
     ///
     /// assert!(a.intersect(&b));
@@ -575,21 +566,20 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
     /// let a   = 0b01100100;
     /// let b   = 0b01011010;
     /// let a_b = 0b00100100; // a - b
     /// let b_a = 0b00011010; // b - a
     ///
-    /// let mut bva = BitVec::from_bytes(&[a]);
+    /// let mut bva = BitVec::<u32>::from_bytes(&[a]);
     /// let bvb = BitVec::from_bytes(&[b]);
     ///
     /// assert!(bva.difference(&bvb));
     /// assert_eq!(bva, BitVec::from_bytes(&[a_b]));
     ///
-    /// let bva = BitVec::from_bytes(&[a]);
+    /// let bva = BitVec::<u32>::from_bytes(&[a]);
     /// let mut bvb = BitVec::from_bytes(&[b]);
     ///
     /// assert!(bvb.difference(&bva));
@@ -605,10 +595,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::from_elem(5, true);
+    /// let mut bv = BitVec::<u32>::from_elem(5, true);
     /// assert_eq!(bv.all(), true);
     ///
     /// bv.set(1, false);
@@ -630,10 +619,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let bv = BitVec::from_bytes(&[0b01110100, 0b10010010]);
+    /// let bv = BitVec::<u32>::from_bytes(&[0b01110100, 0b10010010]);
     /// assert_eq!(bv.iter().filter(|x| *x).count(), 7);
     /// ```
     #[inline]
@@ -648,7 +636,7 @@ impl<B: BitBlock> BitVec<B> {
     ///
     /// ```
     /// # #![feature(collections, bit_vec_append_split_off)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
     /// let mut a = BitVec::from_bytes(&[0b10000000]);
     /// let mut b = BitVec::from_bytes(&[0b01100001]);
@@ -692,7 +680,7 @@ impl<B: BitBlock> BitVec<B> {
     ///
     /// ```
     /// # #![feature(collections, bit_vec_append_split_off)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     /// let mut a = BitVec::new();
     /// a.push(true);
     /// a.push(false);
@@ -751,10 +739,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::from_elem(10, false);
+    /// let mut bv = BitVec::<u32>::from_elem(10, false);
     /// assert_eq!(bv.none(), true);
     ///
     /// bv.set(3, true);
@@ -769,10 +756,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::from_elem(10, false);
+    /// let mut bv = BitVec::<u32>::from_elem(10, false);
     /// assert_eq!(bv.any(), false);
     ///
     /// bv.set(3, true);
@@ -791,15 +777,14 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::from_elem(3, true);
+    /// let mut bv = BitVec::<u32>::from_elem(3, true);
     /// bv.set(1, false);
     ///
     /// assert_eq!(bv.to_bytes(), [0b10100000]);
     ///
-    /// let mut bv = BitVec::from_elem(9, false);
+    /// let mut bv = BitVec::<u32>::from_elem(9, false);
     /// bv.set(2, true);
     /// bv.set(8, true);
     ///
@@ -840,10 +825,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let bv = BitVec::from_bytes(&[0b10100000]);
+    /// let bv = BitVec::<u32>::from_bytes(&[0b10100000]);
     ///
     /// assert!(bv.eq_vec(&[true, false, true, false,
     ///                     false, false, false, false]));
@@ -861,10 +845,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::from_bytes(&[0b01001011]);
+    /// let mut bv = BitVec::<u32>::from_bytes(&[0b01001011]);
     /// bv.truncate(2);
     /// assert!(bv.eq_vec(&[false, true]));
     /// ```
@@ -887,10 +870,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::from_elem(3, false);
+    /// let mut bv = BitVec::<u32>::from_elem(3, false);
     /// bv.reserve(10);
     /// assert_eq!(bv.len(), 3);
     /// assert!(bv.capacity() >= 13);
@@ -917,10 +899,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::from_elem(3, false);
+    /// let mut bv = BitVec::<u32>::from_elem(3, false);
     /// bv.reserve(10);
     /// assert_eq!(bv.len(), 3);
     /// assert!(bv.capacity() >= 13);
@@ -939,10 +920,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::new();
+    /// let mut bv = BitVec::<u32>::new();
     /// bv.reserve(10);
     /// assert!(bv.capacity() >= 10);
     /// ```
@@ -960,10 +940,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::from_bytes(&[0b01001011]);
+    /// let mut bv = BitVec::<u32>::from_bytes(&[0b01001011]);
     /// bv.grow(2, true);
     /// assert_eq!(bv.len(), 10);
     /// assert_eq!(bv.to_bytes(), [0b01001011, 0b11000000]);
@@ -1012,10 +991,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::from_bytes(&[0b01001001]);
+    /// let mut bv = BitVec::<u32>::from_bytes(&[0b01001001]);
     /// assert_eq!(bv.pop(), Some(true));
     /// assert_eq!(bv.pop(), Some(false));
     /// assert_eq!(bv.len(), 6);
@@ -1042,10 +1020,9 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections)]
-    /// use std::collections::BitVec;
+    /// use bit_vec::BitVec;
     ///
-    /// let mut bv = BitVec::new();
+    /// let mut bv = BitVec::<u32>::new();
     /// bv.push(true);
     /// bv.push(false);
     /// assert!(bv.eq_vec(&[true, false]));
@@ -1226,3 +1203,31 @@ impl<'a, B: BitBlock> IntoIterator for &'a BitVec<B> {
         self.iter()
     }
 }
+
+/// An iterator over the blocks of a `BitVec`.
+#[derive(Clone)]
+pub struct Blocks<'a, B: 'a> {
+    iter: slice::Iter<'a, B>,
+}
+
+impl<'a, B: BitBlock> Iterator for Blocks<'a, B> {
+    type Item = B;
+
+    #[inline]
+    fn next(&mut self) -> Option<B> {
+        self.iter.next().cloned()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+}
+
+impl<'a, B: BitBlock> DoubleEndedIterator for Blocks<'a, B> {
+    #[inline]
+    fn next_back(&mut self) -> Option<B> {
+        self.iter.next_back().cloned()
+    }
+}
+
+impl<'a, B: BitBlock> ExactSizeIterator for Blocks<'a, B> {}
