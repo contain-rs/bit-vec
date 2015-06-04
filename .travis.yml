@@ -4,9 +4,10 @@ matrix:
   include:
     - rust: stable
     - rust: nightly
+      env: FEATURES="--features nightly"
 script:
-    - cargo build
-    - cargo test
+    - cargo build $FEATURES
+    - cargo test $FEATURES
     - cargo doc --no-deps
 after_success: |
     [ "$TRAVIS_RUST_VERSION" = nightly ] &&
