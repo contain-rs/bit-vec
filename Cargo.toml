@@ -12,3 +12,6 @@ readme = "README.md"
 
 [dev-dependencies]
 rand = "*"
+
+[features]
+nightly = []

@@ -83,9 +83,9 @@
 //! assert_eq!(num_primes, 1_229);
 //! ```
 
-#![cfg_attr(test, feature(test))]
-#[cfg(test)] extern crate test;
-#[cfg(test)] extern crate rand;
+#![cfg_attr(all(test, feature = "nightly"), feature(test))]
+#[cfg(all(test, feature = "nightly"))] extern crate test;
+#[cfg(all(test, feature = "nightly"))] extern crate rand;
 
 use std::cmp::Ordering;
 use std::cmp;
@@ -2019,7 +2019,7 @@ mod tests {
 */
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "nightly"))]
 mod bench {
     use super::BitVec;
     use rand::{Rng, thread_rng, ThreadRng};
