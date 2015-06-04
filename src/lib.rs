@@ -37,47 +37,50 @@
 //!
 //! [sieve]: http://en.wikipedia.org/wiki/Sieve_of_Eratosthenes
 //!
-//! ```ignore
-//! # #![feature(collections, core, step_by)]
-//! use std::collections::{BitSet, BitVec};
-//! use std::iter;
+//! ```
+//! use bit_vec::BitVec;
 //!
 //! let max_prime = 10000;
 //!
-//! // Store the primes as a BitSet
+//! // Store the primes as a BitVec
 //! let primes = {
 //!     // Assume all numbers are prime to begin, and then we
 //!     // cross off non-primes progressively
-//!     let mut bv = BitVec::from_elem(max_prime, true);
+//!     let mut bv = BitVec::<u32>::from_elem(max_prime, true);
 //!
 //!     // Neither 0 nor 1 are prime
 //!     bv.set(0, false);
 //!     bv.set(1, false);
 //!
-//!     for i in iter::range_inclusive(2, (max_prime as f64).sqrt() as usize) {
+//!     for i in 2.. 1 + (max_prime as f64).sqrt() as usize {
 //!         // if i is a prime
 //!         if bv[i] {
 //!             // Mark all multiples of i as non-prime (any multiples below i * i
 //!             // will have been marked as non-prime previously)
-//!             for j in (i * i..max_prime).step_by(i) { bv.set(j, false) }
+//!             for j in i.. {
+//!                 if i * j >= max_prime {
+//!                     break;
+//!                 }
+//!                 bv.set(i * j, false)
+//!             }
 //!         }
 //!     }
-//!     BitSet::from_bit_vec(bv)
+//!     bv
 //! };
 //!
 //! // Simple primality tests below our max bound
 //! let print_primes = 20;
 //! print!("The primes below {} are: ", print_primes);
 //! for x in 0..print_primes {
-//!     if primes.contains(&x) {
+//!     if primes.get(x).unwrap_or(false) {
 //!         print!("{} ", x);
 //!     }
 //! }
 //! println!("");
 //!
-//! // We can manipulate the internal BitVec
-//! let num_primes = primes.get_ref().iter().filter(|x| *x).count();
+//! let num_primes = primes.iter().filter(|x| *x).count();
 //! println!("There are {} primes below {}", num_primes, max_prime);
+//! assert_eq!(num_primes, 1_229);
 //! ```
 use std::cmp::Ordering;
 use std::cmp;
