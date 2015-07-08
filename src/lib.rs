@@ -266,7 +266,7 @@ impl BitVec<u32> {
     pub fn from_elem(nbits: usize, bit: bool) -> Self {
         let nblocks = blocks_for_bits::<B>(nbits);
         let mut bit_vec = BitVec {
-            storage: repeat(if bit { !B::zero() } else { B::zero() }).take(nblocks).collect(),
+            storage: vec![if bit { !B::zero() } else { B::zero() }; nblocks],
             nbits: nbits
         };
         bit_vec.fix_last_block();
@@ -2114,6 +2114,18 @@ mod bench {
             }
             sum
         })
+    }
+
+    #[bench]
+    fn bench_from_elem(b: &mut Bencher) {
+        let cap = black_box(BENCH_BITS);
+        let bit = black_box(true);
+        b.iter(|| {
+            // create a BitVec and popcount it
+            BitVec::from_elem(cap, bit).blocks()
+                                       .fold(0, |acc, b| acc + b.count_ones())
+        });
+        b.bytes = cap as u64 / 8;
     }
 }
 
