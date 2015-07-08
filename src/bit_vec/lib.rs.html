@@ -2159,6 +2159,18 @@
 <span id="2117">2117</span>
 <span id="2118">2118</span>
 <span id="2119">2119</span>
+<span id="2120">2120</span>
+<span id="2121">2121</span>
+<span id="2122">2122</span>
+<span id="2123">2123</span>
+<span id="2124">2124</span>
+<span id="2125">2125</span>
+<span id="2126">2126</span>
+<span id="2127">2127</span>
+<span id="2128">2128</span>
+<span id="2129">2129</span>
+<span id="2130">2130</span>
+<span id="2131">2131</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2012-2014 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -2428,7 +2440,7 @@
     <span class='kw'>pub</span> <span class='kw'>fn</span> <span class='ident'>from_elem</span>(<span class='ident'>nbits</span>: <span class='ident'>usize</span>, <span class='ident'>bit</span>: <span class='ident'>bool</span>) <span class='op'>-&gt;</span> <span class='kw'>Self</span> {
         <span class='kw'>let</span> <span class='ident'>nblocks</span> <span class='op'>=</span> <span class='ident'>blocks_for_bits</span>::<span class='op'>&lt;</span><span class='ident'>B</span><span class='op'>&gt;</span>(<span class='ident'>nbits</span>);
         <span class='kw'>let</span> <span class='kw-2'>mut</span> <span class='ident'>bit_vec</span> <span class='op'>=</span> <span class='ident'>BitVec</span> {
-            <span class='ident'>storage</span>: <span class='ident'>repeat</span>(<span class='kw'>if</span> <span class='ident'>bit</span> { <span class='op'>!</span><span class='ident'>B</span>::<span class='ident'>zero</span>() } <span class='kw'>else</span> { <span class='ident'>B</span>::<span class='ident'>zero</span>() }).<span class='ident'>take</span>(<span class='ident'>nblocks</span>).<span class='ident'>collect</span>(),
+            <span class='ident'>storage</span>: <span class='macro'>vec</span><span class='macro'>!</span>[<span class='kw'>if</span> <span class='ident'>bit</span> { <span class='op'>!</span><span class='ident'>B</span>::<span class='ident'>zero</span>() } <span class='kw'>else</span> { <span class='ident'>B</span>::<span class='ident'>zero</span>() }; <span class='ident'>nblocks</span>],
             <span class='ident'>nbits</span>: <span class='ident'>nbits</span>
         };
         <span class='ident'>bit_vec</span>.<span class='ident'>fix_last_block</span>();
@@ -4276,6 +4288,18 @@
             }
             <span class='ident'>sum</span>
         })
+    }
+
+    <span class='attribute'>#[<span class='ident'>bench</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>bench_from_elem</span>(<span class='ident'>b</span>: <span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>Bencher</span>) {
+        <span class='kw'>let</span> <span class='ident'>cap</span> <span class='op'>=</span> <span class='ident'>black_box</span>(<span class='ident'>BENCH_BITS</span>);
+        <span class='kw'>let</span> <span class='ident'>bit</span> <span class='op'>=</span> <span class='ident'>black_box</span>(<span class='boolval'>true</span>);
+        <span class='ident'>b</span>.<span class='ident'>iter</span>(<span class='op'>||</span> {
+            <span class='comment'>// create a BitVec and popcount it</span>
+            <span class='ident'>BitVec</span>::<span class='ident'>from_elem</span>(<span class='ident'>cap</span>, <span class='ident'>bit</span>).<span class='ident'>blocks</span>()
+                                       .<span class='ident'>fold</span>(<span class='number'>0</span>, <span class='op'>|</span><span class='ident'>acc</span>, <span class='ident'>b</span><span class='op'>|</span> <span class='ident'>acc</span> <span class='op'>+</span> <span class='ident'>b</span>.<span class='ident'>count_ones</span>())
+        });
+        <span class='ident'>b</span>.<span class='ident'>bytes</span> <span class='op'>=</span> <span class='ident'>cap</span> <span class='kw'>as</span> <span class='ident'>u64</span> <span class='op'>/</span> <span class='number'>8</span>;
     }
 }
 
