@@ -1202,6 +1202,40 @@ impl<'a, B: BitBlock> IntoIterator for &'a BitVec<B> {
     }
 }
 
+
+pub struct IntoIter<B=u32> {
+    bit_vec: BitVec<B>,
+    range: Range<usize>,
+}
+
+impl<B: BitBlock> Iterator for IntoIter<B> {
+    type Item = bool;
+
+    #[inline]
+    fn next(&mut self) -> Option<bool> {
+        self.range.next().map(|i| self.bit_vec[i])
+    }
+}
+
+impl<B: BitBlock> DoubleEndedIterator for IntoIter<B> {
+    #[inline]
+    fn next_back(&mut self) -> Option<bool> {
+        self.range.next_back().map(|i| self.bit_vec[i])
+    }
+}
+
+impl<B: BitBlock> ExactSizeIterator for IntoIter<B> {}
+
+impl<B: BitBlock> IntoIterator for BitVec<B> {
+    type Item = bool;
+    type IntoIter = IntoIter<B>;
+
+    fn into_iter(self) -> IntoIter<B> {
+        let nbits = self.nbits;
+        IntoIter { bit_vec: self, range: 0..nbits }
+    }
+}
+
 /// An iterator over the blocks of a `BitVec`.
 #[derive(Clone)]
 pub struct Blocks<'a, B: 'a> {
@@ -2004,6 +2038,37 @@ mod tests {
                            true, false, true]));
     }
 */
+
+    #[test]
+    fn test_into_iter() {
+        let bools = vec![true, false, true, true];
+        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let mut iter = bit_vec.into_iter();
+        assert_eq!(Some(true), iter.next());
+        assert_eq!(Some(false), iter.next());
+        assert_eq!(Some(true), iter.next());
+        assert_eq!(Some(true), iter.next());
+        assert_eq!(None, iter.next());
+        assert_eq!(None, iter.next());
+
+        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let mut iter = bit_vec.into_iter();
+        assert_eq!(Some(true), iter.next_back());
+        assert_eq!(Some(true), iter.next_back());
+        assert_eq!(Some(false), iter.next_back());
+        assert_eq!(Some(true), iter.next_back());
+        assert_eq!(None, iter.next_back());
+        assert_eq!(None, iter.next_back());
+
+        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let mut iter = bit_vec.into_iter();
+        assert_eq!(Some(true), iter.next_back());
+        assert_eq!(Some(true), iter.next());
+        assert_eq!(Some(false), iter.next());
+        assert_eq!(Some(true), iter.next_back());
+        assert_eq!(None, iter.next());
+        assert_eq!(None, iter.next_back());
+    }
 }
 
 #[cfg(all(test, feature = "nightly"))]
