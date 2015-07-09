@@ -637,7 +637,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn iter(&self) -> Iter<B> {
-        Iter { bit_vec: self, next_idx: 0, end_idx: self.nbits }
+        Iter { bit_vec: self, range: 0..self.nbits }
     }
 
 /*
@@ -1167,8 +1167,7 @@ impl<B: BitBlock> cmp::Eq for BitVec<B> {}
 #[derive(Clone)]
 pub struct Iter<'a, B: 'a> {
     bit_vec: &'a BitVec<B>,
-    next_idx: usize,
-    end_idx: usize,
+    range: Range<usize>,
 }
 
 impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
@@ -1176,30 +1175,18 @@ impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
 
     #[inline]
     fn next(&mut self) -> Option<bool> {
-        if self.next_idx != self.end_idx {
-            let idx = self.next_idx;
-            self.next_idx += 1;
-            Some(self.bit_vec[idx])
-        } else {
-            None
-        }
+        self.range.next().map(|i| self.bit_vec[i])
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let rem = self.end_idx - self.next_idx;
-        (rem, Some(rem))
+        self.range.size_hint()
     }
 }
 
 impl<'a, B: BitBlock> DoubleEndedIterator for Iter<'a, B> {
     #[inline]
     fn next_back(&mut self) -> Option<bool> {
-        if self.next_idx != self.end_idx {
-            self.end_idx -= 1;
-            Some(self.bit_vec[self.end_idx])
-        } else {
-            None
-        }
+        self.range.next_back().map(|i| self.bit_vec[i])
     }
 }
 
