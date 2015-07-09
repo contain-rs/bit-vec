@@ -637,7 +637,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn iter(&self) -> Iter<B> {
-        Iter { bit_vec: self, next_idx: 0, end_idx: self.nbits }
+        Iter { bit_vec: self, range: 0..self.nbits }
     }
 
 /*
@@ -1167,8 +1167,7 @@ impl<B: BitBlock> cmp::Eq for BitVec<B> {}
 #[derive(Clone)]
 pub struct Iter<'a, B: 'a> {
     bit_vec: &'a BitVec<B>,
-    next_idx: usize,
-    end_idx: usize,
+    range: Range<usize>,
 }
 
 impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
@@ -1176,30 +1175,18 @@ impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
 
     #[inline]
     fn next(&mut self) -> Option<bool> {
-        if self.next_idx != self.end_idx {
-            let idx = self.next_idx;
-            self.next_idx += 1;
-            Some(self.bit_vec[idx])
-        } else {
-            None
-        }
+        self.range.next().map(|i| self.bit_vec[i])
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let rem = self.end_idx - self.next_idx;
-        (rem, Some(rem))
+        self.range.size_hint()
     }
 }
 
 impl<'a, B: BitBlock> DoubleEndedIterator for Iter<'a, B> {
     #[inline]
     fn next_back(&mut self) -> Option<bool> {
-        if self.next_idx != self.end_idx {
-            self.end_idx -= 1;
-            Some(self.bit_vec[self.end_idx])
-        } else {
-            None
-        }
+        self.range.next_back().map(|i| self.bit_vec[i])
     }
 }
 
@@ -1212,6 +1199,40 @@ impl<'a, B: BitBlock> IntoIterator for &'a BitVec<B> {
 
     fn into_iter(self) -> Iter<'a, B> {
         self.iter()
+    }
+}
+
+
+pub struct IntoIter<B=u32> {
+    bit_vec: BitVec<B>,
+    range: Range<usize>,
+}
+
+impl<B: BitBlock> Iterator for IntoIter<B> {
+    type Item = bool;
+
+    #[inline]
+    fn next(&mut self) -> Option<bool> {
+        self.range.next().map(|i| self.bit_vec[i])
+    }
+}
+
+impl<B: BitBlock> DoubleEndedIterator for IntoIter<B> {
+    #[inline]
+    fn next_back(&mut self) -> Option<bool> {
+        self.range.next_back().map(|i| self.bit_vec[i])
+    }
+}
+
+impl<B: BitBlock> ExactSizeIterator for IntoIter<B> {}
+
+impl<B: BitBlock> IntoIterator for BitVec<B> {
+    type Item = bool;
+    type IntoIter = IntoIter<B>;
+
+    fn into_iter(self) -> IntoIter<B> {
+        let nbits = self.nbits;
+        IntoIter { bit_vec: self, range: 0..nbits }
     }
 }
 
@@ -2017,6 +2038,37 @@ mod tests {
                            true, false, true]));
     }
 */
+
+    #[test]
+    fn test_into_iter() {
+        let bools = vec![true, false, true, true];
+        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let mut iter = bit_vec.into_iter();
+        assert_eq!(Some(true), iter.next());
+        assert_eq!(Some(false), iter.next());
+        assert_eq!(Some(true), iter.next());
+        assert_eq!(Some(true), iter.next());
+        assert_eq!(None, iter.next());
+        assert_eq!(None, iter.next());
+
+        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let mut iter = bit_vec.into_iter();
+        assert_eq!(Some(true), iter.next_back());
+        assert_eq!(Some(true), iter.next_back());
+        assert_eq!(Some(false), iter.next_back());
+        assert_eq!(Some(true), iter.next_back());
+        assert_eq!(None, iter.next_back());
+        assert_eq!(None, iter.next_back());
+
+        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let mut iter = bit_vec.into_iter();
+        assert_eq!(Some(true), iter.next_back());
+        assert_eq!(Some(true), iter.next());
+        assert_eq!(Some(false), iter.next());
+        assert_eq!(Some(true), iter.next_back());
+        assert_eq!(None, iter.next());
+        assert_eq!(None, iter.next_back());
+    }
 }
 
 #[cfg(all(test, feature = "nightly"))]
