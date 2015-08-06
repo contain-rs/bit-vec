@@ -147,7 +147,8 @@ bit_block_impl!{
     (u8, 8),
     (u16, 16),
     (u32, 32),
-    (u64, 64)
+    (u64, 64),
+    (usize, std::mem::size_of::<usize>())
 }
 
 
