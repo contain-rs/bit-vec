@@ -9,6 +9,7 @@ script:
     - cargo build $FEATURES
     - cargo test $FEATURES
     - cargo doc --no-deps
+    - bash crusader.sh
 after_success: |
     [ "$TRAVIS_RUST_VERSION" = nightly ] &&
     [ "$TRAVIS_BRANCH" = master ] &&
