@@ -619,7 +619,7 @@ impl<B: BitBlock> BitVec<B> {
     ///
     /// let a   = 0b01100100;
     /// let b   = 0b01011010;
-    /// let res = 0b01000000;
+    /// let res = 0b00111110;
     ///
     /// let mut a = BitVec::from_bytes(&[a]);
     /// let b = BitVec::from_bytes(&[b]);
