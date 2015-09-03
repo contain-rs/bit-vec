@@ -120,6 +120,7 @@ pub trait BitBlock:
 	/// How many bits it has
     fn bits() -> usize;
     /// How many bytes it has
+    #[inline]
     fn bytes() -> usize { Self::bits() / 8 }
     /// Convert a byte into this type (lowest-order bits set)
     fn from_byte(byte: u8) -> Self;
@@ -134,10 +135,15 @@ pub trait BitBlock:
 macro_rules! bit_block_impl {
     ($(($t: ty, $size: expr)),*) => ($(
         impl BitBlock for $t {
+            #[inline]
             fn bits() -> usize { $size }
+            #[inline]
             fn from_byte(byte: u8) -> Self { byte as $t }
+            #[inline]
             fn count_ones(self) -> usize { self.count_ones() as usize }
+            #[inline]
             fn one() -> Self { 1 }
+            #[inline]
             fn zero() -> Self { 0 }
         }
     )*)
