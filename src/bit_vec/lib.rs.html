@@ -2224,6 +2224,11 @@
 <span id="2182">2182</span>
 <span id="2183">2183</span>
 <span id="2184">2184</span>
+<span id="2185">2185</span>
+<span id="2186">2186</span>
+<span id="2187">2187</span>
+<span id="2188">2188</span>
+<span id="2189">2189</span>
 </pre><pre class='rust '>
 <span class='comment'>// Copyright 2012-2014 The Rust Project Developers. See the COPYRIGHT</span>
 <span class='comment'>// file at the top-level directory of this distribution and at</span>
@@ -3393,7 +3398,7 @@
 
 <span class='doccomment'>/// An iterator for `BitVec`.</span>
 <span class='attribute'>#[<span class='ident'>derive</span>(<span class='ident'>Clone</span>)]</span>
-<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Iter</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>B</span>: <span class='lifetime'>&#39;a</span><span class='op'>&gt;</span> {
+<span class='kw'>pub</span> <span class='kw'>struct</span> <span class='ident'>Iter</span><span class='op'>&lt;</span><span class='lifetime'>&#39;a</span>, <span class='ident'>B</span>: <span class='lifetime'>&#39;a</span> <span class='op'>=</span> <span class='ident'>u32</span><span class='op'>&gt;</span> {
     <span class='ident'>bit_vec</span>: <span class='kw-2'>&amp;</span><span class='lifetime'>&#39;a</span> <span class='ident'>BitVec</span><span class='op'>&lt;</span><span class='ident'>B</span><span class='op'>&gt;</span>,
     <span class='ident'>range</span>: <span class='ident'>Range</span><span class='op'>&lt;</span><span class='ident'>usize</span><span class='op'>&gt;</span>,
 }
@@ -3504,8 +3509,7 @@
 
 <span class='attribute'>#[<span class='ident'>cfg</span>(<span class='ident'>test</span>)]</span>
 <span class='kw'>mod</span> <span class='ident'>tests</span> {
-
-    <span class='kw'>use</span> <span class='ident'>super</span>::<span class='ident'>BitVec</span>;
+    <span class='kw'>use</span> <span class='ident'>super</span>::{<span class='ident'>BitVec</span>, <span class='ident'>Iter</span>};
 
     <span class='comment'>// This is stupid, but I want to differentiate from a &quot;random&quot; 32</span>
     <span class='kw'>const</span> <span class='ident'>U32_BITS</span>: <span class='ident'>usize</span> <span class='op'>=</span> <span class='number'>32</span>;
@@ -4296,6 +4300,12 @@
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>Some</span>(<span class='boolval'>true</span>), <span class='ident'>iter</span>.<span class='ident'>next_back</span>());
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>None</span>, <span class='ident'>iter</span>.<span class='ident'>next</span>());
         <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='prelude-val'>None</span>, <span class='ident'>iter</span>.<span class='ident'>next_back</span>());
+    }
+
+    <span class='attribute'>#[<span class='ident'>test</span>]</span>
+    <span class='kw'>fn</span> <span class='ident'>iter</span>() {
+        <span class='kw'>let</span> <span class='ident'>b</span> <span class='op'>=</span> <span class='ident'>BitVec</span>::<span class='ident'>with_capacity</span>(<span class='number'>10</span>);
+        <span class='kw'>let</span> <span class='ident'>_a</span>: <span class='ident'>Iter</span> <span class='op'>=</span> <span class='ident'>b</span>.<span class='ident'>iter</span>();
     }
 }
 
