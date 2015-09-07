@@ -1182,7 +1182,9 @@ impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
 
     #[inline]
     fn next(&mut self) -> Option<bool> {
-        self.range.next().map(|i| self.bit_vec[i])
+        // NB: indexing is slow for extern crates when it has to go through &TRUE or &FALSE
+        // variables.  get is more direct, and unwrap is fine since we're sure of the range.
+        self.range.next().map(|i| self.bit_vec.get(i).unwrap())
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -1193,7 +1195,7 @@ impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
 impl<'a, B: BitBlock> DoubleEndedIterator for Iter<'a, B> {
     #[inline]
     fn next_back(&mut self) -> Option<bool> {
-        self.range.next_back().map(|i| self.bit_vec[i])
+        self.range.next_back().map(|i| self.bit_vec.get(i).unwrap())
     }
 }
 
@@ -1220,14 +1222,14 @@ impl<B: BitBlock> Iterator for IntoIter<B> {
 
     #[inline]
     fn next(&mut self) -> Option<bool> {
-        self.range.next().map(|i| self.bit_vec[i])
+        self.range.next().map(|i| self.bit_vec.get(i).unwrap())
     }
 }
 
 impl<B: BitBlock> DoubleEndedIterator for IntoIter<B> {
     #[inline]
     fn next_back(&mut self) -> Option<bool> {
-        self.range.next_back().map(|i| self.bit_vec[i])
+        self.range.next_back().map(|i| self.bit_vec.get(i).unwrap())
     }
 }
 
