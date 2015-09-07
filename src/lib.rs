@@ -1166,7 +1166,7 @@ impl<B: BitBlock> cmp::Eq for BitVec<B> {}
 
 /// An iterator for `BitVec`.
 #[derive(Clone)]
-pub struct Iter<'a, B: 'a> {
+pub struct Iter<'a, B: 'a = u32> {
     bit_vec: &'a BitVec<B>,
     range: Range<usize>,
 }
@@ -1277,8 +1277,7 @@ impl<'a, B: BitBlock> ExactSizeIterator for Blocks<'a, B> {}
 
 #[cfg(test)]
 mod tests {
-
-    use super::BitVec;
+    use super::{BitVec, Iter};
 
     // This is stupid, but I want to differentiate from a "random" 32
     const U32_BITS: usize = 32;
@@ -2069,6 +2068,12 @@ mod tests {
         assert_eq!(Some(true), iter.next_back());
         assert_eq!(None, iter.next());
         assert_eq!(None, iter.next_back());
+    }
+
+    #[test]
+    fn iter() {
+        let b = BitVec::with_capacity(10);
+        let _a: Iter = b.iter();
     }
 }
 
