@@ -9,15 +9,15 @@
 // except according to those terms.
 
 use super::BitVec;
-use rand::{Rng, thread_rng, ThreadRng};
+use rand::{Rng, weak_rng, XorShiftRng};
 
 use test::{Bencher, black_box};
 
 const BENCH_BITS : usize = 1 << 14;
 const U32_BITS: usize = 32;
 
-fn rng() -> ThreadRng {
-    thread_rng()
+fn rng() -> XorShiftRng {
+    weak_rng()
 }
 
 #[bench]
