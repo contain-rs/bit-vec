@@ -120,6 +120,7 @@ pub trait BitBlock:
 	/// How many bits it has
     fn bits() -> usize;
     /// How many bytes it has
+    #[inline]
     fn bytes() -> usize { Self::bits() / 8 }
     /// Convert a byte into this type (lowest-order bits set)
     fn from_byte(byte: u8) -> Self;
@@ -134,10 +135,15 @@ pub trait BitBlock:
 macro_rules! bit_block_impl {
     ($(($t: ty, $size: expr)),*) => ($(
         impl BitBlock for $t {
+            #[inline]
             fn bits() -> usize { $size }
+            #[inline]
             fn from_byte(byte: u8) -> Self { byte as $t }
+            #[inline]
             fn count_ones(self) -> usize { self.count_ones() as usize }
+            #[inline]
             fn one() -> Self { 1 }
+            #[inline]
             fn zero() -> Self { 0 }
         }
     )*)
@@ -1176,7 +1182,9 @@ impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
 
     #[inline]
     fn next(&mut self) -> Option<bool> {
-        self.range.next().map(|i| self.bit_vec[i])
+        // NB: indexing is slow for extern crates when it has to go through &TRUE or &FALSE
+        // variables.  get is more direct, and unwrap is fine since we're sure of the range.
+        self.range.next().map(|i| self.bit_vec.get(i).unwrap())
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -1187,7 +1195,7 @@ impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
 impl<'a, B: BitBlock> DoubleEndedIterator for Iter<'a, B> {
     #[inline]
     fn next_back(&mut self) -> Option<bool> {
-        self.range.next_back().map(|i| self.bit_vec[i])
+        self.range.next_back().map(|i| self.bit_vec.get(i).unwrap())
     }
 }
 
@@ -1214,14 +1222,14 @@ impl<B: BitBlock> Iterator for IntoIter<B> {
 
     #[inline]
     fn next(&mut self) -> Option<bool> {
-        self.range.next().map(|i| self.bit_vec[i])
+        self.range.next().map(|i| self.bit_vec.get(i).unwrap())
     }
 }
 
 impl<B: BitBlock> DoubleEndedIterator for IntoIter<B> {
     #[inline]
     fn next_back(&mut self) -> Option<bool> {
-        self.range.next_back().map(|i| self.bit_vec[i])
+        self.range.next_back().map(|i| self.bit_vec.get(i).unwrap())
     }
 }
 
@@ -2077,113 +2085,5 @@ mod tests {
     }
 }
 
-#[cfg(all(test, feature = "nightly"))]
-mod bench {
-    use super::BitVec;
-    use rand::{Rng, thread_rng, ThreadRng};
-
-    use test::{Bencher, black_box};
-
-    const BENCH_BITS : usize = 1 << 14;
-    const U32_BITS: usize = 32;
-
-    fn rng() -> ThreadRng {
-        thread_rng()
-    }
-
-    #[bench]
-    fn bench_usize_small(b: &mut Bencher) {
-        let mut r = rng();
-        let mut bit_vec = 0 as usize;
-        b.iter(|| {
-            for _ in 0..100 {
-                bit_vec |= 1 << ((r.next_u32() as usize) % U32_BITS);
-            }
-            black_box(&bit_vec);
-        });
-    }
-
-    #[bench]
-    fn bench_bit_set_big_fixed(b: &mut Bencher) {
-        let mut r = rng();
-        let mut bit_vec = BitVec::from_elem(BENCH_BITS, false);
-        b.iter(|| {
-            for _ in 0..100 {
-                bit_vec.set((r.next_u32() as usize) % BENCH_BITS, true);
-            }
-            black_box(&bit_vec);
-        });
-    }
-
-    #[bench]
-    fn bench_bit_set_big_variable(b: &mut Bencher) {
-        let mut r = rng();
-        let mut bit_vec = BitVec::from_elem(BENCH_BITS, false);
-        b.iter(|| {
-            for _ in 0..100 {
-                bit_vec.set((r.next_u32() as usize) % BENCH_BITS, r.gen());
-            }
-            black_box(&bit_vec);
-        });
-    }
-
-    #[bench]
-    fn bench_bit_set_small(b: &mut Bencher) {
-        let mut r = rng();
-        let mut bit_vec = BitVec::from_elem(U32_BITS, false);
-        b.iter(|| {
-            for _ in 0..100 {
-                bit_vec.set((r.next_u32() as usize) % U32_BITS, true);
-            }
-            black_box(&bit_vec);
-        });
-    }
-
-    #[bench]
-    fn bench_bit_vec_big_union(b: &mut Bencher) {
-        let mut b1 = BitVec::from_elem(BENCH_BITS, false);
-        let b2 = BitVec::from_elem(BENCH_BITS, false);
-        b.iter(|| {
-            b1.union(&b2)
-        })
-    }
-
-    #[bench]
-    fn bench_bit_vec_small_iter(b: &mut Bencher) {
-        let bit_vec = BitVec::from_elem(U32_BITS, false);
-        b.iter(|| {
-            let mut sum = 0;
-            for _ in 0..10 {
-                for pres in &bit_vec {
-                    sum += pres as usize;
-                }
-            }
-            sum
-        })
-    }
-
-    #[bench]
-    fn bench_bit_vec_big_iter(b: &mut Bencher) {
-        let bit_vec = BitVec::from_elem(BENCH_BITS, false);
-        b.iter(|| {
-            let mut sum = 0;
-            for pres in &bit_vec {
-                sum += pres as usize;
-            }
-            sum
-        })
-    }
-
-    #[bench]
-    fn bench_from_elem(b: &mut Bencher) {
-        let cap = black_box(BENCH_BITS);
-        let bit = black_box(true);
-        b.iter(|| {
-            // create a BitVec and popcount it
-            BitVec::from_elem(cap, bit).blocks()
-                                       .fold(0, |acc, b| acc + b.count_ones())
-        });
-        b.bytes = cap as u64 / 8;
-    }
-}
+#[cfg(all(test, feature = "nightly"))] mod bench;
 
