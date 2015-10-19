@@ -1074,6 +1074,16 @@ impl<B: BitBlock> BitVec<B> {
     pub fn clear(&mut self) {
         for w in &mut self.storage { *w = B::zero(); }
     }
+
+    /// Shrinks the capacity of the underlying storage as much as
+    /// possible.
+    ///
+    /// It will drop down as close as possible to the length but the
+    /// allocator may still inform the underlying storage that there
+    /// is space for a few more elements/bits.
+    pub fn shrink_to_fit(&mut self) {
+        self.storage.shrink_to_fit();
+    }
 }
 
 impl<B: BitBlock> Default for BitVec<B> {
