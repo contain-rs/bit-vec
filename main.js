@@ -101,6 +101,10 @@
         if (document.activeElement.tagName == "INPUT")
             return;
 
+        // Don't interfere with browser shortcuts
+        if (ev.ctrlKey || ev.altKey || ev.metaKey)
+            return;
+
         switch (getVirtualKey(ev)) {
         case "Escape":
             if (!$("#help").hasClass("hidden")) {
@@ -133,7 +137,7 @@
     $(document).on("keypress", handleShortcut);
     $(document).on("keydown", handleShortcut);
     $(document).on("click", function(ev) {
-        if (!$(e.target).closest("#help > div").length) {
+        if (!$(ev.target).closest("#help > div").length) {
             $("#help").addClass("hidden");
             $("body").removeClass("blur");
         }
@@ -515,7 +519,6 @@
                 var $active = $results.filter('.highlighted');
 
                 if (e.which === 38) { // up
-                    e.preventDefault();
                     if (!$active.length || !$active.prev()) {
                         return;
                     }
@@ -523,7 +526,6 @@
                     $active.prev().addClass('highlighted');
                     $active.removeClass('highlighted');
                 } else if (e.which === 40) { // down
-                    e.preventDefault();
                     if (!$active.length) {
                         $results.first().addClass('highlighted');
                     } else if ($active.next().length) {
@@ -531,7 +533,6 @@
                         $active.removeClass('highlighted');
                     }
                 } else if (e.which === 13) { // return
-                    e.preventDefault();
                     if ($active.length) {
                         document.location.href = $active.find('a').prop('href');
                     }
@@ -722,20 +723,29 @@
         }
 
         function startSearch() {
-
-            $(".search-input").on("keyup",function() {
+            var searchTimeout;
+            $(".search-input").on("keyup input",function() {
+                clearTimeout(searchTimeout);
                 if ($(this).val().length === 0) {
                     window.history.replaceState("", "std - Rust", "?search=");
                     $('#main.content').removeClass('hidden');
                     $('#search.content').addClass('hidden');
+                } else {
+                    searchTimeout = setTimeout(search, 500);
                 }
             });
-
-            var keyUpTimeout;
-            $('.do-search').on('click', search);
-            $('.search-input').on('keyup', function() {
-                clearTimeout(keyUpTimeout);
-                keyUpTimeout = setTimeout(search, 500);
+            $('.search-form').on('submit', function(e){
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                search();
+            });
+            $('.search-input').on('change paste', function(e) {
+                // Do NOT e.preventDefault() here. It will prevent pasting.
+                clearTimeout(searchTimeout);
+                // zero-timeout necessary here because at the time of event handler execution the
+                // pasted content is not in the input field yet. Shouldn’t make any difference for
+                // change, though.
+                setTimeout(search, 0);
             });
 
             // Push and pop states are used to add search results to the browser
