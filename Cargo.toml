@@ -12,6 +12,11 @@ readme = "README.md"
 
 [dev-dependencies]
 rand = "*"
+serde_json = "0.6"
 
 [features]
 nightly = []
+eders = ["serde"]
+
+[dependencies]
+serde = { version = "0.6", optional = true }
