@@ -87,6 +87,9 @@
 #[cfg(all(test, feature = "nightly"))] extern crate test;
 #[cfg(all(test, feature = "nightly"))] extern crate rand;
 
+#[cfg(feature = "eders")] extern crate serde;
+#[cfg(feature = "eders")] use std::marker::PhantomData;
+
 use std::cmp::Ordering;
 use std::cmp;
 use std::fmt;
@@ -1275,11 +1278,134 @@ impl<'a, B: BitBlock> ExactSizeIterator for Blocks<'a, B> {}
 
 
 
+// manual serde trait implementation
+#[cfg(feature = "eders")]
+impl<B: BitBlock + serde::Serialize> serde::Serialize for BitVec<B> {
+    #[inline]
+    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+        where S: serde::Serializer,
+    {
+        serializer.visit_struct("BitVec", BitVecMapVisitor {
+            value: self,
+            state: 0
+        })
+    }
+}
 
+// visitor for serializing struct fields -- must be separate from the deserialize visitor
+// because this maintains a reference, whereas the deserializing visitor hasn't created one yet
+#[cfg(feature = "eders")]
+struct BitVecMapVisitor<'a, B: 'a + BitBlock> {
+    value: &'a BitVec<B>,
+    state: u8,
+}
 
+// visit the struct three times and tell the serializer what to name each field
+#[cfg(feature = "eders")]
+impl<'a, B: BitBlock + serde::Serialize> serde::ser::MapVisitor for BitVecMapVisitor<'a, B> {
+    fn visit<S>(&mut self, serializer: &mut S) -> Result<Option<()>, S::Error>
+        where S: serde::Serializer
+    {
+        match self.state {
+            0 => {
+                self.state += 1;
+                Ok(Some(try!(serializer.visit_struct_elt("storage", &self.value.storage))))
+            },
+            1 => {
+                self.state += 1;
+                Ok(Some(try!(serializer.visit_struct_elt("nbits", &self.value.nbits))))
+            },
+            _ => {
+                Ok(None)
+            }
+        }
+    }
+}
 
+// deserialization code
+#[cfg(feature = "eders")]
+impl<B: BitBlock + serde::Deserialize> serde::Deserialize for BitVec<B> {
+    fn deserialize<D>(deserializer: &mut D) -> Result<BitVec<B>, D::Error>
+        where D: serde::Deserializer,
+    {
+        static FIELDS: &'static [&'static str] = &["storage", "nbits"];
+        deserializer.visit_struct("BitVec", FIELDS, BitVecVisitor { p: PhantomData })
+    }
+}
 
+// this visitor consumes data from a deserializer and produces a BitVec
+// because BitVec's are generic, we need PhantomData to store the correct type param
+#[cfg(feature = "eders")]
+struct BitVecVisitor<B: BitBlock> {
+    p: PhantomData<B>,
+}
 
+#[cfg(feature = "eders")]
+impl<B: BitBlock + serde::Deserialize> serde::de::Visitor for BitVecVisitor<B> {
+    type Value = BitVec<B>;
+
+    fn visit_map<V>(&mut self, mut visitor: V) -> Result<BitVec<B>, V::Error>
+        where V: serde::de::MapVisitor
+    {
+        let mut storage = None;
+        let mut nbits = None;
+
+        loop {
+            match try!(visitor.visit_key()) {
+                Some(BitVecField::Storage) => storage = Some(try!(visitor.visit_value())),
+                Some(BitVecField::Nbits) => nbits = Some(try!(visitor.visit_value())),
+                None => break,
+            }
+        }
+
+        let storage = match storage {
+            Some(s) => s,
+            None => try!(visitor.missing_field("storage")),
+        };
+
+        let nbits = match nbits {
+            Some(n) => n,
+            None => try!(visitor.missing_field("nbits")),
+        };
+
+        try!(visitor.end());
+
+        Ok(BitVec { storage: storage, nbits: nbits })
+    }
+}
+
+// this enum allows the deserialization to avoid allocating temporary strings in the course
+// of reading the field names
+#[cfg(feature = "eders")]
+enum BitVecField {
+    Storage,
+    Nbits,
+}
+
+#[cfg(feature = "eders")]
+impl serde::Deserialize for BitVecField {
+    fn deserialize<D>(deserializer: &mut D) -> Result<BitVecField, D::Error>
+        where D: serde::de::Deserializer
+    {
+        struct BitVecFieldVisitor;
+
+        impl serde::de::Visitor for BitVecFieldVisitor {
+            type Value = BitVecField;
+
+            fn visit_str<E>(&mut self, value: &str) -> Result<BitVecField, E>
+                where E: serde::de::Error
+            {
+                match value {
+                    "storage" => Ok(BitVecField::Storage),
+                    "nbits" => Ok(BitVecField::Nbits),
+                    _ => Err(serde::de::Error::syntax("expected storage or nbits")),
+                }
+            }
+        }
+
+        deserializer.visit(BitVecFieldVisitor)
+    }
+}
 
 
 
@@ -2083,7 +2209,27 @@ mod tests {
         let b = BitVec::with_capacity(10);
         let _a: Iter = b.iter();
     }
+
+	#[cfg(feature = "eders")] extern crate serde_json;
+	#[cfg(feature = "eders")] use super::serde;
+
+	#[test]
+	#[cfg(feature = "eders")]
+	fn test_serde_implemented() {
+	    fn impls_serde_traits<S: serde::Serialize + serde::Deserialize>() {}
+
+	    impls_serde_traits::<BitVec>();
+	}
+
+	#[test]
+	#[cfg(feature = "eders")]
+	fn test_serde() {
+	    let bv = BitVec::from_elem(100, true);
+
+	    let bv_json = serde_json::ser::to_string_pretty(&bv).unwrap();
+	    let bv_de = serde_json::de::from_str(&bv_json).unwrap();
+	    assert_eq!(bv, bv_de);
+	}
 }
 
 #[cfg(all(test, feature = "nightly"))] mod bench;
-
