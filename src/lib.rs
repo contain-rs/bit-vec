@@ -78,7 +78,7 @@
 //! }
 //! println!("");
 //!
-//! let num_primes = primes.iter().filter(|x| *x).count();
+//! let num_primes = primes.count_ones();
 //! println!("There are {} primes below {}", num_primes, max_prime);
 //! assert_eq!(num_primes, 1_229);
 //! ```
@@ -184,17 +184,20 @@ static FALSE: bool = false;
 /// bv.set(5, true);
 /// bv.set(7, true);
 /// println!("{:?}", bv);
-/// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
+/// println!("total bits set to true: {}", bv.count_ones());
+/// assert_eq!(bv.count_ones(), 4);
 ///
 /// // flip all values in bitvector, producing non-primes less than 10
 /// bv.negate();
 /// println!("{:?}", bv);
-/// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
+/// println!("total bits set to true: {}", bv.count_ones());
+/// assert_eq!(bv.count_ones(), 6);
 ///
 /// // reset bitvector to empty
 /// bv.clear();
 /// println!("{:?}", bv);
-/// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
+/// println!("total bits set to true: {}", bv.count_ones());
+/// assert_eq!(bv.count_ones(), 0);
 /// ```
 pub struct BitVec<B=u32> {
     /// Internal representation of the bit vector
@@ -640,7 +643,7 @@ impl<B: BitBlock> BitVec<B> {
     /// use bit_vec::BitVec;
     ///
     /// let bv = BitVec::from_bytes(&[0b01110100, 0b10010010]);
-    /// assert_eq!(bv.iter().filter(|x| *x).count(), 7);
+    /// assert_eq!(bv.count_ones(), 7);
     /// ```
     #[inline]
     pub fn iter(&self) -> Iter<B> {
@@ -1073,6 +1076,18 @@ impl<B: BitBlock> BitVec<B> {
     #[inline]
     pub fn clear(&mut self) {
         for w in &mut self.storage { *w = B::zero(); }
+    }
+
+    /// Returns the number of ones in the vector.
+    #[inline]
+    pub fn count_ones(&self) -> usize {
+        self.storage.iter().fold(0, |cnt, &w| cnt + w.count_ones())
+    }
+
+    /// Returns the number of zeros in the vector.
+    #[inline]
+    pub fn count_zeros(&self) -> usize {
+        self.nbits - self.count_ones()
     }
 }
 
@@ -2082,6 +2097,60 @@ mod tests {
     fn iter() {
         let b = BitVec::with_capacity(10);
         let _a: Iter = b.iter();
+    }
+
+    #[test]
+    fn test_count_ones() {
+        let bit_vec = BitVec::from_elem(0, true);
+        assert_eq!(bit_vec.count_ones(), 0);
+
+        let bit_vec = BitVec::from_elem(5, true);
+        assert_eq!(bit_vec.count_ones(), 5);
+
+        let mut bit_vec = BitVec::from_elem(5, false);
+        assert_eq!(bit_vec.count_ones(), 0);
+        bit_vec.set(3, true);
+        assert_eq!(bit_vec.count_ones(), 1);
+
+        let bit_vec = BitVec::from_elem(64, true);
+        assert_eq!(bit_vec.count_ones(), 64);
+
+        let bit_vec = BitVec::from_elem(65, true);
+        assert_eq!(bit_vec.count_ones(), 65);
+
+        let mut bit_vec = BitVec::from_elem(65, false);
+        assert_eq!(bit_vec.count_ones(), 0);
+        bit_vec.set(0, true);
+        bit_vec.set(40, true);
+        bit_vec.set(64, true);
+        assert_eq!(bit_vec.count_ones(), 3);
+    }
+
+    #[test]
+    fn test_count_zeros() {
+        let bit_vec = BitVec::from_elem(0, false);
+        assert_eq!(bit_vec.count_zeros(), 0);
+
+        let bit_vec = BitVec::from_elem(5, false);
+        assert_eq!(bit_vec.count_zeros(), 5);
+
+        let mut bit_vec = BitVec::from_elem(5, true);
+        assert_eq!(bit_vec.count_zeros(), 0);
+        bit_vec.set(3, false);
+        assert_eq!(bit_vec.count_zeros(), 1);
+
+        let bit_vec = BitVec::from_elem(64, false);
+        assert_eq!(bit_vec.count_zeros(), 64);
+
+        let bit_vec = BitVec::from_elem(65, false);
+        assert_eq!(bit_vec.count_zeros(), 65);
+
+        let mut bit_vec = BitVec::from_elem(65, true);
+        assert_eq!(bit_vec.count_zeros(), 0);
+        bit_vec.set(0, false);
+        bit_vec.set(40, false);
+        bit_vec.set(64, false);
+        assert_eq!(bit_vec.count_zeros(), 3);
     }
 }
 
