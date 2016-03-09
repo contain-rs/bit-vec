@@ -86,6 +86,9 @@
 #![cfg_attr(all(test, feature = "nightly"), feature(test))]
 #[cfg(all(test, feature = "nightly"))] extern crate test;
 #[cfg(all(test, feature = "nightly"))] extern crate rand;
+extern crate rustc_serialize;
+
+use rustc_serialize::{Decodable, Encodable};
 
 use std::cmp::Ordering;
 use std::cmp;
@@ -116,6 +119,8 @@ pub trait BitBlock:
 	Eq +
 	Ord +
 	hash::Hash +
+        Decodable +
+        Encodable +
 {
 	/// How many bits it has
     fn bits() -> usize;
@@ -196,7 +201,8 @@ static FALSE: bool = false;
 /// println!("{:?}", bv);
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 /// ```
-pub struct BitVec<B=u32> {
+#[derive(RustcDecodable, RustcEncodable)]
+pub struct BitVec<B=u32> where B: BitBlock {
     /// Internal representation of the bit vector
     storage: Vec<B>,
     /// The number of valid bits in the internal representation
@@ -336,6 +342,18 @@ impl BitVec<u32> {
         }
 
         bit_vec
+    }
+
+    /// Creates a `BitVec` from raw block storage with the specified number of
+    /// bits.
+    ///
+    /// Only intended for deserialization.
+    pub fn from_storage(nbits: usize, storage: Vec<u32>) -> Self {
+        assert!(nbits <= 32 * storage.len());
+        BitVec{
+            storage: storage,
+            nbits: nbits,
+        }
     }
 
     /// Creates a `BitVec` of the specified length where the value at each index
@@ -1172,7 +1190,7 @@ impl<B: BitBlock> cmp::Eq for BitVec<B> {}
 
 /// An iterator for `BitVec`.
 #[derive(Clone)]
-pub struct Iter<'a, B: 'a = u32> {
+pub struct Iter<'a, B: 'a = u32> where B: BitBlock {
     bit_vec: &'a BitVec<B>,
     range: Range<usize>,
 }
@@ -1212,7 +1230,7 @@ impl<'a, B: BitBlock> IntoIterator for &'a BitVec<B> {
 }
 
 
-pub struct IntoIter<B=u32> {
+pub struct IntoIter<B=u32> where B: BitBlock {
     bit_vec: BitVec<B>,
     range: Range<usize>,
 }

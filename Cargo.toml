@@ -13,5 +13,8 @@ readme = "README.md"
 [dev-dependencies]
 rand = "*"
 
+[dependencies]
+rustc-serialize = "^0.3.*"
+
 [features]
 nightly = []
