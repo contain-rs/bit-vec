@@ -787,6 +787,56 @@ impl<B: BitBlock> BitVec<B> {
         !self.none()
     }
 
+    /// Counts the number of 1 bits.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut bv = BitVec::from_elem(10, false);
+    ///
+    /// assert_eq!(0, bv.count_ones());
+    ///
+    /// bv.set(2, true);
+    /// bv.set(4, true);
+    /// bv.set(9, true);
+    ///
+    /// assert_eq!(3, bv.count_ones());
+    /// ```
+    pub fn count_ones(&self) -> usize {
+        let mut last_word = B::zero();
+        // Count ones for every block but the last
+        self.blocks().map(|elem| {
+            let tmp = last_word;
+            last_word = elem;
+            tmp.count_ones()
+        }).fold(0, |a, b| a + b)
+        // then count ones for the last block
+        + (last_word & mask_for_bits(self.nbits)).count_ones()
+    }
+
+    /// Counts the number of 0 bits.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut bv = BitVec::from_elem(10, false);
+    ///
+    /// assert_eq!(10, bv.count_zeros());
+    ///
+    /// bv.set(2, true);
+    /// bv.set(4, true);
+    /// bv.set(9, true);
+    ///
+    /// assert_eq!(7, bv.count_zeros());
+    /// ```
+    pub fn count_zeros(&self) -> usize {
+        self.len() - self.count_ones()
+    }
+
     /// Organises the bits into bytes, such that the first bit in the
     /// `BitVec` becomes the high-order bit of the first byte. If the
     /// size of the `BitVec` is not a multiple of eight then trailing bits
@@ -2082,6 +2132,24 @@ mod tests {
     fn iter() {
         let b = BitVec::with_capacity(10);
         let _a: Iter = b.iter();
+    }
+
+    #[test]
+    fn count_ones_zeros() {
+        fn assert(ones: usize, bv: &BitVec) {
+            assert_eq!(ones, bv.count_ones());
+            assert_eq!(bv.len(), ones + bv.count_zeros());
+        }
+        let bv = &mut BitVec::from_bytes(&[0b10100000, 0b00010010, 0b10010010, 0b00110011, 0b10010101]);
+        assert(15, bv);
+        bv.pop();
+        assert(14, bv);
+        bv.truncate(12);
+        assert(3, bv);
+        bv.truncate(2);
+        assert(1, bv);
+        bv.truncate(0);
+        assert(0, bv);
     }
 }
 
