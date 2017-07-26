@@ -192,7 +192,7 @@ static FALSE: bool = false;
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 ///
 /// // reset bitvector to empty
-/// bv.clear();
+/// bv.clear_all();
 /// println!("{:?}", bv);
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 /// ```
@@ -1088,8 +1088,14 @@ impl<B: BitBlock> BitVec<B> {
 
     /// Clears all bits in this vector.
     #[inline]
-    pub fn clear(&mut self) {
+    pub fn clear_all(&mut self) {
         for w in &mut self.storage { *w = B::zero(); }
+    }
+
+    /// Set the size to zero
+    #[inline]
+    pub fn clear(&mut self) {
+        self.storage.clear()
     }
 }
 
@@ -1751,7 +1757,7 @@ mod tests {
     fn test_small_clear() {
         let mut b = BitVec::from_elem(14, true);
         assert!(!b.none() && b.all());
-        b.clear();
+        b.clear_all();
         assert!(b.none() && !b.all());
     }
 
@@ -1759,7 +1765,7 @@ mod tests {
     fn test_big_clear() {
         let mut b = BitVec::from_elem(140, true);
         assert!(!b.none() && b.all());
-        b.clear();
+        b.clear_all();
         assert!(b.none() && !b.all());
     }
 
