@@ -479,6 +479,32 @@ impl<B: BitBlock> BitVec<B> {
         self.storage[w] = val;
     }
 
+    /// Flips the value of a bit at an index `i`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i` is out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut bv = BitVec::from_elem(5, false);
+    /// bv.set(3, true);
+    /// bv.flip(3);
+    /// assert_eq!(bv[3], false);
+    /// ```
+    #[inline]
+    pub fn flip(&mut self, i: usize) {
+        assert!(i < self.nbits);
+        let w = i / B::bits();
+        let b = i % B::bits();
+        let flag = B::one() << b;
+        let val = self.storage[w] ^ flag;
+        self.storage[w] = val;
+    }
+
     /// Sets all bits to 1.
     ///
     /// # Examples
@@ -2104,6 +2130,20 @@ mod tests {
     fn iter() {
         let b = BitVec::with_capacity(10);
         let _a: Iter = b.iter();
+    }
+
+    #[test]
+    fn test_flip() {
+        let n = 123;
+        let mut bv = BitVec::from_elem(n, false);
+
+        for &bit in &[0, 1, 2, 3, 4, 11, 22, 99, 122] {
+            for i in 0..n { assert_eq!(bv[i], false); }
+            bv.flip(bit);
+            for i in 0..n { assert_eq!(bv[i], i == bit); }
+            bv.flip(bit);
+            for i in 0..n { assert_eq!(bv[i], false); }
+        }
     }
 }
 
