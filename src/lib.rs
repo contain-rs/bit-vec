@@ -616,6 +616,37 @@ impl<B: BitBlock> BitVec<B> {
         self.process(other, |w1, w2| (w1 & !w2))
     }
 
+    /// Calculates the exclusive union of two bitvectors. This acts like the
+    /// bitwise `xor` function.
+    ///
+    /// Sets `self` to the exclusive union of `self` and `other`. Both bitvectors
+    /// must be the same length. Returns `true` if `self` changed.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the bitvectors are of different lengths.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let a   = 0b01100100;
+    /// let b   = 0b01011010;
+    /// let res = 0b00111110;
+    ///
+    /// let mut a = BitVec::from_bytes(&[a]);
+    /// let b = BitVec::from_bytes(&[b]);
+    ///
+    /// assert!(a.ex_union(&b));
+    /// assert_eq!(a, BitVec::from_bytes(&[res]));
+    /// ```
+    #[inline]
+    pub fn ex_union(&mut self, other: &Self) -> bool {
+        self.process(other, |w1, w2| (w1 ^ w2))
+    }
+
+
     /// Returns `true` if all bits are 1.
     ///
     /// # Examples
