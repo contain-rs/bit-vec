@@ -1,6 +1,6 @@
 [package]
 name = "bit-vec"
-version = "0.4.4"
+version = "0.5.0"
 authors = ["Alexis Beingessner <a.beingessner@gmail.com>"]
 license = "MIT/Apache-2.0"
 description = "A vector of bits"
@@ -14,4 +14,8 @@ readme = "README.md"
 rand = "0.3.15"
 
 [features]
+default = ["std"]
+
 nightly = []
+
+std = []
