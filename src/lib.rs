@@ -83,19 +83,20 @@
 //! assert_eq!(num_primes, 1_229);
 //! ```
 
-#![cfg_attr(not(feature="std"), no_std)]
+#![no_std]
 #![cfg_attr(not(feature="std"), feature(alloc))]
-
-
 
 #![cfg_attr(all(test, feature = "nightly"), feature(test))]
 #[cfg(all(test, feature = "nightly"))] extern crate test;
 #[cfg(all(test, feature = "nightly"))] extern crate rand;
+
 #[cfg(any(test, feature = "std"))]
 #[macro_use]
-extern crate std as core;
+extern crate std;
+#[cfg(feature="std")]
+use std::vec::Vec;
 
-#[cfg(not(any(feature="std", test)))]
+#[cfg(not(feature="std"))]
 #[macro_use]
 extern crate alloc;
 #[cfg(not(feature="std"))]
