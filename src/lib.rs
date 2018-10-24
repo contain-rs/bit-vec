@@ -100,10 +100,11 @@ use std::vec::Vec;
 #[macro_use]
 extern crate alloc;
 #[cfg(not(feature="std"))]
-use alloc::Vec;
+use alloc::vec::Vec;
 
 use core::cmp::Ordering;
 use core::cmp;
+#[cfg(feature="std")]
 use core::fmt;
 use core::hash;
 use core::iter::{Chain, Enumerate, Repeat, Skip, Take, repeat};
@@ -1183,6 +1184,7 @@ impl<B: BitBlock> Ord for BitVec<B> {
     }
 }
 
+#[cfg(feature="std")]
 impl<B: BitBlock> fmt::Debug for BitVec<B> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         for bit in self {
