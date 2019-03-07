@@ -104,6 +104,7 @@ use alloc::prelude::Vec;
 
 use core::cmp::Ordering;
 use core::cmp;
+#[cfg(feature="std")]
 use core::fmt;
 use core::hash;
 use core::iter::FromIterator;
@@ -1183,6 +1184,7 @@ impl<B: BitBlock> Ord for BitVec<B> {
     }
 }
 
+#[cfg(feature="std")]
 impl<B: BitBlock> fmt::Debug for BitVec<B> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         for bit in self {
