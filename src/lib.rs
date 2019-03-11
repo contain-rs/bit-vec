@@ -76,7 +76,7 @@
 //!         print!("{} ", x);
 //!     }
 //! }
-//! println!("");
+//! println!();
 //!
 //! let num_primes = primes.iter().filter(|x| *x).count();
 //! println!("There are {} primes below {}", num_primes, max_prime);
@@ -104,18 +104,15 @@ use alloc::prelude::Vec;
 
 use core::cmp::Ordering;
 use core::cmp;
-#[cfg(feature="std")]
 use core::fmt;
 use core::hash;
 use core::iter::FromIterator;
+use core::ops::*;
 use core::slice;
 use core::{u8, usize};
 use core::iter::repeat;
 
 type MutBlocks<'a, B> = slice::IterMut<'a, B>;
-//type MatchWords<'a, B> = Chain<Enumerate<Blocks<'a, B>>, Skip<Take<Enumerate<Repeat<B>>>>>;
-
-use core::ops::*;
 
 /// Abstracts over a pile of bits (basically unsigned primitives)
 pub trait BitBlock:
@@ -1184,11 +1181,10 @@ impl<B: BitBlock> Ord for BitVec<B> {
     }
 }
 
-#[cfg(feature="std")]
 impl<B: BitBlock> fmt::Debug for BitVec<B> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         for bit in self {
-            try!(write!(fmt, "{}", if bit { 1 } else { 0 }));
+            write!(fmt, "{}", if bit { 1 } else { 0 })?;
         }
         Ok(())
     }
@@ -1667,14 +1663,14 @@ mod tests {
     fn test_equal_differing_sizes() {
         let v0 = BitVec::from_elem(10, false);
         let v1 = BitVec::from_elem(11, false);
-        assert!(v0 != v1);
+        assert_ne!(v0, v1);
     }
 
     #[test]
     fn test_equal_greatly_differing_sizes() {
         let v0 = BitVec::from_elem(10, false);
         let v1 = BitVec::from_elem(110, false);
-        assert!(v0 != v1);
+        assert_ne!(v0, v1);
     }
 
     #[test]
