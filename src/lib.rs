@@ -292,7 +292,7 @@ impl BitVec<u32> {
         let nblocks = blocks_for_bits::<B>(nbits);
         let mut bit_vec = BitVec {
             storage: vec![if bit { !B::zero() } else { B::zero() }; nblocks],
-            nbits,
+            nbits: nbits,
         };
         bit_vec.fix_last_block();
         bit_vec
