@@ -8,10 +8,15 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use super::BitVec;
-use rand::{Rng, weak_rng, XorShiftRng};
+#![feature(test)]
+
+extern crate test;
+extern crate rand;
+extern crate bit_vec;
 
 use test::{Bencher, black_box};
+use rand::{Rng, weak_rng, XorShiftRng};
+use bit_vec::BitVec;
 
 const BENCH_BITS : usize = 1 << 14;
 const U32_BITS: usize = 32;
@@ -110,7 +115,7 @@ fn bench_from_elem(b: &mut Bencher) {
     b.iter(|| {
         // create a BitVec and popcount it
         BitVec::from_elem(cap, bit).blocks()
-                                   .fold(0, |acc, b| acc + b.count_ones())
+            .fold(0, |acc, b| acc + b.count_ones())
     });
     b.bytes = cap as u64 / 8;
 }
