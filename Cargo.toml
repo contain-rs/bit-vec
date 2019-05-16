@@ -20,6 +20,5 @@ serde_json = "1.0"
 [features]
 default = ["std"]
 serialize = ["serde"]
-nightly = []
 
 std = []

@@ -4,13 +4,15 @@ matrix:
   include:
     - rust: stable
     - rust: nightly
-      env: FEATURES="--features nightly"
 script:
-    - cargo build $FEATURES
-    - cargo test $FEATURES
+    - cargo build
+    - cargo test
     - cargo doc --no-deps
     - bash crusader.sh
 after_success: |
+    if [ "$TRAVIS_RUST_VERSION" == "nightly" ]; then
+      cargo bench;
+    fi
     [ "$TRAVIS_RUST_VERSION" = nightly ] &&
     [ "$TRAVIS_BRANCH" = master ] &&
     [ "$TRAVIS_PULL_REQUEST" = false ] &&

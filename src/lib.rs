@@ -76,7 +76,7 @@
 //!         print!("{} ", x);
 //!     }
 //! }
-//! println!("");
+//! println!();
 //!
 //! let num_primes = primes.iter().filter(|x| *x).count();
 //! println!("There are {} primes below {}", num_primes, max_prime);
@@ -84,11 +84,7 @@
 //! ```
 
 #![no_std]
-#![cfg_attr(not(feature="std"), feature(alloc))]
-
-#![cfg_attr(all(test, feature = "nightly"), feature(test))]
-#[cfg(all(test, feature = "nightly"))] extern crate test;
-#[cfg(all(test, feature = "nightly"))] extern crate rand;
+#![cfg_attr(not(feature = "std"), feature(alloc_prelude))]
 
 #[cfg(any(test, feature = "std"))]
 #[macro_use]
@@ -105,22 +101,20 @@ use serde::{Serialize, Deserialize};
 #[macro_use]
 extern crate alloc;
 #[cfg(not(feature="std"))]
-use alloc::prelude::Vec;
+use alloc::vec::Vec;
 
 use core::cmp::Ordering;
 use core::cmp;
-#[cfg(feature="std")]
 use core::fmt;
 use core::hash;
+use core::mem;
 use core::iter::FromIterator;
 use core::slice;
 use core::{u8, usize};
 use core::iter::repeat;
+use core::ops::*;
 
 type MutBlocks<'a, B> = slice::IterMut<'a, B>;
-//type MatchWords<'a, B> = Chain<Enumerate<Blocks<'a, B>>, Skip<Take<Enumerate<Repeat<B>>>>>;
-
-use core::ops::*;
 
 /// Abstracts over a pile of bits (basically unsigned primitives)
 pub trait BitBlock:
@@ -136,7 +130,7 @@ pub trait BitBlock:
 	Rem<Self, Output=Self> +
 	Eq +
 	Ord +
-	hash::Hash +
+	hash::Hash
 {
 	/// How many bits it has
     fn bits() -> usize;
@@ -177,7 +171,6 @@ bit_block_impl!{
     (u64, 64),
     (usize, core::mem::size_of::<usize>() * 8)
 }
-
 
 fn reverse_bits(byte: u8) -> u8 {
     let mut result = 0;
@@ -678,13 +671,11 @@ impl<B: BitBlock> BitVec<B> {
         Iter { bit_vec: self, range: 0..self.nbits }
     }
 
-/*
     /// Moves all bits from `other` into `Self`, leaving `other` empty.
     ///
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections, bit_vec_append_split_off)]
     /// use bit_vec::BitVec;
     ///
     /// let mut a = BitVec::from_bytes(&[0b10000000]);
@@ -718,6 +709,7 @@ impl<B: BitBlock> BitVec<B> {
         }
     }
 
+
     /// Splits the `BitVec` into two at the given bit,
     /// retaining the first half in-place and returning the second one.
     ///
@@ -728,7 +720,6 @@ impl<B: BitBlock> BitVec<B> {
     /// # Examples
     ///
     /// ```
-    /// # #![feature(collections, bit_vec_append_split_off)]
     /// use bit_vec::BitVec;
     /// let mut a = BitVec::new();
     /// a.push(true);
@@ -746,10 +737,10 @@ impl<B: BitBlock> BitVec<B> {
     pub fn split_off(&mut self, at: usize) -> Self {
         assert!(at <= self.len(), "`at` out of bounds");
 
-        let mut other = BitVec::new();
+        let mut other = BitVec::<B>::default();
 
         if at == 0 {
-            swap(self, &mut other);
+            mem::swap(self, &mut other);
             return other;
         } else if at == self.len() {
             return other;
@@ -781,7 +772,6 @@ impl<B: BitBlock> BitVec<B> {
 
         other
     }
-*/
 
     /// Returns `true` if all bits are 0.
     ///
@@ -1190,11 +1180,10 @@ impl<B: BitBlock> Ord for BitVec<B> {
     }
 }
 
-#[cfg(feature="std")]
 impl<B: BitBlock> fmt::Debug for BitVec<B> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         for bit in self {
-            try!(write!(fmt, "{}", if bit { 1 } else { 0 }));
+            write!(fmt, "{}", if bit { 1 } else { 0 })?;
         }
         Ok(())
     }
@@ -1253,7 +1242,6 @@ impl<'a, B: BitBlock> DoubleEndedIterator for Iter<'a, B> {
 
 impl<'a, B: BitBlock> ExactSizeIterator for Iter<'a, B> {}
 
-
 impl<'a, B: BitBlock> IntoIterator for &'a BitVec<B> {
     type Item = bool;
     type IntoIter = Iter<'a, B>;
@@ -1263,7 +1251,6 @@ impl<'a, B: BitBlock> IntoIterator for &'a BitVec<B> {
         self.iter()
     }
 }
-
 
 pub struct IntoIter<B=u32> {
     bit_vec: BitVec<B>,
@@ -1328,20 +1315,9 @@ impl<'a, B: BitBlock> DoubleEndedIterator for Blocks<'a, B> {
 
 impl<'a, B: BitBlock> ExactSizeIterator for Blocks<'a, B> {}
 
-
-
-
-
-
-
-
-
-
-
 #[cfg(test)]
 mod tests {
-    use super::{BitVec, Iter};
-    use std::vec::Vec;
+    use super::{BitVec, Iter, Vec};
 
     // This is stupid, but I want to differentiate from a "random" 32
     const U32_BITS: usize = 32;
@@ -1673,14 +1649,14 @@ mod tests {
     fn test_equal_differing_sizes() {
         let v0 = BitVec::from_elem(10, false);
         let v1 = BitVec::from_elem(11, false);
-        assert!(v0 != v1);
+        assert_ne!(v0, v1);
     }
 
     #[test]
     fn test_equal_greatly_differing_sizes() {
         let v0 = BitVec::from_elem(10, false);
         let v1 = BitVec::from_elem(110, false);
-        assert!(v0 != v1);
+        assert_ne!(v0, v1);
     }
 
     #[test]
@@ -1828,7 +1804,6 @@ mod tests {
         assert!(a < b && a <= b);
     }
 
-
     #[test]
     fn test_small_bit_vec_tests() {
         let v = BitVec::from_bytes(&[0]);
@@ -1965,7 +1940,6 @@ mod tests {
                                      0b01001001, 0b10010010, 0b10111101]));
     }
 
-/* nightly
     #[test]
     fn test_bit_vec_append() {
         // Append to BitVec that holds a multiple of U32_BITS bits
@@ -2039,7 +2013,6 @@ mod tests {
                            true, false, false, true, false, true, false, true]));
     }
 
-
     #[test]
     fn test_bit_vec_split_off() {
         // Split at 0
@@ -2101,7 +2074,6 @@ mod tests {
                            false, true, true,  true, false, true, false, true,
                            true, false, true]));
     }
-*/
 
     #[test]
     fn test_into_iter() {
@@ -2155,6 +2127,3 @@ mod tests {
         assert_eq!(bit_vec, unserialized);
     }
 }
-
-#[cfg(all(test, feature = "nightly"))] mod bench;
-
