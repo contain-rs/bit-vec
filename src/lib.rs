@@ -92,9 +92,9 @@ extern crate std;
 #[cfg(feature="std")]
 use std::vec::Vec;
 
-#[cfg(feature="serialize")]
+#[cfg(feature="serde")]
 extern crate serde;
-#[cfg(feature="serialize")]
+#[cfg(feature="serde")]
 use serde::{Serialize, Deserialize};
 
 #[cfg(not(feature="std"))]
@@ -210,7 +210,7 @@ static FALSE: bool = false;
 /// println!("{:?}", bv);
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 /// ```
-#[cfg_attr(feature="serialize", derive(Serialize, Deserialize))] 
+#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
 pub struct BitVec<B=u32> {
     /// Internal representation of the bit vector
     storage: Vec<B>,
@@ -2111,7 +2111,7 @@ mod tests {
         let _a: Iter = b.iter();
     }
 
-    #[cfg(feature="serialize")]
+    #[cfg(feature="serde")]
     #[test]
     fn test_serialization() {
         let bit_vec: BitVec = BitVec::new();
