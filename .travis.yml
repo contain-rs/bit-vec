@@ -7,6 +7,9 @@ matrix:
 script:
     - cargo build
     - cargo test
+    - cargo test --features serde
+    - cargo test --no-default-features
+    - cargo test --no-default-features --features serde
     - cargo doc --no-deps
 after_success: |
     if [ "$TRAVIS_RUST_VERSION" == "nightly" ]; then
