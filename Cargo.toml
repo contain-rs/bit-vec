@@ -11,7 +11,7 @@ keywords = ["data-structures", "bitvec", "bitmask", "bitmap", "bit"]
 readme = "README.md"
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"], optional = true}
+serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
 rand = "0.3.15"
@@ -19,6 +19,4 @@ serde_json = "1.0"
 
 [features]
 default = ["std"]
-serialize = ["serde"]
-
-std = []
+std = ["serde/std"]
