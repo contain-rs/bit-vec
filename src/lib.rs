@@ -709,7 +709,6 @@ impl<B: BitBlock> BitVec<B> {
         }
     }
 
-
     /// Splits the `BitVec` into two at the given bit,
     /// retaining the first half in-place and returning the second one.
     ///
