@@ -11,7 +11,7 @@ Add this to your Cargo.toml:
 
 ```toml
 [dependencies]
-bit-vec = "0.5"
+bit-vec = "0.6"
 ```
 
 and this to your crate root:
@@ -24,12 +24,12 @@ If you want [serde](https://github.com/serde-rs/serde) support, include the feat
 
 ```toml
 [dependencies]
-bit-vec = { version = "0.5", features = ["serde"] }
+bit-vec = { version = "0.6", features = ["serde"] }
 ```
 
 If you want to use bit-vec in a program that has `#![no_std]`, just drop default features:
 
 ```toml
 [dependencies]
-bit-vec = { version = "0.5", default-features = false }
+bit-vec = { version = "0.6", default-features = false }
 ```

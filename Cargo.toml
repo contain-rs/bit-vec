@@ -1,6 +1,6 @@
 [package]
 name = "bit-vec"
-version = "0.5.1"
+version = "0.6.0"
 authors = ["Alexis Beingessner <a.beingessner@gmail.com>"]
 license = "MIT/Apache-2.0"
 description = "A vector of bits"
@@ -14,7 +14,6 @@ readme = "README.md"
 serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
-rand = "0.3.15"
 serde_json = "1.0"
 
 [features]
