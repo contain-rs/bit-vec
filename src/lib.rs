@@ -631,10 +631,10 @@ impl<B: BitBlock> BitVec<B> {
         self.process(other, |w1, w2| (w1 & !w2))
     }
 
-    /// Calculates the symmetric difference of two bitvectors.
+    /// Calculates the xor of two bitvectors.
     ///
-    /// Sets `self` to the symmetric difference of `self` and `other`. Both
-    /// bitvectors must be the same length. Returns `true` if `self` changed.
+    /// Sets `self` to the xor of `self` and `other`. Both bitvectors must be
+    /// the same length. Returns `true` if `self` changed.
     ///
     /// # Panics
     ///
@@ -652,11 +652,11 @@ impl<B: BitBlock> BitVec<B> {
     /// let mut a = BitVec::from_bytes(&[a]);
     /// let b = BitVec::from_bytes(&[b]);
     ///
-    /// assert!(a.symmetric_difference(&b));
+    /// assert!(a.xor(&b));
     /// assert_eq!(a, BitVec::from_bytes(&[res]));
     /// ```
     #[inline]
-    pub fn symmetric_difference(&mut self, other: &Self) -> bool {
+    pub fn xor(&mut self, other: &Self) -> bool {
         self.process(other, |w1, w2| (w1 ^ w2))
     }
 
@@ -1786,16 +1786,16 @@ mod tests {
     }
 
     #[test]
-    fn test_small_symmetric_difference() {
+    fn test_small_xor() {
         let mut a = BitVec::from_bytes(&[0b0011]);
         let b = BitVec::from_bytes(&[0b0101]);
         let c = BitVec::from_bytes(&[0b0110]);
-        assert!(a.symmetric_difference(&b));
+        assert!(a.xor(&b));
         assert_eq!(a,c);
     }
 
     #[test]
-    fn test_big_symmetric_difference() {
+    fn test_big_xor() {
         let mut a = BitVec::from_bytes(&[ // 88 bits
             0, 0, 0b00010100, 0,
             0, 0, 0, 0b00110100,
@@ -1808,7 +1808,7 @@ mod tests {
             0, 0, 0, 0,
             0, 0, 0, 0b00110100,
             0, 0, 0b00110100]);
-        assert!(a.symmetric_difference(&b));
+        assert!(a.xor(&b));
         assert_eq!(a,c);
     }
 
