@@ -631,6 +631,35 @@ impl<B: BitBlock> BitVec<B> {
         self.process(other, |w1, w2| (w1 & !w2))
     }
 
+    /// Calculates the xor of two bitvectors.
+    ///
+    /// Sets `self` to the xor of `self` and `other`. Both bitvectors must be
+    /// the same length. Returns `true` if `self` changed.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the bitvectors are of different length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let a   = 0b01100110;
+    /// let b   = 0b01010100;
+    /// let res = 0b00110010;
+    ///
+    /// let mut a = BitVec::from_bytes(&[a]);
+    /// let b = BitVec::from_bytes(&[b]);
+    ///
+    /// assert!(a.xor(&b));
+    /// assert_eq!(a, BitVec::from_bytes(&[res]));
+    /// ```
+    #[inline]
+    pub fn xor(&mut self, other: &Self) -> bool {
+        self.process(other, |w1, w2| (w1 ^ w2))
+    }
+
     /// Returns `true` if all bits are 1.
     ///
     /// # Examples
@@ -1754,6 +1783,33 @@ mod tests {
         assert!(b1[0]);
         assert!(!b1[40]);
         assert!(!b1[80]);
+    }
+
+    #[test]
+    fn test_small_xor() {
+        let mut a = BitVec::from_bytes(&[0b0011]);
+        let b = BitVec::from_bytes(&[0b0101]);
+        let c = BitVec::from_bytes(&[0b0110]);
+        assert!(a.xor(&b));
+        assert_eq!(a,c);
+    }
+
+    #[test]
+    fn test_big_xor() {
+        let mut a = BitVec::from_bytes(&[ // 88 bits
+            0, 0, 0b00010100, 0,
+            0, 0, 0, 0b00110100,
+            0, 0, 0]);
+        let b = BitVec::from_bytes(&[ // 88 bits
+            0, 0, 0b00010100, 0,
+            0, 0, 0, 0,
+            0, 0, 0b00110100]);
+        let c = BitVec::from_bytes(&[ // 88 bits
+            0, 0, 0, 0,
+            0, 0, 0, 0b00110100,
+            0, 0, 0b00110100]);
+        assert!(a.xor(&b));
+        assert_eq!(a,c);
     }
 
     #[test]
