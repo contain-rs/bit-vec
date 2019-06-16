@@ -660,6 +660,93 @@ impl<B: BitBlock> BitVec<B> {
         self.process(other, |w1, w2| (w1 ^ w2))
     }
 
+    /// Calculates the nand of two bitvectors.
+    ///
+    /// Sets `self` to the nand of `self` and `other`. Both bitvectors must be
+    /// the same length. Returns `true` if `self` changed.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the bitvectors are of different length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let a   = 0b01100110;
+    /// let b   = 0b01010100;
+    /// let res = 0b10111011;
+    ///
+    /// let mut a = BitVec::from_bytes(&[a]);
+    /// let b = BitVec::from_bytes(&[b]);
+    ///
+    /// assert!(a.nand(&b));
+    /// assert_eq!(a, BitVec::from_bytes(&[res]));
+    /// ```
+    #[inline]
+    pub fn nand(&mut self, other: &Self) -> bool {
+        self.process(other, |w1, w2| !(w1 & w2))
+    }
+
+    /// Calculates the nor of two bitvectors.
+    ///
+    /// Sets `self` to the nor of `self` and `other`. Both bitvectors must be
+    /// the same length. Returns `true` if `self` changed.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the bitvectors are of different length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let a   = 0b01100110;
+    /// let b   = 0b01010100;
+    /// let res = 0b10001001;
+    ///
+    /// let mut a = BitVec::from_bytes(&[a]);
+    /// let b = BitVec::from_bytes(&[b]);
+    ///
+    /// assert!(a.nor(&b));
+    /// assert_eq!(a, BitVec::from_bytes(&[res]));
+    /// ```
+    #[inline]
+    pub fn nor(&mut self, other: &Self) -> bool {
+        self.process(other, |w1, w2| !(w1 | w2))
+    }
+
+    /// Calculates the xnor of two bitvectors.
+    ///
+    /// Sets `self` to the xnor of `self` and `other`. Both bitvectors must be
+    /// the same length. Returns `true` if `self` changed.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the bitvectors are of different length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let a   = 0b01100110;
+    /// let b   = 0b01010100;
+    /// let res = 0b11001101;
+    ///
+    /// let mut a = BitVec::from_bytes(&[a]);
+    /// let b = BitVec::from_bytes(&[b]);
+    ///
+    /// assert!(a.xnor(&b));
+    /// assert_eq!(a, BitVec::from_bytes(&[res]));
+    /// ```
+    #[inline]
+    pub fn xnor(&mut self, other: &Self) -> bool {
+        self.process(other, |w1, w2| !(w1 ^ w2))
+    }
+
     /// Returns `true` if all bits are 1.
     ///
     /// # Examples
