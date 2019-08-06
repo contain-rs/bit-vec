@@ -77,11 +77,11 @@ fn bench_bit_set_small(b: &mut Bencher) {
 }
 
 #[bench]
-fn bench_bit_vec_big_union(b: &mut Bencher) {
+fn bench_bit_vec_big_or(b: &mut Bencher) {
     let mut b1 = BitVec::from_elem(BENCH_BITS, false);
     let b2 = BitVec::from_elem(BENCH_BITS, false);
     b.iter(|| {
-        b1.union(&b2)
+        b1.or(&b2)
     })
 }
 

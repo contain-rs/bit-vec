@@ -14,9 +14,6 @@
 // `BitVec` will not want to leak its internal representation while its internal
 // representation as `u32`s must be assumed for best performance.
 
-// FIXME(tbu-): `BitVec`'s methods shouldn't be `union`, `intersection`, but
-// rather `or` and `and`.
-
 // (1) Be careful, most things can overflow here because the amount of bits in
 //     memory can overflow `usize`.
 // (2) Make sure that the underlying vector has no excess length:
@@ -602,11 +599,13 @@ impl<B: BitBlock> BitVec<B> {
     /// assert!(a.union(&b));
     /// assert_eq!(a, BitVec::from_bytes(&[res]));
     /// ```
+    #[deprecated(
+        since = "0.7.0",
+        note = "Please use the 'or' function instead"
+    )]
     #[inline]
     pub fn union(&mut self, other: &Self) -> bool {
-        debug_assert!(self.is_last_block_fixed());
-        debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| (w1 | w2))
+        self.or(other)
     }
 
     /// Calculates the intersection of two bitvectors. This acts like the
@@ -634,8 +633,72 @@ impl<B: BitBlock> BitVec<B> {
     /// assert!(a.intersect(&b));
     /// assert_eq!(a, BitVec::from_bytes(&[res]));
     /// ```
+    #[deprecated(
+        since = "0.7.0",
+        note = "Please use the 'and' function instead"
+    )]
     #[inline]
     pub fn intersect(&mut self, other: &Self) -> bool {
+        self.and(other)
+    }
+
+    /// Calculates the bitwise `or` of two bitvectors.
+    ///
+    /// Sets `self` to the union of `self` and `other`. Both bitvectors must be
+    /// the same length. Returns `true` if `self` changed.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the bitvectors are of different lengths.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let a   = 0b01100100;
+    /// let b   = 0b01011010;
+    /// let res = 0b01111110;
+    ///
+    /// let mut a = BitVec::from_bytes(&[a]);
+    /// let b = BitVec::from_bytes(&[b]);
+    ///
+    /// assert!(a.or(&b));
+    /// assert_eq!(a, BitVec::from_bytes(&[res]));
+    /// ```
+    #[inline]
+    pub fn or(&mut self, other: &Self) -> bool {
+        debug_assert!(self.is_last_block_fixed());
+        debug_assert!(other.is_last_block_fixed());
+        self.process(other, |w1, w2| (w1 | w2))
+    }
+
+    /// Calculates the bitwise `and` of two bitvectors.
+    ///
+    /// Sets `self` to the intersection of `self` and `other`. Both bitvectors
+    /// must be the same length. Returns `true` if `self` changed.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the bitvectors are of different lengths.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let a   = 0b01100100;
+    /// let b   = 0b01011010;
+    /// let res = 0b01000000;
+    ///
+    /// let mut a = BitVec::from_bytes(&[a]);
+    /// let b = BitVec::from_bytes(&[b]);
+    ///
+    /// assert!(a.and(&b));
+    /// assert_eq!(a, BitVec::from_bytes(&[res]));
+    /// ```
+    #[inline]
+    pub fn and(&mut self, other: &Self) -> bool {
         debug_assert!(self.is_last_block_fixed());
         debug_assert!(other.is_last_block_fixed());
         self.process(other, |w1, w2| (w1 & w2))
