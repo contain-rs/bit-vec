@@ -428,18 +428,56 @@ impl<B: BitBlock> BitVec<B> {
     	&mut self.storage
     }
 
-    /// An operation might screw up the unused bits in the last block of the
-    /// `BitVec`. As per (3), it's assumed to be all 0s. This method fixes it up.
-    fn fix_last_block(&mut self) {
+    /// Helper for procedures involving spare space in the last block.
+    #[inline]
+    fn last_block_with_mask(&self) -> Option<(B, B)> {
         let extra_bits = self.len() % B::bits();
         if extra_bits > 0 {
             let mask = (B::one() << extra_bits) - B::one();
             let storage_len = self.storage.len();
-            let block = &mut self.storage[storage_len - 1];
-            *block = *block & mask;
+            Some((self.storage[storage_len - 1], mask))
+        } else {
+            None
         }
     }
 
+    /// Helper for procedures involving spare space in the last block.
+    #[inline]
+    fn last_block_mut_with_mask(&mut self) -> Option<(&mut B, B)> {
+        let extra_bits = self.len() % B::bits();
+        if extra_bits > 0 {
+            let mask = (B::one() << extra_bits) - B::one();
+            let storage_len = self.storage.len();
+            Some((&mut self.storage[storage_len - 1], mask))
+        } else {
+            None
+        }
+    }
+
+    /// An operation might screw up the unused bits in the last block of the
+    /// `BitVec`. As per (3), it's assumed to be all 0s. This method fixes it up.
+    fn fix_last_block(&mut self) {
+        if let Some((last_block, used_bits)) = self.last_block_mut_with_mask() {
+            *last_block = *last_block & used_bits;
+        }
+    }
+
+    /// Operations such as change detection for xnor, nor and nand are easiest
+    /// to implement when unused bits are all set to 1s.
+    fn fix_last_block_with_ones(&mut self) {
+        if let Some((last_block, used_bits)) = self.last_block_mut_with_mask() {
+            *last_block = *last_block | !used_bits;
+        }
+    }
+
+    /// Check whether last block's invariant is fine.
+    fn is_last_block_fixed(&self) -> bool {
+        if let Some((last_block, used_bits)) = self.last_block_with_mask() {
+            last_block & !used_bits == B::zero()
+        } else {
+            true
+        }
+    }
 
     /// Retrieves the value at index `i`, or `None` if the index is out of bounds.
     ///
@@ -686,7 +724,10 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn nand(&mut self, other: &Self) -> bool {
-        self.process(other, |w1, w2| !(w1 & w2))
+        self.fix_last_block_with_ones();
+        let result = self.process(other, |w1, w2| !(w1 & w2));
+        self.fix_last_block();
+        result
     }
 
     /// Calculates the nor of two bitvectors.
@@ -715,7 +756,10 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn nor(&mut self, other: &Self) -> bool {
-        self.process(other, |w1, w2| !(w1 | w2))
+        self.fix_last_block_with_ones();
+        let result = self.process(other, |w1, w2| !(w1 | w2));
+        self.fix_last_block();
+        result
     }
 
     /// Calculates the xnor of two bitvectors.
@@ -744,7 +788,10 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn xnor(&mut self, other: &Self) -> bool {
-        self.process(other, |w1, w2| !(w1 ^ w2))
+        self.fix_last_block_with_ones();
+        let result = self.process(other, |w1, w2| !(w1 ^ w2));
+        self.fix_last_block();
+        result
     }
 
     /// Returns `true` if all bits are 1.
@@ -1882,6 +1929,33 @@ mod tests {
     }
 
     #[test]
+    fn test_small_xnor() {
+        let mut a = BitVec::from_bytes(&[0b0011]);
+        let b = BitVec::from_bytes(&[0b1111_0101]);
+        let c = BitVec::from_bytes(&[0b1001]);
+        assert!(a.xnor(&b));
+        assert_eq!(a,c);
+    }
+
+    #[test]
+    fn test_small_nand() {
+        let mut a = BitVec::from_bytes(&[0b1111_0011]);
+        let b = BitVec::from_bytes(&[0b1111_0101]);
+        let c = BitVec::from_bytes(&[0b1110]);
+        assert!(a.nand(&b));
+        assert_eq!(a,c);
+    }
+
+    #[test]
+    fn test_small_nor() {
+        let mut a = BitVec::from_bytes(&[0b0011]);
+        let b = BitVec::from_bytes(&[0b1111_0101]);
+        let c = BitVec::from_bytes(&[0b1000]);
+        assert!(a.nor(&b));
+        assert_eq!(a,c);
+    }
+
+    #[test]
     fn test_big_xor() {
         let mut a = BitVec::from_bytes(&[ // 88 bits
             0, 0, 0b00010100, 0,
@@ -1896,6 +1970,24 @@ mod tests {
             0, 0, 0, 0b00110100,
             0, 0, 0b00110100]);
         assert!(a.xor(&b));
+        assert_eq!(a,c);
+    }
+
+    #[test]
+    fn test_big_xnor() {
+        let mut a = BitVec::from_bytes(&[ // 88 bits
+            0, 0, 0b00010100, 0,
+            0, 0, 0, 0b00110100,
+            0, 0, 0]);
+        let b = BitVec::from_bytes(&[ // 88 bits
+            0, 0, 0b00010100, 0,
+            0, 0, 0, 0,
+            0, 0, 0b00110100]);
+        let c = BitVec::from_bytes(&[ // 88 bits
+            !0, !0, !0, !0,
+            !0, !0, !0, !0b00110100,
+            !0, !0, !0b00110100]);
+        assert!(a.xnor(&b));
         assert_eq!(a,c);
     }
 

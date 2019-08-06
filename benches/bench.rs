@@ -12,22 +12,25 @@
 
 extern crate test;
 extern crate rand;
+extern crate rand_xorshift;
 extern crate bit_vec;
 
 use test::{Bencher, black_box};
-use rand::{Rng, weak_rng, XorShiftRng};
+use rand::{Rng, RngCore, SeedableRng};
+use rand_xorshift::XorShiftRng;
 use bit_vec::BitVec;
 
+const HUGE_BENCH_BITS : usize = 1 << 20;
 const BENCH_BITS : usize = 1 << 14;
 const U32_BITS: usize = 32;
 
-fn rng() -> XorShiftRng {
-    weak_rng()
+fn small_rng() -> XorShiftRng {
+    XorShiftRng::from_entropy()
 }
 
 #[bench]
 fn bench_usize_small(b: &mut Bencher) {
-    let mut r = rng();
+    let mut r = small_rng();
     let mut bit_vec = 0 as usize;
     b.iter(|| {
         for _ in 0..100 {
@@ -39,7 +42,7 @@ fn bench_usize_small(b: &mut Bencher) {
 
 #[bench]
 fn bench_bit_set_big_fixed(b: &mut Bencher) {
-    let mut r = rng();
+    let mut r = small_rng();
     let mut bit_vec = BitVec::from_elem(BENCH_BITS, false);
     b.iter(|| {
         for _ in 0..100 {
@@ -51,7 +54,7 @@ fn bench_bit_set_big_fixed(b: &mut Bencher) {
 
 #[bench]
 fn bench_bit_set_big_variable(b: &mut Bencher) {
-    let mut r = rng();
+    let mut r = small_rng();
     let mut bit_vec = BitVec::from_elem(BENCH_BITS, false);
     b.iter(|| {
         for _ in 0..100 {
@@ -63,7 +66,7 @@ fn bench_bit_set_big_variable(b: &mut Bencher) {
 
 #[bench]
 fn bench_bit_set_small(b: &mut Bencher) {
-    let mut r = rng();
+    let mut r = small_rng();
     let mut bit_vec = BitVec::from_elem(U32_BITS, false);
     b.iter(|| {
         for _ in 0..100 {
@@ -79,6 +82,46 @@ fn bench_bit_vec_big_union(b: &mut Bencher) {
     let b2 = BitVec::from_elem(BENCH_BITS, false);
     b.iter(|| {
         b1.union(&b2)
+    })
+}
+
+#[bench]
+fn bench_bit_vec_big_xnor(b: &mut Bencher) {
+    let mut b1 = BitVec::from_elem(BENCH_BITS, false);
+    let b2 = BitVec::from_elem(BENCH_BITS, false);
+    b.iter(|| {
+        b1.xnor(&b2)
+    })
+}
+
+#[bench]
+fn bench_bit_vec_big_negate_xor(b: &mut Bencher) {
+    let mut b1 = BitVec::from_elem(BENCH_BITS, false);
+    let b2 = BitVec::from_elem(BENCH_BITS, false);
+    b.iter(|| {
+        let res = b1.xor(&b2);
+        b1.negate();
+        res
+    })
+}
+
+#[bench]
+fn bench_bit_vec_huge_xnor(b: &mut Bencher) {
+    let mut b1 = BitVec::from_elem(HUGE_BENCH_BITS, false);
+    let b2 = BitVec::from_elem(HUGE_BENCH_BITS, false);
+    b.iter(|| {
+        b1.xnor(&b2)
+    })
+}
+
+#[bench]
+fn bench_bit_vec_huge_negate_xor(b: &mut Bencher) {
+    let mut b1 = BitVec::from_elem(HUGE_BENCH_BITS, false);
+    let b2 = BitVec::from_elem(HUGE_BENCH_BITS, false);
+    b.iter(|| {
+        let res = b1.xor(&b2);
+        b1.negate();
+        res
     })
 }
 
