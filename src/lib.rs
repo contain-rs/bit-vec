@@ -413,7 +413,6 @@ impl<B: BitBlock> BitVec<B> {
     /// Only really intended for BitSet.
     #[inline]
     pub fn storage(&self) -> &[B] {
-        debug_assert!(self.is_last_block_fixed());
     	&self.storage
     }
 
@@ -422,7 +421,6 @@ impl<B: BitBlock> BitVec<B> {
     /// Can probably cause unsafety. Only really intended for BitSet.
     #[inline]
     pub unsafe fn storage_mut(&mut self) -> &mut Vec<B> {
-        debug_assert!(self.is_last_block_fixed());
     	&mut self.storage
     }
 
@@ -477,6 +475,20 @@ impl<B: BitBlock> BitVec<B> {
         }
     }
 
+    /// Ensure the invariant for the last block.
+    ///
+    /// An operation might screw up the unused bits in the last block of the
+    /// `BitVec`.
+    ///
+    /// This method fails in case the last block is not fixed. The check
+    /// is skipped outside testing.
+    #[inline]
+    fn ensure_invariant(&self) {
+        if cfg!(test) {
+            debug_assert!(self.is_last_block_fixed());
+        }
+    }
+
     /// Retrieves the value at index `i`, or `None` if the index is out of bounds.
     ///
     /// # Examples
@@ -494,7 +506,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn get(&self, i: usize) -> Option<bool> {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         if i >= self.nbits {
             return None;
         }
@@ -522,7 +534,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn set(&mut self, i: usize, x: bool) {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         assert!(i < self.nbits, "index out of bounds: {:?} >= {:?}", i, self.nbits);
         let w = i / B::bits();
         let b = i % B::bits();
@@ -548,7 +560,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn set_all(&mut self) {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         for w in &mut self.storage { *w = !B::zero(); }
         self.fix_last_block();
     }
@@ -569,7 +581,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn negate(&mut self) {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         for w in &mut self.storage { *w = !*w; }
         self.fix_last_block();
     }
@@ -668,7 +680,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn or(&mut self, other: &Self) -> bool {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         self.process(other, |w1, w2| (w1 | w2))
     }
@@ -699,7 +711,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn and(&mut self, other: &Self) -> bool {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         self.process(other, |w1, w2| (w1 & w2))
     }
@@ -738,7 +750,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn difference(&mut self, other: &Self) -> bool {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         self.process(other, |w1, w2| (w1 & !w2))
     }
@@ -769,7 +781,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn xor(&mut self, other: &Self) -> bool {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         self.process(other, |w1, w2| (w1 ^ w2))
     }
@@ -800,7 +812,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn nand(&mut self, other: &Self) -> bool {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         self.fix_last_block_with_ones();
         let result = self.process(other, |w1, w2| !(w1 & w2));
@@ -834,7 +846,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn nor(&mut self, other: &Self) -> bool {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         self.fix_last_block_with_ones();
         let result = self.process(other, |w1, w2| !(w1 | w2));
@@ -868,7 +880,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn xnor(&mut self, other: &Self) -> bool {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         self.fix_last_block_with_ones();
         let result = self.process(other, |w1, w2| !(w1 ^ w2));
@@ -891,7 +903,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn all(&self) -> bool {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         let mut last_word = !B::zero();
         // Check that every block but the last is all-ones...
         self.blocks().all(|elem| {
@@ -914,7 +926,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn iter(&self) -> Iter<B> {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         Iter { bit_vec: self, range: 0..self.nbits }
     }
 
@@ -936,7 +948,7 @@ impl<B: BitBlock> BitVec<B> {
     ///                    false, true, true, false, false, false, false, true]));
     /// ```
     pub fn append(&mut self, other: &mut Self) {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
 
         let b = self.len() % B::bits();
@@ -984,7 +996,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert!(b.eq_vec(&[false, true]));
     /// ```
     pub fn split_off(&mut self, at: usize) -> Self {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         assert!(at <= self.len(), "`at` out of bounds");
 
         let mut other = BitVec::<B>::default();
@@ -1081,7 +1093,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert_eq!(bv.to_bytes(), [0b00100000, 0b10000000]);
     /// ```
     pub fn to_bytes(&self) -> Vec<u8> {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
     	// Oh lord, we're mapping this to bytes bit-by-bit!
         fn bit<B: BitBlock>(bit_vec: &BitVec<B>, byte: usize, bit: usize) -> u8 {
             let offset = byte * 8 + bit;
@@ -1145,7 +1157,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn truncate(&mut self, len: usize) {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         if len < self.len() {
             self.nbits = len;
             // This fixes (2).
@@ -1244,7 +1256,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert_eq!(bv.to_bytes(), [0b01001011, 0b11000000]);
     /// ```
     pub fn grow(&mut self, n: usize, value: bool) {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
 
         // Note: we just bulk set all the bits in the last word in this fn in multiple places
         // which is technically wrong if not all of these bits are to be used. However, at the end
@@ -1298,7 +1310,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn pop(&mut self) -> Option<bool> {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
 
         if self.is_empty() {
             None
@@ -1357,7 +1369,7 @@ impl<B: BitBlock> BitVec<B> {
     /// Clears all bits in this vector.
     #[inline]
     pub fn clear(&mut self) {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         for w in &mut self.storage { *w = B::zero(); }
     }
 
@@ -1389,7 +1401,7 @@ impl<B: BitBlock> FromIterator<bool> for BitVec<B> {
 impl<B: BitBlock> Extend<bool> for BitVec<B> {
     #[inline]
     fn extend<I: IntoIterator<Item=bool>>(&mut self, iterable: I) {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         let iterator = iterable.into_iter();
         let (min, _) = iterator.size_hint();
         self.reserve(min);
@@ -1402,7 +1414,7 @@ impl<B: BitBlock> Extend<bool> for BitVec<B> {
 impl<B: BitBlock> Clone for BitVec<B> {
     #[inline]
     fn clone(&self) -> Self {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         BitVec { storage: self.storage.clone(), nbits: self.nbits }
     }
 
@@ -1424,7 +1436,7 @@ impl<B: BitBlock> PartialOrd for BitVec<B> {
 impl<B: BitBlock> Ord for BitVec<B> {
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         let mut a = self.iter();
         let mut b = other.iter();
@@ -1444,7 +1456,7 @@ impl<B: BitBlock> Ord for BitVec<B> {
 
 impl<B: BitBlock> fmt::Debug for BitVec<B> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         for bit in self {
             write!(fmt, "{}", if bit { 1 } else { 0 })?;
         }
@@ -1455,7 +1467,7 @@ impl<B: BitBlock> fmt::Debug for BitVec<B> {
 impl<B: BitBlock> hash::Hash for BitVec<B> {
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
-        debug_assert!(self.is_last_block_fixed());
+        self.ensure_invariant();
         self.nbits.hash(state);
         for elem in self.blocks() {
             elem.hash(state);
@@ -1467,8 +1479,8 @@ impl<B: BitBlock> cmp::PartialEq for BitVec<B> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         if self.nbits != other.nbits {
-            debug_assert!(self.is_last_block_fixed());
-            debug_assert!(other.is_last_block_fixed());
+            self.ensure_invariant();
+            other.ensure_invariant();
             return false;
         }
         self.blocks().zip(other.blocks()).all(|(w1, w2)| w1 == w2)
