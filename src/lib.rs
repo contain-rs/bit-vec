@@ -81,7 +81,6 @@
 //! ```
 
 #![no_std]
-#![cfg_attr(not(feature = "std"), feature(alloc_prelude))]
 
 #[cfg(any(test, feature = "std"))]
 #[macro_use]
