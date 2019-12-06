@@ -965,7 +965,11 @@ impl<B: BitBlock> BitVec<B> {
             		let last = self.storage.last_mut().unwrap();
                 	*last = *last | (block << b);
                 }
-                self.storage.push(block >> (B::bits() - b));
+                let new_block = block >> (B::bits() - b);
+
+                if new_block != B::zero() {
+                    self.storage.push(new_block);
+                }
             }
         }
     }
@@ -2474,5 +2478,27 @@ mod tests {
         let serialized = serde_json::to_string(&bit_vec).unwrap();
         let unserialized = serde_json::from_str(&serialized).unwrap();
         assert_eq!(bit_vec, unserialized);
+    }
+
+    #[test]
+    // Bug showcased in https://github.com/contain-rs/bit-vec/issues/63.
+    fn append_issue_63() {
+        // Create a 8 bit integer with value (`1`) encoded in BE.
+        let mut a = BitVec::from_elem(8, false);
+        a.set(7, true);
+
+        // Create a 16 bit integer with value (`2`) encoded in BE.
+        let mut b = BitVec::from_elem(16, false);
+        b.set(14, true);
+
+        // Create a 8 bit integer with value (`3`) encoded in BE.
+        let mut c = BitVec::from_elem(8, false);
+        c.set(6, true);
+        c.set(7, true);
+
+        a.append(&mut b);
+        a.append(&mut c);
+
+        assert_eq!(&[01, 00, 02, 03][..], &*a.to_bytes());
     }
 }
