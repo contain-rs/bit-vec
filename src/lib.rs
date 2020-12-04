@@ -951,6 +951,8 @@ impl<B: BitBlock> BitVec<B> {
         debug_assert!(other.is_last_block_fixed());
 
         let b = self.len() % B::bits();
+        let o = other.len() % B::bits();
+        let will_overflow = (b + o > B::bits()) || (o == 0 && b != 0);
 
         self.nbits += other.len();
         other.nbits = 0;
@@ -966,6 +968,11 @@ impl<B: BitBlock> BitVec<B> {
                 	*last = *last | (block << b);
                 }
                 self.storage.push(block >> (B::bits() - b));
+            }
+
+            // Remove additional block if the last shift did not overflow
+            if !will_overflow {
+                self.storage.pop();
             }
         }
     }
@@ -2474,5 +2481,53 @@ mod tests {
         let serialized = serde_json::to_string(&bit_vec).unwrap();
         let unserialized = serde_json::from_str(&serialized).unwrap();
         assert_eq!(bit_vec, unserialized);
+    }
+
+    #[test]
+    fn test_bit_vec_unaligned_small_append() {
+        let mut a = BitVec::from_elem(8, false);
+        a.set(7, true);
+
+        let mut b = BitVec::from_elem(16, false);
+        b.set(14, true);
+
+        let mut c = BitVec::from_elem(8, false);
+        c.set(6, true);
+        c.set(7, true);
+
+        a.append(&mut b);
+        a.append(&mut c);
+
+        assert_eq!(&[01, 00, 02, 03][..], &*a.to_bytes());
+    }
+
+    #[test]
+    fn test_bit_vec_unaligned_large_append() {
+        let mut a = BitVec::from_elem(48, false);
+        a.set(47, true);
+
+        let mut b = BitVec::from_elem(48, false);
+        b.set(46, true);
+
+        let mut c = BitVec::from_elem(48, false);
+        c.set(46, true);
+        c.set(47, true);
+
+        a.append(&mut b);
+        a.append(&mut c);
+
+        assert_eq!(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x03][..], &*a.to_bytes());
+    }
+
+    #[test]
+    fn test_bit_vec_append_aligned_to_unaligned() {
+        let mut a = BitVec::from_elem(2, true);
+        let mut b = BitVec::from_elem(32, false);
+        let mut c = BitVec::from_elem(8, true);
+        a.append(&mut b);
+        a.append(&mut c);
+        assert_eq!(&[0xc0, 0x00, 0x00, 0x00, 0x3f, 0xc0][..], &*a.to_bytes());
     }
 }
