@@ -1,4 +1,4 @@
-// Copyright 2012-2014 The Rust Project Developers. See the COPYRIGHT
+// Copyright 2012-2020 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
 // http://rust-lang.org/COPYRIGHT.
 //
@@ -79,6 +79,8 @@
 //! println!("There are {} primes below {}", num_primes, max_prime);
 //! assert_eq!(num_primes, 1_229);
 //! ```
+
+#![doc(html_root_url = "https://docs.rs/bit-vec/0.6.3")]
 
 #![no_std]
 
