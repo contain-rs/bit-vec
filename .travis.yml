@@ -18,9 +18,3 @@ after_success: |
     if [ "$TRAVIS_RUST_VERSION" == "nightly" ]; then
       cargo bench;
     fi
-    [ "$TRAVIS_RUST_VERSION" = nightly ] &&
-    [ "$TRAVIS_BRANCH" = master ] &&
-    [ "$TRAVIS_PULL_REQUEST" = false ] &&
-    bash deploy-docs.sh
-notifications:
-    webhooks: http://huon.me:54857/travis
