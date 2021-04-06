@@ -554,6 +554,16 @@ impl<B: BitBlock> BitVec<B> {
             .map(|&block| (block & (B::one() << b)) != B::zero())
     }
 
+    #[inline]
+    pub fn get_unchecked(&self, i: usize) -> bool {
+        self.ensure_invariant();
+        let w = i / B::bits();
+        let b = i % B::bits();
+        self.storage.get(w).map(|&block|
+            (block & (B::one() << b)) != B::zero()
+        ).unwrap()
+    }
+
     /// Sets the value of a bit at an index `i`.
     ///
     /// # Panics
