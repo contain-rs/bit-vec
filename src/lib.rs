@@ -536,7 +536,7 @@ impl<B: BitBlock> BitVec<B> {
     #[inline]
     pub fn set(&mut self, i: usize, x: bool) {
         self.ensure_invariant();
-        assert!(i < self.nbits, "index out of bounds: {:?} >= {:?}", i, self.nbits);
+        debug_assert!(i < self.nbits, "index out of bounds: {:?} >= {:?}", i, self.nbits);
         let w = i / B::bits();
         let b = i % B::bits();
         let flag = B::one() << b;
