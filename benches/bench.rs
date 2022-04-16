@@ -10,18 +10,18 @@
 
 #![feature(test)]
 
-extern crate test;
+extern crate bit_vec;
 extern crate rand;
 extern crate rand_xorshift;
-extern crate bit_vec;
+extern crate test;
 
-use test::{Bencher, black_box};
+use bit_vec::BitVec;
 use rand::{Rng, RngCore, SeedableRng};
 use rand_xorshift::XorShiftRng;
-use bit_vec::BitVec;
+use test::{black_box, Bencher};
 
-const HUGE_BENCH_BITS : usize = 1 << 20;
-const BENCH_BITS : usize = 1 << 14;
+const HUGE_BENCH_BITS: usize = 1 << 20;
+const BENCH_BITS: usize = 1 << 14;
 const U32_BITS: usize = 32;
 
 fn small_rng() -> XorShiftRng {
@@ -80,18 +80,14 @@ fn bench_bit_set_small(b: &mut Bencher) {
 fn bench_bit_vec_big_or(b: &mut Bencher) {
     let mut b1 = BitVec::from_elem(BENCH_BITS, false);
     let b2 = BitVec::from_elem(BENCH_BITS, false);
-    b.iter(|| {
-        b1.or(&b2)
-    })
+    b.iter(|| b1.or(&b2))
 }
 
 #[bench]
 fn bench_bit_vec_big_xnor(b: &mut Bencher) {
     let mut b1 = BitVec::from_elem(BENCH_BITS, false);
     let b2 = BitVec::from_elem(BENCH_BITS, false);
-    b.iter(|| {
-        b1.xnor(&b2)
-    })
+    b.iter(|| b1.xnor(&b2))
 }
 
 #[bench]
@@ -109,9 +105,7 @@ fn bench_bit_vec_big_negate_xor(b: &mut Bencher) {
 fn bench_bit_vec_huge_xnor(b: &mut Bencher) {
     let mut b1 = BitVec::from_elem(HUGE_BENCH_BITS, false);
     let b2 = BitVec::from_elem(HUGE_BENCH_BITS, false);
-    b.iter(|| {
-        b1.xnor(&b2)
-    })
+    b.iter(|| b1.xnor(&b2))
 }
 
 #[bench]
@@ -157,7 +151,8 @@ fn bench_from_elem(b: &mut Bencher) {
     let bit = black_box(true);
     b.iter(|| {
         // create a BitVec and popcount it
-        BitVec::from_elem(cap, bit).blocks()
+        BitVec::from_elem(cap, bit)
+            .blocks()
             .fold(0, |acc, b| acc + b.count_ones())
     });
     b.bytes = cap as u64 / 8;

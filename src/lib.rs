@@ -81,60 +81,61 @@
 //! ```
 
 #![doc(html_root_url = "https://docs.rs/bit-vec/0.6.3")]
-
 #![no_std]
 
 #[cfg(any(test, feature = "std"))]
 #[macro_use]
 extern crate std;
-#[cfg(feature="std")]
+#[cfg(feature = "std")]
 use std::vec::Vec;
 
-#[cfg(feature="serde")]
+#[cfg(feature = "serde")]
 extern crate serde;
-#[cfg(feature="serde")]
-use serde::{Serialize, Deserialize};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
-#[cfg(not(feature="std"))]
+#[cfg(not(feature = "std"))]
 #[macro_use]
 extern crate alloc;
-#[cfg(not(feature="std"))]
+#[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 
-use core::cmp::Ordering;
 use core::cmp;
+use core::cmp::Ordering;
 use core::fmt;
 use core::hash;
-use core::mem;
+use core::iter::repeat;
 use core::iter::FromIterator;
+use core::mem;
+use core::ops::*;
 use core::slice;
 use core::{u8, usize};
-use core::iter::repeat;
-use core::ops::*;
 
 type MutBlocks<'a, B> = slice::IterMut<'a, B>;
 
 /// Abstracts over a pile of bits (basically unsigned primitives)
 pub trait BitBlock:
-	Copy +
-	Add<Self, Output=Self> +
-	Sub<Self, Output=Self> +
-	Shl<usize, Output=Self> +
-	Shr<usize, Output=Self> +
-	Not<Output=Self> +
-	BitAnd<Self, Output=Self> +
-	BitOr<Self, Output=Self> +
-	BitXor<Self, Output=Self> +
-	Rem<Self, Output=Self> +
-	Eq +
-	Ord +
-	hash::Hash
+    Copy
+    + Add<Self, Output = Self>
+    + Sub<Self, Output = Self>
+    + Shl<usize, Output = Self>
+    + Shr<usize, Output = Self>
+    + Not<Output = Self>
+    + BitAnd<Self, Output = Self>
+    + BitOr<Self, Output = Self>
+    + BitXor<Self, Output = Self>
+    + Rem<Self, Output = Self>
+    + Eq
+    + Ord
+    + hash::Hash
 {
-	/// How many bits it has
+    /// How many bits it has
     fn bits() -> usize;
     /// How many bytes it has
     #[inline]
-    fn bytes() -> usize { Self::bits() / 8 }
+    fn bytes() -> usize {
+        Self::bits() / 8
+    }
     /// Convert a byte into this type (lowest-order bits set)
     fn from_byte(byte: u8) -> Self;
     /// Count the number of 1's in the bitwise repr
@@ -162,7 +163,7 @@ macro_rules! bit_block_impl {
     )*)
 }
 
-bit_block_impl!{
+bit_block_impl! {
     (u8, 8),
     (u16, 16),
     (u32, 32),
@@ -208,12 +209,12 @@ static FALSE: bool = false;
 /// println!("{:?}", bv);
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 /// ```
-#[cfg_attr(feature="serde", derive(Serialize, Deserialize))]
-pub struct BitVec<B=u32> {
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct BitVec<B = u32> {
     /// Internal representation of the bit vector
     storage: Vec<B>,
     /// The number of valid bits in the internal representation
-    nbits: usize
+    nbits: usize,
 }
 
 // FIXME(Gankro): NopeNopeNopeNopeNope (wait for IndexGet to be a thing)
@@ -256,7 +257,6 @@ fn mask_for_bits<B: BitBlock>(bits: usize) -> B {
 type B = u32;
 
 impl BitVec<u32> {
-
     /// Creates an empty `BitVec`.
     ///
     /// # Examples
@@ -326,7 +326,10 @@ impl BitVec<u32> {
     ///                     false, false, true, false]));
     /// ```
     pub fn from_bytes(bytes: &[u8]) -> Self {
-        let len = bytes.len().checked_mul(u8::bits()).expect("capacity overflow");
+        let len = bytes
+            .len()
+            .checked_mul(u8::bits())
+            .expect("capacity overflow");
         let mut bit_vec = BitVec::with_capacity(len);
         let complete_words = bytes.len() / B::bytes();
         let extra_bytes = bytes.len() % B::bytes();
@@ -336,8 +339,7 @@ impl BitVec<u32> {
         for i in 0..complete_words {
             let mut accumulator = B::zero();
             for idx in 0..B::bytes() {
-                accumulator |=
-                    B::from_byte(reverse_bits(bytes[i * B::bytes() + idx])) << (idx * 8)
+                accumulator |= B::from_byte(reverse_bits(bytes[i * B::bytes() + idx])) << (idx * 8)
             }
             bit_vec.storage.push(accumulator);
         }
@@ -345,8 +347,7 @@ impl BitVec<u32> {
         if extra_bytes > 0 {
             let mut last_word = B::zero();
             for (i, &byte) in bytes[complete_words * B::bytes()..].iter().enumerate() {
-                last_word |=
-                    B::from_byte(reverse_bits(byte)) << (i * 8);
+                last_word |= B::from_byte(reverse_bits(byte)) << (i * 8);
             }
             bit_vec.storage.push(last_word);
         }
@@ -367,7 +368,8 @@ impl BitVec<u32> {
     /// ```
     #[inline]
     pub fn from_fn<F>(len: usize, mut f: F) -> Self
-        where F: FnMut(usize) -> bool
+    where
+        F: FnMut(usize) -> bool,
     {
         let mut bit_vec = BitVec::from_elem(len, false);
         for i in 0..len {
@@ -383,7 +385,9 @@ impl<B: BitBlock> BitVec<B> {
     /// last word.
     #[inline]
     fn process<F>(&mut self, other: &BitVec<B>, mut op: F) -> bool
-    		where F: FnMut(B, B) -> B {
+    where
+        F: FnMut(B, B) -> B,
+    {
         assert_eq!(self.len(), other.len());
         debug_assert_eq!(self.storage.len(), other.storage.len());
         let mut changed_bits = B::zero();
@@ -406,7 +410,9 @@ impl<B: BitBlock> BitVec<B> {
     #[inline]
     pub fn blocks(&self) -> Blocks<B> {
         // (2)
-        Blocks{iter: self.storage.iter()}
+        Blocks {
+            iter: self.storage.iter(),
+        }
     }
 
     /// Exposes the raw block storage of this BitVec
@@ -414,7 +420,7 @@ impl<B: BitBlock> BitVec<B> {
     /// Only really intended for BitSet.
     #[inline]
     pub fn storage(&self) -> &[B] {
-    	&self.storage
+        &self.storage
     }
 
     /// Exposes the raw block storage of this BitVec
@@ -422,7 +428,7 @@ impl<B: BitBlock> BitVec<B> {
     /// Can probably cause unsafety. Only really intended for BitSet.
     #[inline]
     pub unsafe fn storage_mut(&mut self) -> &mut Vec<B> {
-    	&mut self.storage
+        &mut self.storage
     }
 
     /// Helper for procedures involving spare space in the last block.
@@ -513,9 +519,9 @@ impl<B: BitBlock> BitVec<B> {
         }
         let w = i / B::bits();
         let b = i % B::bits();
-        self.storage.get(w).map(|&block|
-            (block & (B::one() << b)) != B::zero()
-        )
+        self.storage
+            .get(w)
+            .map(|&block| (block & (B::one() << b)) != B::zero())
     }
 
     /// Sets the value of a bit at an index `i`.
@@ -536,12 +542,20 @@ impl<B: BitBlock> BitVec<B> {
     #[inline]
     pub fn set(&mut self, i: usize, x: bool) {
         self.ensure_invariant();
-        assert!(i < self.nbits, "index out of bounds: {:?} >= {:?}", i, self.nbits);
+        assert!(
+            i < self.nbits,
+            "index out of bounds: {:?} >= {:?}",
+            i,
+            self.nbits
+        );
         let w = i / B::bits();
         let b = i % B::bits();
         let flag = B::one() << b;
-        let val = if x { self.storage[w] | flag }
-                  else { self.storage[w] & !flag };
+        let val = if x {
+            self.storage[w] | flag
+        } else {
+            self.storage[w] & !flag
+        };
         self.storage[w] = val;
     }
 
@@ -562,7 +576,9 @@ impl<B: BitBlock> BitVec<B> {
     #[inline]
     pub fn set_all(&mut self) {
         self.ensure_invariant();
-        for w in &mut self.storage { *w = !B::zero(); }
+        for w in &mut self.storage {
+            *w = !B::zero();
+        }
         self.fix_last_block();
     }
 
@@ -583,7 +599,9 @@ impl<B: BitBlock> BitVec<B> {
     #[inline]
     pub fn negate(&mut self) {
         self.ensure_invariant();
-        for w in &mut self.storage { *w = !*w; }
+        for w in &mut self.storage {
+            *w = !*w;
+        }
         self.fix_last_block();
     }
 
@@ -612,10 +630,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert!(a.union(&b));
     /// assert_eq!(a, BitVec::from_bytes(&[res]));
     /// ```
-    #[deprecated(
-        since = "0.7.0",
-        note = "Please use the 'or' function instead"
-    )]
+    #[deprecated(since = "0.7.0", note = "Please use the 'or' function instead")]
     #[inline]
     pub fn union(&mut self, other: &Self) -> bool {
         self.or(other)
@@ -646,10 +661,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert!(a.intersect(&b));
     /// assert_eq!(a, BitVec::from_bytes(&[res]));
     /// ```
-    #[deprecated(
-        since = "0.7.0",
-        note = "Please use the 'and' function instead"
-    )]
+    #[deprecated(since = "0.7.0", note = "Please use the 'and' function instead")]
     #[inline]
     pub fn intersect(&mut self, other: &Self) -> bool {
         self.and(other)
@@ -911,7 +923,7 @@ impl<B: BitBlock> BitVec<B> {
             let tmp = last_word;
             last_word = elem;
             tmp == !B::zero()
-        // and then check the last one has enough ones
+            // and then check the last one has enough ones
         }) && (last_word == mask_for_bits(self.nbits))
     }
 
@@ -928,7 +940,10 @@ impl<B: BitBlock> BitVec<B> {
     #[inline]
     pub fn iter(&self) -> Iter<B> {
         self.ensure_invariant();
-        Iter { bit_vec: self, range: 0..self.nbits }
+        Iter {
+            bit_vec: self,
+            range: 0..self.nbits,
+        }
     }
 
     /// Moves all bits from `other` into `Self`, leaving `other` empty.
@@ -965,9 +980,9 @@ impl<B: BitBlock> BitVec<B> {
             self.storage.reserve(other.storage.len());
 
             for block in other.storage.drain(..) {
-            	{
-            		let last = self.storage.last_mut().unwrap();
-                	*last = *last | (block << b);
+                {
+                    let last = self.storage.last_mut().unwrap();
+                    *last = *last | (block << b);
                 }
                 self.storage.push(block >> (B::bits() - b));
             }
@@ -1102,7 +1117,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     pub fn to_bytes(&self) -> Vec<u8> {
         self.ensure_invariant();
-    	// Oh lord, we're mapping this to bytes bit-by-bit!
+        // Oh lord, we're mapping this to bytes bit-by-bit!
         fn bit<B: BitBlock>(bit_vec: &BitVec<B>, byte: usize, bit: usize) -> u8 {
             let offset = byte * 8 + bit;
             if offset >= bit_vec.nbits {
@@ -1112,18 +1127,19 @@ impl<B: BitBlock> BitVec<B> {
             }
         }
 
-        let len = self.nbits / 8 +
-                  if self.nbits % 8 == 0 { 0 } else { 1 };
-        (0..len).map(|i|
-            bit(self, i, 0) |
-            bit(self, i, 1) |
-            bit(self, i, 2) |
-            bit(self, i, 3) |
-            bit(self, i, 4) |
-            bit(self, i, 5) |
-            bit(self, i, 6) |
-            bit(self, i, 7)
-        ).collect()
+        let len = self.nbits / 8 + if self.nbits % 8 == 0 { 0 } else { 1 };
+        (0..len)
+            .map(|i| {
+                bit(self, i, 0)
+                    | bit(self, i, 1)
+                    | bit(self, i, 2)
+                    | bit(self, i, 3)
+                    | bit(self, i, 4)
+                    | bit(self, i, 5)
+                    | bit(self, i, 6)
+                    | bit(self, i, 7)
+            })
+            .collect()
     }
 
     /// Compares a `BitVec` to a slice of `bool`s.
@@ -1193,10 +1209,14 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn reserve(&mut self, additional: usize) {
-        let desired_cap = self.len().checked_add(additional).expect("capacity overflow");
+        let desired_cap = self
+            .len()
+            .checked_add(additional)
+            .expect("capacity overflow");
         let storage_len = self.storage.len();
         if desired_cap > self.capacity() {
-            self.storage.reserve(blocks_for_bits::<B>(desired_cap) - storage_len);
+            self.storage
+                .reserve(blocks_for_bits::<B>(desired_cap) - storage_len);
         }
     }
 
@@ -1223,10 +1243,14 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn reserve_exact(&mut self, additional: usize) {
-        let desired_cap = self.len().checked_add(additional).expect("capacity overflow");
+        let desired_cap = self
+            .len()
+            .checked_add(additional)
+            .expect("capacity overflow");
         let storage_len = self.storage.len();
         if desired_cap > self.capacity() {
-            self.storage.reserve_exact(blocks_for_bits::<B>(desired_cap) - storage_len);
+            self.storage
+                .reserve_exact(blocks_for_bits::<B>(desired_cap) - storage_len);
         }
     }
 
@@ -1244,7 +1268,10 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn capacity(&self) -> usize {
-        self.storage.capacity().checked_mul(B::bits()).unwrap_or(usize::MAX)
+        self.storage
+            .capacity()
+            .checked_mul(B::bits())
+            .unwrap_or(usize::MAX)
     }
 
     /// Grows the `BitVec` in-place, adding `n` copies of `value` to the `BitVec`.
@@ -1279,7 +1306,7 @@ impl<B: BitBlock> BitVec<B> {
         if self.nbits % B::bits() > 0 {
             let mask = mask_for_bits::<B>(self.nbits);
             if value {
-            	let block = &mut self.storage[num_cur_blocks - 1];
+                let block = &mut self.storage[num_cur_blocks - 1];
                 *block = *block | !mask;
             } else {
                 // Extra bits are already zero by invariant.
@@ -1360,25 +1387,31 @@ impl<B: BitBlock> BitVec<B> {
 
     /// Returns the total number of bits in this vector
     #[inline]
-    pub fn len(&self) -> usize { self.nbits }
+    pub fn len(&self) -> usize {
+        self.nbits
+    }
 
     /// Sets the number of bits that this BitVec considers initialized.
     ///
     /// Almost certainly can cause bad stuff. Only really intended for BitSet.
     #[inline]
     pub unsafe fn set_len(&mut self, len: usize) {
-    	self.nbits = len;
+        self.nbits = len;
     }
 
     /// Returns true if there are no bits in this vector
     #[inline]
-    pub fn is_empty(&self) -> bool { self.len() == 0 }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 
     /// Clears all bits in this vector.
     #[inline]
     pub fn clear(&mut self) {
         self.ensure_invariant();
-        for w in &mut self.storage { *w = B::zero(); }
+        for w in &mut self.storage {
+            *w = B::zero();
+        }
     }
 
     /// Shrinks the capacity of the underlying storage as much as
@@ -1394,12 +1427,17 @@ impl<B: BitBlock> BitVec<B> {
 
 impl<B: BitBlock> Default for BitVec<B> {
     #[inline]
-    fn default() -> Self { BitVec { storage: Vec::new(), nbits: 0 } }
+    fn default() -> Self {
+        BitVec {
+            storage: Vec::new(),
+            nbits: 0,
+        }
+    }
 }
 
 impl<B: BitBlock> FromIterator<bool> for BitVec<B> {
     #[inline]
-    fn from_iter<I: IntoIterator<Item=bool>>(iter: I) -> Self {
+    fn from_iter<I: IntoIterator<Item = bool>>(iter: I) -> Self {
         let mut ret: Self = Default::default();
         ret.extend(iter);
         ret
@@ -1408,7 +1446,7 @@ impl<B: BitBlock> FromIterator<bool> for BitVec<B> {
 
 impl<B: BitBlock> Extend<bool> for BitVec<B> {
     #[inline]
-    fn extend<I: IntoIterator<Item=bool>>(&mut self, iterable: I) {
+    fn extend<I: IntoIterator<Item = bool>>(&mut self, iterable: I) {
         self.ensure_invariant();
         let iterator = iterable.into_iter();
         let (min, _) = iterator.size_hint();
@@ -1423,7 +1461,10 @@ impl<B: BitBlock> Clone for BitVec<B> {
     #[inline]
     fn clone(&self) -> Self {
         self.ensure_invariant();
-        BitVec { storage: self.storage.clone(), nbits: self.nbits }
+        BitVec {
+            storage: self.storage.clone(),
+            nbits: self.nbits,
+        }
     }
 
     #[inline]
@@ -1538,7 +1579,7 @@ impl<'a, B: BitBlock> IntoIterator for &'a BitVec<B> {
     }
 }
 
-pub struct IntoIter<B=u32> {
+pub struct IntoIter<B = u32> {
     bit_vec: BitVec<B>,
     range: Range<usize>,
 }
@@ -1568,7 +1609,10 @@ impl<B: BitBlock> IntoIterator for BitVec<B> {
     #[inline]
     fn into_iter(self) -> IntoIter<B> {
         let nbits = self.nbits;
-        IntoIter { bit_vec: self, range: 0..nbits }
+        IntoIter {
+            bit_vec: self,
+            range: 0..nbits,
+        }
     }
 }
 
@@ -1650,8 +1694,9 @@ mod tests {
         // all 0
 
         act = BitVec::from_elem(10, false);
-        assert!((act.eq_vec(
-                    &[false, false, false, false, false, false, false, false, false, false])));
+        assert!(
+            (act.eq_vec(&[false, false, false, false, false, false, false, false, false, false]))
+        );
         assert!(act.none() && !act.all());
         // all 1
 
@@ -1695,18 +1740,20 @@ mod tests {
         // all 0
 
         act = BitVec::from_elem(31, false);
-        assert!(act.eq_vec(
-                &[false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false]));
+        assert!(act.eq_vec(&[
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false
+        ]));
         assert!(act.none() && !act.all());
         // all 1
 
         act = BitVec::from_elem(31, true);
-        assert!(act.eq_vec(
-                &[true, true, true, true, true, true, true, true, true, true, true, true, true,
-                  true, true, true, true, true, true, true, true, true, true, true, true, true,
-                  true, true, true, true, true]));
+        assert!(act.eq_vec(&[
+            true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+            true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+            true, true, true
+        ]));
         assert!(!act.none() && act.all());
         // mixed
 
@@ -1719,10 +1766,11 @@ mod tests {
         act.set(5, true);
         act.set(6, true);
         act.set(7, true);
-        assert!(act.eq_vec(
-                &[true, true, true, true, true, true, true, true, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, false, false]));
+        assert!(act.eq_vec(&[
+            true, true, true, true, true, true, true, true, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false
+        ]));
         assert!(!act.none() && !act.all());
         // mixed
 
@@ -1735,10 +1783,11 @@ mod tests {
         act.set(21, true);
         act.set(22, true);
         act.set(23, true);
-        assert!(act.eq_vec(
-                &[false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, true, true, true, true, true, true, true, true,
-                  false, false, false, false, false, false, false]));
+        assert!(act.eq_vec(&[
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, true, true, true, true, true, true, true, true, false,
+            false, false, false, false, false, false
+        ]));
         assert!(!act.none() && !act.all());
         // mixed
 
@@ -1750,10 +1799,11 @@ mod tests {
         act.set(28, true);
         act.set(29, true);
         act.set(30, true);
-        assert!(act.eq_vec(
-                &[false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, true, true, true, true, true, true, true]));
+        assert!(act.eq_vec(&[
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            true, true, true, true, true, true, true
+        ]));
         assert!(!act.none() && !act.all());
         // mixed
 
@@ -1761,10 +1811,11 @@ mod tests {
         act.set(3, true);
         act.set(17, true);
         act.set(30, true);
-        assert!(act.eq_vec(
-                &[false, false, false, true, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, true, false, false, false, false, false, false,
-                  false, false, false, false, false, false, true]));
+        assert!(act.eq_vec(&[
+            false, false, false, true, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, true, false, false, false, false, false, false,
+            false, false, false, false, false, false, true
+        ]));
         assert!(!act.none() && !act.all());
     }
 
@@ -1774,18 +1825,20 @@ mod tests {
         // all 0
 
         act = BitVec::from_elem(32, false);
-        assert!(act.eq_vec(
-                &[false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false, false]));
+        assert!(act.eq_vec(&[
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false
+        ]));
         assert!(act.none() && !act.all());
         // all 1
 
         act = BitVec::from_elem(32, true);
-        assert!(act.eq_vec(
-                &[true, true, true, true, true, true, true, true, true, true, true, true, true,
-                  true, true, true, true, true, true, true, true, true, true, true, true, true,
-                  true, true, true, true, true, true]));
+        assert!(act.eq_vec(&[
+            true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+            true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+            true, true, true, true
+        ]));
         assert!(!act.none() && act.all());
         // mixed
 
@@ -1798,10 +1851,11 @@ mod tests {
         act.set(5, true);
         act.set(6, true);
         act.set(7, true);
-        assert!(act.eq_vec(
-                &[true, true, true, true, true, true, true, true, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false]));
+        assert!(act.eq_vec(&[
+            true, true, true, true, true, true, true, true, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false
+        ]));
         assert!(!act.none() && !act.all());
         // mixed
 
@@ -1814,10 +1868,11 @@ mod tests {
         act.set(21, true);
         act.set(22, true);
         act.set(23, true);
-        assert!(act.eq_vec(
-                &[false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, true, true, true, true, true, true, true, true,
-                  false, false, false, false, false, false, false, false]));
+        assert!(act.eq_vec(&[
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, true, true, true, true, true, true, true, true, false,
+            false, false, false, false, false, false, false
+        ]));
         assert!(!act.none() && !act.all());
         // mixed
 
@@ -1830,10 +1885,11 @@ mod tests {
         act.set(29, true);
         act.set(30, true);
         act.set(31, true);
-        assert!(act.eq_vec(
-                &[false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, true, true, true, true, true, true, true, true]));
+        assert!(act.eq_vec(&[
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            true, true, true, true, true, true, true, true
+        ]));
         assert!(!act.none() && !act.all());
         // mixed
 
@@ -1842,10 +1898,11 @@ mod tests {
         act.set(17, true);
         act.set(30, true);
         act.set(31, true);
-        assert!(act.eq_vec(
-                &[false, false, false, true, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, true, false, false, false, false, false, false,
-                  false, false, false, false, false, false, true, true]));
+        assert!(act.eq_vec(&[
+            false, false, false, true, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, true, false, false, false, false, false, false,
+            false, false, false, false, false, false, true, true
+        ]));
         assert!(!act.none() && !act.all());
     }
 
@@ -1855,18 +1912,20 @@ mod tests {
         // all 0
 
         act = BitVec::from_elem(33, false);
-        assert!(act.eq_vec(
-                &[false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false, false, false]));
+        assert!(act.eq_vec(&[
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false
+        ]));
         assert!(act.none() && !act.all());
         // all 1
 
         act = BitVec::from_elem(33, true);
-        assert!(act.eq_vec(
-                &[true, true, true, true, true, true, true, true, true, true, true, true, true,
-                  true, true, true, true, true, true, true, true, true, true, true, true, true,
-                  true, true, true, true, true, true, true]));
+        assert!(act.eq_vec(&[
+            true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+            true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+            true, true, true, true, true
+        ]));
         assert!(!act.none() && act.all());
         // mixed
 
@@ -1879,10 +1938,11 @@ mod tests {
         act.set(5, true);
         act.set(6, true);
         act.set(7, true);
-        assert!(act.eq_vec(
-                &[true, true, true, true, true, true, true, true, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false]));
+        assert!(act.eq_vec(&[
+            true, true, true, true, true, true, true, true, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false
+        ]));
         assert!(!act.none() && !act.all());
         // mixed
 
@@ -1895,10 +1955,11 @@ mod tests {
         act.set(21, true);
         act.set(22, true);
         act.set(23, true);
-        assert!(act.eq_vec(
-                &[false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, true, true, true, true, true, true, true, true,
-                  false, false, false, false, false, false, false, false, false]));
+        assert!(act.eq_vec(&[
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, true, true, true, true, true, true, true, true, false,
+            false, false, false, false, false, false, false, false
+        ]));
         assert!(!act.none() && !act.all());
         // mixed
 
@@ -1911,10 +1972,11 @@ mod tests {
         act.set(29, true);
         act.set(30, true);
         act.set(31, true);
-        assert!(act.eq_vec(
-                &[false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, false, false, false, false, false, false,
-                  false, false, true, true, true, true, true, true, true, true, false]));
+        assert!(act.eq_vec(&[
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            true, true, true, true, true, true, true, true, false
+        ]));
         assert!(!act.none() && !act.all());
         // mixed
 
@@ -1924,10 +1986,11 @@ mod tests {
         act.set(30, true);
         act.set(31, true);
         act.set(32, true);
-        assert!(act.eq_vec(
-                &[false, false, false, true, false, false, false, false, false, false, false, false,
-                  false, false, false, false, false, true, false, false, false, false, false, false,
-                  false, false, false, false, false, false, true, true, true]));
+        assert!(act.eq_vec(&[
+            false, false, false, true, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, true, false, false, false, false, false, false,
+            false, false, false, false, false, false, true, true, true
+        ]));
         assert!(!act.none() && !act.all());
     }
 
@@ -2000,7 +2063,12 @@ mod tests {
     #[test]
     fn test_to_bools() {
         let bools = vec![false, false, true, false, false, true, true, false];
-        assert_eq!(BitVec::from_bytes(&[0b00100110]).iter().collect::<Vec<bool>>(), bools);
+        assert_eq!(
+            BitVec::from_bytes(&[0b00100110])
+                .iter()
+                .collect::<Vec<bool>>(),
+            bools
+        );
     }
 
     #[test]
@@ -2049,7 +2117,7 @@ mod tests {
         let b = BitVec::from_bytes(&[0b0101]);
         let c = BitVec::from_bytes(&[0b0110]);
         assert!(a.xor(&b));
-        assert_eq!(a,c);
+        assert_eq!(a, c);
     }
 
     #[test]
@@ -2058,7 +2126,7 @@ mod tests {
         let b = BitVec::from_bytes(&[0b1111_0101]);
         let c = BitVec::from_bytes(&[0b1001]);
         assert!(a.xnor(&b));
-        assert_eq!(a,c);
+        assert_eq!(a, c);
     }
 
     #[test]
@@ -2067,7 +2135,7 @@ mod tests {
         let b = BitVec::from_bytes(&[0b1111_0101]);
         let c = BitVec::from_bytes(&[0b1110]);
         assert!(a.nand(&b));
-        assert_eq!(a,c);
+        assert_eq!(a, c);
     }
 
     #[test]
@@ -2076,43 +2144,53 @@ mod tests {
         let b = BitVec::from_bytes(&[0b1111_0101]);
         let c = BitVec::from_bytes(&[0b1000]);
         assert!(a.nor(&b));
-        assert_eq!(a,c);
+        assert_eq!(a, c);
     }
 
     #[test]
     fn test_big_xor() {
-        let mut a = BitVec::from_bytes(&[ // 88 bits
-            0, 0, 0b00010100, 0,
-            0, 0, 0, 0b00110100,
-            0, 0, 0]);
-        let b = BitVec::from_bytes(&[ // 88 bits
-            0, 0, 0b00010100, 0,
-            0, 0, 0, 0,
-            0, 0, 0b00110100]);
-        let c = BitVec::from_bytes(&[ // 88 bits
-            0, 0, 0, 0,
-            0, 0, 0, 0b00110100,
-            0, 0, 0b00110100]);
+        let mut a = BitVec::from_bytes(&[
+            // 88 bits
+            0, 0, 0b00010100, 0, 0, 0, 0, 0b00110100, 0, 0, 0,
+        ]);
+        let b = BitVec::from_bytes(&[
+            // 88 bits
+            0, 0, 0b00010100, 0, 0, 0, 0, 0, 0, 0, 0b00110100,
+        ]);
+        let c = BitVec::from_bytes(&[
+            // 88 bits
+            0, 0, 0, 0, 0, 0, 0, 0b00110100, 0, 0, 0b00110100,
+        ]);
         assert!(a.xor(&b));
-        assert_eq!(a,c);
+        assert_eq!(a, c);
     }
 
     #[test]
     fn test_big_xnor() {
-        let mut a = BitVec::from_bytes(&[ // 88 bits
-            0, 0, 0b00010100, 0,
-            0, 0, 0, 0b00110100,
-            0, 0, 0]);
-        let b = BitVec::from_bytes(&[ // 88 bits
-            0, 0, 0b00010100, 0,
-            0, 0, 0, 0,
-            0, 0, 0b00110100]);
-        let c = BitVec::from_bytes(&[ // 88 bits
-            !0, !0, !0, !0,
-            !0, !0, !0, !0b00110100,
-            !0, !0, !0b00110100]);
+        let mut a = BitVec::from_bytes(&[
+            // 88 bits
+            0, 0, 0b00010100, 0, 0, 0, 0, 0b00110100, 0, 0, 0,
+        ]);
+        let b = BitVec::from_bytes(&[
+            // 88 bits
+            0, 0, 0b00010100, 0, 0, 0, 0, 0, 0, 0, 0b00110100,
+        ]);
+        let c = BitVec::from_bytes(&[
+            // 88 bits
+            !0,
+            !0,
+            !0,
+            !0,
+            !0,
+            !0,
+            !0,
+            !0b00110100,
+            !0,
+            !0,
+            !0b00110100,
+        ]);
         assert!(a.xnor(&b));
-        assert_eq!(a,c);
+        assert_eq!(a, c);
     }
 
     #[test]
@@ -2182,26 +2260,26 @@ mod tests {
 
     #[test]
     fn test_big_bit_vec_tests() {
-        let v = BitVec::from_bytes(&[ // 88 bits
-            0, 0, 0, 0,
-            0, 0, 0, 0,
-            0, 0, 0]);
+        let v = BitVec::from_bytes(&[
+            // 88 bits
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ]);
         assert!(!v.all());
         assert!(!v.any());
         assert!(v.none());
 
-        let v = BitVec::from_bytes(&[ // 88 bits
-            0, 0, 0b00010100, 0,
-            0, 0, 0, 0b00110100,
-            0, 0, 0]);
+        let v = BitVec::from_bytes(&[
+            // 88 bits
+            0, 0, 0b00010100, 0, 0, 0, 0, 0b00110100, 0, 0, 0,
+        ]);
         assert!(!v.all());
         assert!(v.any());
         assert!(!v.none());
 
-        let v = BitVec::from_bytes(&[ // 88 bits
-            0xFF, 0xFF, 0xFF, 0xFF,
-            0xFF, 0xFF, 0xFF, 0xFF,
-            0xFF, 0xFF, 0xFF]);
+        let v = BitVec::from_bytes(&[
+            // 88 bits
+            0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        ]);
         assert!(v.all());
         assert!(v.any());
         assert!(!v.none());
@@ -2279,14 +2357,25 @@ mod tests {
     fn test_bit_vec_grow() {
         let mut bit_vec = BitVec::from_bytes(&[0b10110110, 0b00000000, 0b10101010]);
         bit_vec.grow(32, true);
-        assert_eq!(bit_vec, BitVec::from_bytes(&[0b10110110, 0b00000000, 0b10101010,
-                                     0xFF, 0xFF, 0xFF, 0xFF]));
+        assert_eq!(
+            bit_vec,
+            BitVec::from_bytes(&[0b10110110, 0b00000000, 0b10101010, 0xFF, 0xFF, 0xFF, 0xFF])
+        );
         bit_vec.grow(64, false);
-        assert_eq!(bit_vec, BitVec::from_bytes(&[0b10110110, 0b00000000, 0b10101010,
-                                     0xFF, 0xFF, 0xFF, 0xFF, 0, 0, 0, 0, 0, 0, 0, 0]));
+        assert_eq!(
+            bit_vec,
+            BitVec::from_bytes(&[
+                0b10110110, 0b00000000, 0b10101010, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0, 0, 0, 0, 0, 0, 0
+            ])
+        );
         bit_vec.grow(16, true);
-        assert_eq!(bit_vec, BitVec::from_bytes(&[0b10110110, 0b00000000, 0b10101010,
-                                     0xFF, 0xFF, 0xFF, 0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF]));
+        assert_eq!(
+            bit_vec,
+            BitVec::from_bytes(&[
+                0b10110110, 0b00000000, 0b10101010, 0xFF, 0xFF, 0xFF, 0xFF, 0, 0, 0, 0, 0, 0, 0, 0,
+                0xFF, 0xFF
+            ])
+        );
     }
 
     #[test]
@@ -2294,8 +2383,12 @@ mod tests {
         let mut bit_vec = BitVec::from_bytes(&[0b10110110, 0b00000000, 0b11111111]);
         let ext = BitVec::from_bytes(&[0b01001001, 0b10010010, 0b10111101]);
         bit_vec.extend(ext.iter());
-        assert_eq!(bit_vec, BitVec::from_bytes(&[0b10110110, 0b00000000, 0b11111111,
-                                     0b01001001, 0b10010010, 0b10111101]));
+        assert_eq!(
+            bit_vec,
+            BitVec::from_bytes(&[
+                0b10110110, 0b00000000, 0b11111111, 0b01001001, 0b10010010, 0b10111101
+            ])
+        );
     }
 
     #[test]
@@ -2313,18 +2406,19 @@ mod tests {
         assert_eq!(b.len(), 0);
         assert!(b.capacity() >= 3);
 
-        assert!(a.eq_vec(&[true, false, true, false, false, false, false, false,
-                           false, false, false, true, false, false, true, false,
-                           true, false, false, true, false, false, true, false,
-                           false, false, true, true, false, false, true, true,
-                           false, true, true]));
+        assert!(a.eq_vec(&[
+            true, false, true, false, false, false, false, false, false, false, false, true, false,
+            false, true, false, true, false, false, true, false, false, true, false, false, false,
+            true, true, false, false, true, true, false, true, true
+        ]));
 
         // Append to arbitrary BitVec
         let mut a = BitVec::new();
         a.push(true);
         a.push(false);
 
-        let mut b = BitVec::from_bytes(&[0b10100000, 0b00010010, 0b10010010, 0b00110011, 0b10010101]);
+        let mut b =
+            BitVec::from_bytes(&[0b10100000, 0b00010010, 0b10010010, 0b00110011, 0b10010101]);
 
         a.append(&mut b);
 
@@ -2332,16 +2426,17 @@ mod tests {
         assert_eq!(b.len(), 0);
         assert!(b.capacity() >= 40);
 
-        assert!(a.eq_vec(&[true, false, true, false, true, false, false, false,
-                           false, false, false, false, false, true, false, false,
-                           true, false, true, false, false, true, false, false,
-                           true, false, false, false, true, true, false, false,
-                           true, true, true, false, false, true, false, true,
-                           false, true]));
+        assert!(a.eq_vec(&[
+            true, false, true, false, true, false, false, false, false, false, false, false, false,
+            true, false, false, true, false, true, false, false, true, false, false, true, false,
+            false, false, true, true, false, false, true, true, true, false, false, true, false,
+            true, false, true
+        ]));
 
         // Append to empty BitVec
         let mut a = BitVec::new();
-        let mut b = BitVec::from_bytes(&[0b10100000, 0b00010010, 0b10010010, 0b00110011, 0b10010101]);
+        let mut b =
+            BitVec::from_bytes(&[0b10100000, 0b00010010, 0b10010010, 0b00110011, 0b10010101]);
 
         a.append(&mut b);
 
@@ -2349,14 +2444,16 @@ mod tests {
         assert_eq!(b.len(), 0);
         assert!(b.capacity() >= 40);
 
-        assert!(a.eq_vec(&[true, false, true, false, false, false, false, false,
-                           false, false, false, true, false, false, true, false,
-                           true, false, false, true, false, false, true, false,
-                           false, false, true, true, false, false, true, true,
-                           true, false, false, true, false, true, false, true]));
+        assert!(a.eq_vec(&[
+            true, false, true, false, false, false, false, false, false, false, false, true, false,
+            false, true, false, true, false, false, true, false, false, true, false, false, false,
+            true, true, false, false, true, true, true, false, false, true, false, true, false,
+            true
+        ]));
 
         // Append empty BitVec
-        let mut a = BitVec::from_bytes(&[0b10100000, 0b00010010, 0b10010010, 0b00110011, 0b10010101]);
+        let mut a =
+            BitVec::from_bytes(&[0b10100000, 0b00010010, 0b10010010, 0b00110011, 0b10010101]);
         let mut b = BitVec::new();
 
         a.append(&mut b);
@@ -2364,11 +2461,12 @@ mod tests {
         assert_eq!(a.len(), 40);
         assert_eq!(b.len(), 0);
 
-        assert!(a.eq_vec(&[true, false, true, false, false, false, false, false,
-                           false, false, false, true, false, false, true, false,
-                           true, false, false, true, false, false, true, false,
-                           false, false, true, true, false, false, true, true,
-                           true, false, false, true, false, true, false, true]));
+        assert!(a.eq_vec(&[
+            true, false, true, false, false, false, false, false, false, false, false, true, false,
+            false, true, false, true, false, false, true, false, false, true, false, false, false,
+            true, true, false, false, true, true, true, false, false, true, false, true, false,
+            true
+        ]));
     }
 
     #[test]
@@ -2402,35 +2500,39 @@ mod tests {
         assert!(a.eq_vec(&[true, false, false, true]));
 
         // Split at block boundary
-        let mut a = BitVec::from_bytes(&[0b10100000, 0b00010010, 0b10010010, 0b00110011, 0b11110011]);
+        let mut a =
+            BitVec::from_bytes(&[0b10100000, 0b00010010, 0b10010010, 0b00110011, 0b11110011]);
 
         let b = a.split_off(32);
 
         assert_eq!(a.len(), 32);
         assert_eq!(b.len(), 8);
 
-        assert!(a.eq_vec(&[true, false, true, false, false, false, false, false,
-                           false, false, false, true, false, false, true, false,
-                           true, false, false, true, false, false, true, false,
-                           false, false, true, true, false, false, true, true]));
+        assert!(a.eq_vec(&[
+            true, false, true, false, false, false, false, false, false, false, false, true, false,
+            false, true, false, true, false, false, true, false, false, true, false, false, false,
+            true, true, false, false, true, true
+        ]));
         assert!(b.eq_vec(&[true, true, true, true, false, false, true, true]));
 
         // Don't split at block boundary
-        let mut a = BitVec::from_bytes(&[0b10100000, 0b00010010, 0b10010010, 0b00110011,
-                                         0b01101011, 0b10101101]);
+        let mut a = BitVec::from_bytes(&[
+            0b10100000, 0b00010010, 0b10010010, 0b00110011, 0b01101011, 0b10101101,
+        ]);
 
         let b = a.split_off(13);
 
         assert_eq!(a.len(), 13);
         assert_eq!(b.len(), 35);
 
-        assert!(a.eq_vec(&[true, false, true, false, false, false, false, false,
-                           false, false, false, true, false]));
-        assert!(b.eq_vec(&[false, true, false, true, false, false, true, false,
-                           false, true, false, false, false, true, true, false,
-                           false, true, true, false, true, true, false, true,
-                           false, true, true,  true, false, true, false, true,
-                           true, false, true]));
+        assert!(a.eq_vec(&[
+            true, false, true, false, false, false, false, false, false, false, false, true, false
+        ]));
+        assert!(b.eq_vec(&[
+            false, true, false, true, false, false, true, false, false, true, false, false, false,
+            true, true, false, false, true, true, false, true, true, false, true, false, true,
+            true, true, false, true, false, true, true, false, true
+        ]));
     }
 
     #[test]
@@ -2470,7 +2572,7 @@ mod tests {
         let _a: Iter = b.iter();
     }
 
-    #[cfg(feature="serde")]
+    #[cfg(feature = "serde")]
     #[test]
     fn test_serialization() {
         let bit_vec: BitVec = BitVec::new();
@@ -2518,9 +2620,13 @@ mod tests {
         a.append(&mut b);
         a.append(&mut c);
 
-        assert_eq!(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-                     0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
-                     0x00, 0x00, 0x00, 0x00, 0x00, 0x03][..], &*a.to_bytes());
+        assert_eq!(
+            &[
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x03
+            ][..],
+            &*a.to_bytes()
+        );
     }
 
     #[test]
