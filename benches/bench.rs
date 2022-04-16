@@ -31,7 +31,7 @@ fn small_rng() -> XorShiftRng {
 #[bench]
 fn bench_usize_small(b: &mut Bencher) {
     let mut r = small_rng();
-    let mut bit_vec = 0 as usize;
+    let mut bit_vec = 0_usize;
     b.iter(|| {
         for _ in 0..100 {
             bit_vec |= 1 << ((r.next_u32() as usize) % U32_BITS);
@@ -167,7 +167,7 @@ fn bench_erathostenes(b: &mut test::Bencher) {
         black_box(&mut sieve);
         let mut i = 2;
         while i < sieve.len() {
-            if sieve[i] == true {
+            if sieve[i] {
                 primes.push(i);
             }
             let mut j = i;
@@ -192,7 +192,7 @@ fn bench_erathostenes_set_all(b: &mut test::Bencher) {
         black_box(&mut sieve);
         let mut i = 2;
         while i < sieve.len() {
-            if sieve[i] == true {
+            if sieve[i] {
                 primes.push(i);
             }
             let mut j = i;

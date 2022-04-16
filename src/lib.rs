@@ -425,6 +425,8 @@ impl<B: BitBlock> BitVec<B> {
 
     /// Exposes the raw block storage of this BitVec
     ///
+    /// # Safety
+    ///
     /// Can probably cause unsafety. Only really intended for BitSet.
     #[inline]
     pub unsafe fn storage_mut(&mut self) -> &mut Vec<B> {
@@ -1269,9 +1271,7 @@ impl<B: BitBlock> BitVec<B> {
     #[inline]
     pub fn capacity(&self) -> usize {
         self.storage
-            .capacity()
-            .checked_mul(B::bits())
-            .unwrap_or(usize::MAX)
+            .capacity().saturating_mul(B::bits())
     }
 
     /// Grows the `BitVec` in-place, adding `n` copies of `value` to the `BitVec`.
@@ -1392,6 +1392,8 @@ impl<B: BitBlock> BitVec<B> {
     }
 
     /// Sets the number of bits that this BitVec considers initialized.
+    ///
+    /// # Safety
     ///
     /// Almost certainly can cause bad stuff. Only really intended for BitSet.
     #[inline]
@@ -1690,10 +1692,10 @@ mod tests {
 
     #[test]
     fn test_10_elements() {
-        let mut act;
+        
         // all 0
 
-        act = BitVec::from_elem(10, false);
+        let mut act = BitVec::from_elem(10, false);
         assert!(
             (act.eq_vec(&[false, false, false, false, false, false, false, false, false, false]))
         );
@@ -1736,10 +1738,10 @@ mod tests {
 
     #[test]
     fn test_31_elements() {
-        let mut act;
+        
         // all 0
 
-        act = BitVec::from_elem(31, false);
+        let mut act = BitVec::from_elem(31, false);
         assert!(act.eq_vec(&[
             false, false, false, false, false, false, false, false, false, false, false, false,
             false, false, false, false, false, false, false, false, false, false, false, false,
@@ -1821,10 +1823,10 @@ mod tests {
 
     #[test]
     fn test_32_elements() {
-        let mut act;
+        
         // all 0
 
-        act = BitVec::from_elem(32, false);
+        let mut act = BitVec::from_elem(32, false);
         assert!(act.eq_vec(&[
             false, false, false, false, false, false, false, false, false, false, false, false,
             false, false, false, false, false, false, false, false, false, false, false, false,
@@ -1908,10 +1910,10 @@ mod tests {
 
     #[test]
     fn test_33_elements() {
-        let mut act;
+        
         // all 0
 
-        act = BitVec::from_elem(33, false);
+        let mut act = BitVec::from_elem(33, false);
         assert!(act.eq_vec(&[
             false, false, false, false, false, false, false, false, false, false, false, false,
             false, false, false, false, false, false, false, false, false, false, false, false,
@@ -2056,7 +2058,7 @@ mod tests {
     #[test]
     fn test_from_bools() {
         let bools = vec![true, false, true, true];
-        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let bit_vec: BitVec = bools.iter().copied().collect();
         assert_eq!(format!("{:?}", bit_vec), "1011");
     }
 
@@ -2074,12 +2076,12 @@ mod tests {
     #[test]
     fn test_bit_vec_iterator() {
         let bools = vec![true, false, true, true];
-        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let bit_vec: BitVec = bools.iter().copied().collect();
 
         assert_eq!(bit_vec.iter().collect::<Vec<bool>>(), bools);
 
         let long: Vec<_> = (0..10000).map(|i| i % 2 == 0).collect();
-        let bit_vec: BitVec = long.iter().map(|n| *n).collect();
+        let bit_vec: BitVec = long.iter().copied().collect();
         assert_eq!(bit_vec.iter().collect::<Vec<bool>>(), long)
     }
 
@@ -2214,13 +2216,13 @@ mod tests {
         let mut a = BitVec::from_elem(5, false);
         let mut b = BitVec::from_elem(5, false);
 
-        assert!(!(a < b) && !(b < a));
+        assert!(a >= b && b >= a);
         b.set(2, true);
         assert!(a < b);
         a.set(3, true);
         assert!(a < b);
         a.set(2, true);
-        assert!(!(a < b) && b < a);
+        assert!(a >= b && b < a);
         b.set(0, true);
         assert!(a < b);
     }
@@ -2230,7 +2232,7 @@ mod tests {
         let mut a = BitVec::from_elem(5, false);
         let mut b = BitVec::from_elem(5, false);
 
-        assert!(a <= b && a >= b);
+        assert!(a == b);
         a.set(1, true);
         assert!(a > b && a >= b);
         assert!(b < a && b <= a);
@@ -2341,7 +2343,7 @@ mod tests {
         s.reserve_exact(7 * U32_BITS);
         assert!(s.capacity() >= 12 * U32_BITS);
         s.reserve(7 * U32_BITS + 1);
-        assert!(s.capacity() >= 12 * U32_BITS + 1);
+        assert!(s.capacity() > 12 * U32_BITS);
         // Check that length hasn't changed
         assert_eq!(s.len(), 5 * U32_BITS);
         s.push(true);
@@ -2538,7 +2540,7 @@ mod tests {
     #[test]
     fn test_into_iter() {
         let bools = vec![true, false, true, true];
-        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let bit_vec: BitVec = bools.iter().copied().collect();
         let mut iter = bit_vec.into_iter();
         assert_eq!(Some(true), iter.next());
         assert_eq!(Some(false), iter.next());
@@ -2547,7 +2549,7 @@ mod tests {
         assert_eq!(None, iter.next());
         assert_eq!(None, iter.next());
 
-        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let bit_vec: BitVec = bools.iter().copied().collect();
         let mut iter = bit_vec.into_iter();
         assert_eq!(Some(true), iter.next_back());
         assert_eq!(Some(true), iter.next_back());
@@ -2556,7 +2558,7 @@ mod tests {
         assert_eq!(None, iter.next_back());
         assert_eq!(None, iter.next_back());
 
-        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let bit_vec: BitVec = bools.iter().copied().collect();
         let mut iter = bit_vec.into_iter();
         assert_eq!(Some(true), iter.next_back());
         assert_eq!(Some(true), iter.next());
