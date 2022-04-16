@@ -1270,8 +1270,7 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     #[inline]
     pub fn capacity(&self) -> usize {
-        self.storage
-            .capacity().saturating_mul(B::bits())
+        self.storage.capacity().saturating_mul(B::bits())
     }
 
     /// Grows the `BitVec` in-place, adding `n` copies of `value` to the `BitVec`.
@@ -1692,7 +1691,6 @@ mod tests {
 
     #[test]
     fn test_10_elements() {
-        
         // all 0
 
         let mut act = BitVec::from_elem(10, false);
@@ -1738,7 +1736,6 @@ mod tests {
 
     #[test]
     fn test_31_elements() {
-        
         // all 0
 
         let mut act = BitVec::from_elem(31, false);
@@ -1823,7 +1820,6 @@ mod tests {
 
     #[test]
     fn test_32_elements() {
-        
         // all 0
 
         let mut act = BitVec::from_elem(32, false);
@@ -1910,7 +1906,6 @@ mod tests {
 
     #[test]
     fn test_33_elements() {
-        
         // all 0
 
         let mut act = BitVec::from_elem(33, false);
