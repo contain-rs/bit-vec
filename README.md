@@ -7,7 +7,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/bit-vec?label=latest)](https://crates.io/crates/bit-vec)
 [![Documentation](https://docs.rs/bit-vec/badge.svg?version=0.6.3)](https://docs.rs/bit-vec/0.6.3/bit_vec/)
-[![Build Status](https://travis-ci.org/contain-rs/bit-vec.svg?branch=master)](https://travis-ci.org/contain-rs/bit-vec)
+![Rust CI](https://github.com/contain-rs/linked-hash-map/workflows/Rust/badge.svg?branch=master)
 [![rustc 1.0+]][Rust 1.0]
 [![serde_derive: rustc 1.31+]][Rust 1.31]
 <br />
