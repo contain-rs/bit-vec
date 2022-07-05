@@ -125,6 +125,7 @@ pub trait BitBlock:
     + BitOr<Self, Output = Self>
     + BitXor<Self, Output = Self>
     + Rem<Self, Output = Self>
+    + BitOrAssign<Self>
     + Eq
     + Ord
     + hash::Hash
@@ -286,13 +287,7 @@ impl BitVec<u32> {
     /// ```
     #[inline]
     pub fn from_elem(nbits: usize, bit: bool) -> Self {
-        let nblocks = blocks_for_bits::<B>(nbits);
-        let mut bit_vec = BitVec {
-            storage: vec![if bit { !B::zero() } else { B::zero() }; nblocks],
-            nbits,
-        };
-        bit_vec.fix_last_block();
-        bit_vec
+	    BitVec::<u32>::from_elem_general(nbits, bit)
     }
 
     /// Constructs a new, empty `BitVec` with the specified capacity.
@@ -304,10 +299,7 @@ impl BitVec<u32> {
     /// *length* of the returned bitvector, but only the *capacity*.
     #[inline]
     pub fn with_capacity(nbits: usize) -> Self {
-        BitVec {
-            storage: Vec::with_capacity(blocks_for_bits::<B>(nbits)),
-            nbits: 0,
-        }
+	    BitVec::<u32>::with_capacity_general(nbits)
     }
 
     /// Transforms a byte-vector into a `BitVec`. Each byte becomes eight bits,
@@ -326,11 +318,104 @@ impl BitVec<u32> {
     ///                     false, false, true, false]));
     /// ```
     pub fn from_bytes(bytes: &[u8]) -> Self {
+	    BitVec::<u32>::from_bytes_general(bytes)
+    }
+
+    /// Creates a `BitVec` of the specified length where the value at each index
+    /// is `f(index)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let bv = BitVec::from_fn(5, |i| { i % 2 == 0 });
+    /// assert!(bv.eq_vec(&[true, false, true, false, true]));
+    /// ```
+    #[inline]
+    pub fn from_fn<F>(len: usize, mut f: F) -> Self
+    where
+        F: FnMut(usize) -> bool,
+    {
+	BitVec::<u32>::from_fn_general(len, f)
+    }
+}
+
+impl<B: BitBlock> BitVec<B> {
+    /// Creates an empty `BitVec`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    /// let mut bv = BitVec::<usize>::new_general();
+    /// ```
+    #[inline]
+    pub fn new_general() -> Self {
+        Default::default()
+    }
+
+    /// Creates a `BitVec` that holds `nbits` elements, setting each element
+    /// to `bit`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut bv = BitVec::<usize>::from_elem_general(10, false);
+    /// assert_eq!(bv.len(), 10);
+    /// for x in bv.iter() {
+    ///     assert_eq!(x, false);
+    /// }
+    /// ```
+    #[inline]
+    pub fn from_elem_general(nbits: usize, bit: bool) -> Self {
+        let nblocks = blocks_for_bits::<B>(nbits);
+        let mut bit_vec = BitVec {
+            storage: vec![if bit { !B::zero() } else { B::zero() }; nblocks],
+            nbits,
+        };
+        bit_vec.fix_last_block();
+        bit_vec
+    }
+
+    /// Constructs a new, empty `BitVec` with the specified capacity.
+    ///
+    /// The bitvector will be able to hold at least `capacity` bits without
+    /// reallocating. If `capacity` is 0, it will not allocate.
+    ///
+    /// It is important to note that this function does not specify the
+    /// *length* of the returned bitvector, but only the *capacity*.
+    #[inline]
+    pub fn with_capacity_general(nbits: usize) -> Self {
+        BitVec {
+            storage: Vec::with_capacity(blocks_for_bits::<B>(nbits)),
+            nbits: 0,
+        }
+    }
+
+    /// Transforms a byte-vector into a `BitVec`. Each byte becomes eight bits,
+    /// with the most significant bits of each byte coming first. Each
+    /// bit becomes `true` if equal to 1 or `false` if equal to 0.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let bv = BitVec::<usize>::from_bytes_general(&[0b10100000, 0b00010010]);
+    /// assert!(bv.eq_vec(&[true, false, true, false,
+    ///                     false, false, false, false,
+    ///                     false, false, false, true,
+    ///                     false, false, true, false]));
+    /// ```
+    pub fn from_bytes_general(bytes: &[u8]) -> Self {
         let len = bytes
             .len()
             .checked_mul(u8::bits())
             .expect("capacity overflow");
-        let mut bit_vec = BitVec::with_capacity(len);
+        let mut bit_vec = BitVec::with_capacity_general(len);
         let complete_words = bytes.len() / B::bytes();
         let extra_bytes = bytes.len() % B::bytes();
 
@@ -363,23 +448,21 @@ impl BitVec<u32> {
     /// ```
     /// use bit_vec::BitVec;
     ///
-    /// let bv = BitVec::from_fn(5, |i| { i % 2 == 0 });
+    /// let bv = BitVec::<usize>::from_fn_general(5, |i| { i % 2 == 0 });
     /// assert!(bv.eq_vec(&[true, false, true, false, true]));
     /// ```
     #[inline]
-    pub fn from_fn<F>(len: usize, mut f: F) -> Self
+    pub fn from_fn_general<F>(len: usize, mut f: F) -> Self
     where
         F: FnMut(usize) -> bool,
     {
-        let mut bit_vec = BitVec::from_elem(len, false);
+        let mut bit_vec = BitVec::from_elem_general(len, false);
         for i in 0..len {
             bit_vec.set(i, f(i));
         }
         bit_vec
     }
-}
 
-impl<B: BitBlock> BitVec<B> {
     /// Applies the given operation to the blocks of self and other, and sets
     /// self to be the result. This relies on the caller not to corrupt the
     /// last word.
