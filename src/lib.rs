@@ -399,7 +399,7 @@ impl<B: BitBlock> BitVec<B> {
         changed_bits != B::zero()
     }
 
-    /// Iterator over mutable refs to  the underlying blocks of data.
+    /// Iterator over mutable refs to the underlying blocks of data.
     #[inline]
     fn blocks_mut(&mut self) -> MutBlocks<B> {
         // (2)
@@ -927,6 +927,29 @@ impl<B: BitBlock> BitVec<B> {
             tmp == !B::zero()
             // and then check the last one has enough ones
         }) && (last_word == mask_for_bits(self.nbits))
+    }
+
+    /// Returns the number of ones in the binary representation.
+    ///
+    /// Also known as the
+    /// [Hamming weight](https://en.wikipedia.org/wiki/Hamming_weight).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut bv = BitVec::from_elem(100, true);
+    /// assert_eq!(bv.count_ones(), 100);
+    ///
+    /// bv.set(50, false);
+    /// assert_eq!(bv.count_ones(), 99);
+    /// ```
+    #[inline]
+    pub fn count_ones(&self) -> usize {
+        self.ensure_invariant();
+        // Add the number of ones of each block.
+        self.blocks().map(|elem| elem.count_ones()).sum()
     }
 
     /// Returns an iterator over the elements of the vector in order.
@@ -2634,5 +2657,23 @@ mod tests {
         a.append(&mut b);
         a.append(&mut c);
         assert_eq!(&[0xc0, 0x00, 0x00, 0x00, 0x3f, 0xc0][..], &*a.to_bytes());
+    }
+
+    #[test]
+    fn test_count_ones() {
+        for i in 0..1000 {
+            let mut t = BitVec::from_elem(i, true);
+            let mut f = BitVec::from_elem(i, false);
+            assert_eq!(i, t.count_ones());
+            assert_eq!(0, f.count_ones());
+            if i > 20 {
+                t.set(10, false);
+                t.set(i - 10, false);
+                assert_eq!(i - 2, t.count_ones());
+                f.set(10, true);
+                f.set(i - 10, true);
+                assert_eq!(2, f.count_ones());
+            }
+        }
     }
 }
