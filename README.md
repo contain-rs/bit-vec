@@ -60,6 +60,10 @@ bit-vec = { version = "0.6", default-features = false }
 
 <!-- cargo-rdme start -->
 
+### Description
+
+Dynamic collections implemented with compact bit vectors.
+
 ### Examples
 
 This is a simple example of the [Sieve of Eratosthenes][sieve]

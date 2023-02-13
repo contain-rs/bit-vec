@@ -25,6 +25,10 @@
 // (4) `BitSet` is tightly coupled with `BitVec`, so any changes you make in
 // `BitVec` will need to be reflected in `BitSet`.
 
+//! # Description
+//!
+//! Dynamic collections implemented with compact bit vectors.
+//!
 //! # Examples
 //!
 //! This is a simple example of the [Sieve of Eratosthenes][sieve]
