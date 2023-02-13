@@ -60,4 +60,59 @@ If you want to use bit-vec in a program that has `#![no_std]`, just drop default
 bit-vec = { version = "0.6", default-features = false }
 ```
 
-<!-- cargo-rdme -->
+<!-- cargo-rdme start -->
+
+### Examples
+
+This is a simple example of the [Sieve of Eratosthenes][sieve]
+which calculates prime numbers up to a given limit.
+
+[sieve]: http://en.wikipedia.org/wiki/Sieve_of_Eratosthenes
+
+```rust
+use bit_vec::BitVec;
+
+let max_prime = 10000;
+
+// Store the primes as a BitVec
+let primes = {
+    // Assume all numbers are prime to begin, and then we
+    // cross off non-primes progressively
+    let mut bv = BitVec::from_elem(max_prime, true);
+
+    // Neither 0 nor 1 are prime
+    bv.set(0, false);
+    bv.set(1, false);
+
+    for i in 2.. 1 + (max_prime as f64).sqrt() as usize {
+        // if i is a prime
+        if bv[i] {
+            // Mark all multiples of i as non-prime (any multiples below i * i
+            // will have been marked as non-prime previously)
+            for j in i.. {
+                if i * j >= max_prime {
+                    break;
+                }
+                bv.set(i * j, false)
+            }
+        }
+    }
+    bv
+};
+
+// Simple primality tests below our max bound
+let print_primes = 20;
+print!("The primes below {} are: ", print_primes);
+for x in 0..print_primes {
+    if primes.get(x).unwrap_or(false) {
+        print!("{} ", x);
+    }
+}
+println!();
+
+let num_primes = primes.iter().filter(|x| *x).count();
+println!("There are {} primes below {}", num_primes, max_prime);
+assert_eq!(num_primes, 1_229);
+```
+
+<!-- cargo-rdme end -->

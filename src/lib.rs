@@ -1,4 +1,4 @@
-// Copyright 2012-2020 The Rust Project Developers. See the COPYRIGHT
+// Copyright 2012-2023 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
 // http://rust-lang.org/COPYRIGHT.
 //
@@ -25,8 +25,6 @@
 // (4) `BitSet` is tightly coupled with `BitVec`, so any changes you make in
 // `BitVec` will need to be reflected in `BitSet`.
 
-//! Collections implemented with bit vectors.
-//!
 //! # Examples
 //!
 //! This is a simple example of the [Sieve of Eratosthenes][sieve]
