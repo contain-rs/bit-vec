@@ -42,8 +42,6 @@ bit-vec = "0.6"
 
 and this to your crate root:
 
-```rust
-extern crate bit_vec;
 ```
 
 If you want [serde](https://github.com/serde-rs/serde) support, include the feature like this:
@@ -116,3 +114,10 @@ assert_eq!(num_primes, 1_229);
 ```
 
 <!-- cargo-rdme end -->
+
+## License
+
+Dual-licensed for compatibility with the Rust project.
+
+Licensed under the Apache License Version 2.0: http://www.apache.org/licenses/LICENSE-2.0,
+or the MIT license: http://opensource.org/licenses/MIT, at your option.
