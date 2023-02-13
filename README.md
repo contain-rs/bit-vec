@@ -13,7 +13,7 @@
 <br />
 <br />
 [![Dependency Status][deps.rs status]][deps.rs link]
-[![Download Status][download count shield]][crates.io link]
+[![Download Status][shields.io download count]][crates.io link]
 
   </p>
 </div>
