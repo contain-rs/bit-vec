@@ -11,6 +11,7 @@ keywords = ["data-structures", "bitvec", "bitmask", "bitmap", "bit"]
 readme = "README.md"
 
 [dependencies]
+borsh = { version = "1.2.0", default-features = false, features = ["derive"], optional = true }
 serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
 
 [dev-dependencies]
