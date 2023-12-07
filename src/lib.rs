@@ -95,6 +95,8 @@ use std::vec::Vec;
 extern crate serde;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "borsh")]
+extern crate borsh;
 
 #[cfg(not(feature = "std"))]
 #[macro_use]
@@ -212,6 +214,10 @@ static FALSE: bool = false;
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 /// ```
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "borsh",
+    derive(borsh::BorshDeserialize, borsh::BorshSerialize)
+)]
 pub struct BitVec<B = u32> {
     /// Internal representation of the bit vector
     storage: Vec<B>,
