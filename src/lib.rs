@@ -541,9 +541,9 @@ impl<B: BitBlock> BitVec<B> {
     /// use bit_vec::BitVec;
     ///
     /// let mut bv = BitVec::from_bytes(&[0b01100000]);
-    /// *(bv.get_mut(0).unrwap()) = true;
-    /// *(bv.get_mut(1).unrwap()) = false;
-    /// assert_eq!(bv.get_mut(100), None);
+    /// *(bv.get_mut(0).unwrap()) = true;
+    /// *(bv.get_mut(1).unwrap()) = false;
+    /// assert!(bv.get_mut(100).is_none());
     /// assert_eq!(bv, BitVec::from_bytes(&[0b10100000]));
     /// ```
     #[inline]
@@ -552,7 +552,9 @@ impl<B: BitBlock> BitVec<B> {
             MutBorrowedBit {
                 vec: Rc::new(RefCell::new(self)),
                 index,
-                value
+                #[cfg(debug_assertions)]
+                old_value: value,
+                new_value: value
             })
     }
 
@@ -1601,10 +1603,13 @@ pub struct Iter<'a, B: 'a = u32> {
     range: Range<usize>,
 }
 
+#[derive(Debug)]
 pub struct MutBorrowedBit<'a, B: BitBlock> {
     vec: Rc<RefCell<&'a mut BitVec<B>>>,
     index: usize,
-    value: bool
+    #[cfg(debug_assertions)]
+    old_value: bool,
+    new_value: bool
 }
 
 /// An iterator for `BitVec`.
@@ -1618,19 +1623,22 @@ impl <'a, B: BitBlock> Deref for MutBorrowedBit<'a, B> {
     type Target = bool;
 
     fn deref(&self) -> &Self::Target {
-        &self.value
+        &self.new_value
     }
 }
 
 impl <'a, B: BitBlock> DerefMut for MutBorrowedBit<'a, B> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.value
+        &mut self.new_value
     }
 }
 
 impl <'a, B: BitBlock> Drop for MutBorrowedBit<'a, B> {
     fn drop(&mut self) {
-        (*self.vec).borrow_mut().set(self.index, self.value)
+        let mut vec = (*self.vec).borrow_mut();
+        #[cfg(debug_assertions)]
+        debug_assert_eq!(Some(self.old_value), vec.get(self.index), "Mutably-borrowed bit was modified externally!");
+        vec.set(self.index, self.new_value);
     }
 }
 
@@ -1659,7 +1667,9 @@ impl<'a, B: BitBlock> Iterator for IterMut<'a, B> {
         Some(MutBorrowedBit {
             vec: self.vec.clone(),
             index,
-            value
+            #[cfg(debug_assertions)]
+            old_value: value,
+            new_value: value
         })
     }
 
