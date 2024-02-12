@@ -89,6 +89,8 @@
 #[macro_use]
 extern crate std;
 #[cfg(feature = "std")]
+use std::rc::Rc;
+#[cfg(feature = "std")]
 use std::vec::Vec;
 
 #[cfg(feature = "serde")]
@@ -100,8 +102,11 @@ use serde::{Deserialize, Serialize};
 #[macro_use]
 extern crate alloc;
 #[cfg(not(feature = "std"))]
+use alloc::rc::Rc;
+#[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 
+use core::cell::RefCell;
 use core::cmp;
 use core::cmp::Ordering;
 use core::fmt;
@@ -216,7 +221,7 @@ pub struct BitVec<B = u32> {
     /// Internal representation of the bit vector
     storage: Vec<B>,
     /// The number of valid bits in the internal representation
-    nbits: usize,
+    nbits: usize
 }
 
 // FIXME(Gankro): NopeNopeNopeNopeNope (wait for IndexGet to be a thing)
@@ -545,7 +550,7 @@ impl<B: BitBlock> BitVec<B> {
     pub fn get_mut(&mut self, index: usize) -> Option<MutBorrowedBit<B>> {
         self.get(index).map(move |value|
             MutBorrowedBit {
-                vec: self,
+                vec: Rc::new(RefCell::new(self)),
                 index,
                 value
             })
@@ -970,6 +975,31 @@ impl<B: BitBlock> BitVec<B> {
         Iter {
             bit_vec: self,
             range: 0..self.nbits,
+        }
+    }
+
+    /// Returns an iterator over mutable smart pointers to the elements of the vector in order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut a = BitVec::from_elem(8, false);
+    /// a.iter_mut().enumerate().for_each(|(index, mut bit)| {
+    ///     *bit = if index % 2 == 1 { true } else { false };
+    /// });
+    /// assert!(a.eq_vec(&[
+    ///    false, true, false, true, false, true, false, true
+    /// ]));
+    /// ```
+    #[inline]
+    pub fn iter_mut(&mut self) -> IterMut<B> {
+        self.ensure_invariant();
+        let nbits = self.nbits;
+        IterMut {
+            vec: Rc::new(RefCell::new(self)),
+            range: 0..nbits
         }
     }
 
@@ -1572,9 +1602,16 @@ pub struct Iter<'a, B: 'a = u32> {
 }
 
 pub struct MutBorrowedBit<'a, B: BitBlock> {
-    vec: &'a mut BitVec<B>,
+    vec: Rc<RefCell<&'a mut BitVec<B>>>,
     index: usize,
     value: bool
+}
+
+/// An iterator for `BitVec`.
+#[derive(Clone)]
+pub struct IterMut<'a, B: 'a = u32> {
+    vec: Rc<RefCell<&'a mut BitVec<B>>>,
+    range: Range<usize>,
 }
 
 impl <'a, B: BitBlock> Deref for MutBorrowedBit<'a, B> {
@@ -1593,7 +1630,7 @@ impl <'a, B: BitBlock> DerefMut for MutBorrowedBit<'a, B> {
 
 impl <'a, B: BitBlock> Drop for MutBorrowedBit<'a, B> {
     fn drop(&mut self) {
-        self.vec.set(self.index, self.value)
+        (*self.vec).borrow_mut().set(self.index, self.value)
     }
 }
 
@@ -1605,6 +1642,25 @@ impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
         // NB: indexing is slow for extern crates when it has to go through &TRUE or &FALSE
         // variables.  get is more direct, and unwrap is fine since we're sure of the range.
         self.range.next().map(|i| self.bit_vec.get(i).unwrap())
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.range.size_hint()
+    }
+}
+
+impl<'a, B: BitBlock> Iterator for IterMut<'a, B> {
+    type Item = MutBorrowedBit<'a, B>;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        let index = self.range.next()?;
+        let value = (*self.vec).borrow().get(index)?;
+        Some(MutBorrowedBit {
+            vec: self.vec.clone(),
+            index,
+            value
+        })
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -2696,6 +2752,16 @@ mod tests {
         drop(a_bit_1);
         assert!(a.eq_vec(&[
             false, true, false
+        ]));
+    }
+    #[test]
+    fn test_iter_mut() {
+        let mut a = BitVec::from_elem(8, false);
+        a.iter_mut().enumerate().for_each(|(index, mut bit)| {
+            *bit = if index % 2 == 1 { true } else { false };
+        });
+        assert!(a.eq_vec(&[
+            false, true, false, true, false, true, false, true
         ]));
     }
 }
