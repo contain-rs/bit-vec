@@ -1612,8 +1612,7 @@ pub struct MutBorrowedBit<'a, B: 'a + BitBlock> {
     new_value: bool
 }
 
-/// An iterator for `BitVec`.
-#[derive(Clone)]
+/// An iterator for mutable references to the bits in a `BitVec`.
 pub struct IterMut<'a, B: 'a + BitBlock = u32> {
     vec: Rc<RefCell<&'a mut BitVec<B>>>,
     range: Range<usize>,
