@@ -1734,7 +1734,7 @@ pub struct Iter<'a, B: 'a = u32> {
 }
 
 #[derive(Debug)]
-pub struct MutBorrowedBit<'a, B: BitBlock> {
+pub struct MutBorrowedBit<'a, B: 'a + BitBlock> {
     vec: Rc<RefCell<&'a mut BitVec<B>>>,
     index: usize,
     #[cfg(debug_assertions)]
@@ -1744,9 +1744,23 @@ pub struct MutBorrowedBit<'a, B: BitBlock> {
 
 /// An iterator for `BitVec`.
 #[derive(Clone)]
-pub struct IterMut<'a, B: 'a = u32> {
+pub struct IterMut<'a, B: 'a + BitBlock = u32> {
     vec: Rc<RefCell<&'a mut BitVec<B>>>,
     range: Range<usize>,
+}
+
+impl <'a, B: 'a + BitBlock> IterMut<'a, B> {
+    fn get(&mut self, index: Option<usize>) -> Option<MutBorrowedBit<'a, B>> {
+        let index = index?;
+        let value = (*self.vec).borrow().get(index)?;
+        Some(MutBorrowedBit {
+            vec: self.vec.clone(),
+            index,
+            #[cfg(debug_assertions)]
+            old_value: value,
+            new_value: value
+        })
+    }
 }
 
 impl <'a, B: BitBlock> Deref for MutBorrowedBit<'a, B> {
@@ -1792,15 +1806,8 @@ impl<'a, B: BitBlock> Iterator for IterMut<'a, B> {
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        let index = self.range.next()?;
-        let value = (*self.vec).borrow().get(index)?;
-        Some(MutBorrowedBit {
-            vec: self.vec.clone(),
-            index,
-            #[cfg(debug_assertions)]
-            old_value: value,
-            new_value: value
-        })
+        let index = self.range.next();
+        self.get(index)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -1815,7 +1822,17 @@ impl<'a, B: BitBlock> DoubleEndedIterator for Iter<'a, B> {
     }
 }
 
+impl<'a, B: BitBlock> DoubleEndedIterator for IterMut<'a, B> {
+    #[inline]
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let index = self.range.next_back();
+        self.get(index)
+    }
+}
+
 impl<'a, B: BitBlock> ExactSizeIterator for Iter<'a, B> {}
+
+impl<'a, B: BitBlock> ExactSizeIterator for IterMut<'a, B> {}
 
 impl<'a, B: BitBlock> IntoIterator for &'a BitVec<B> {
     type Item = bool;
