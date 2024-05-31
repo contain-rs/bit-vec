@@ -981,7 +981,10 @@ impl<B: BitBlock> BitVec<B> {
         self.ensure_invariant();
         // Add the number of zeros of each block.
         let extra_zeros = (B::bits() - (self.len() % B::bits())) % B::bits();
-        self.blocks().map(|elem| elem.count_zeros() as u64).sum::<u64>() - extra_zeros as u64
+        self.blocks()
+            .map(|elem| elem.count_zeros() as u64)
+            .sum::<u64>()
+            - extra_zeros as u64
     }
 
     /// Returns an iterator over the elements of the vector in order.
