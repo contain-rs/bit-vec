@@ -97,6 +97,8 @@ extern crate serde;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "borsh")]
 extern crate borsh;
+#[cfg(feature = "miniserde")]
+extern crate miniserde;
 
 #[cfg(not(feature = "std"))]
 #[macro_use]
@@ -223,6 +225,10 @@ static FALSE: bool = false;
 #[cfg_attr(
     feature = "borsh",
     derive(borsh::BorshDeserialize, borsh::BorshSerialize)
+)]
+#[cfg_attr(
+    feature = "miniserde",
+    derive(miniserde::Deserialize, miniserde::Serialize)
 )]
 pub struct BitVec<B = u32> {
     /// Internal representation of the bit vector
@@ -2645,6 +2651,21 @@ mod tests {
         let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
         let serialized = serde_json::to_string(&bit_vec).unwrap();
         let unserialized = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(bit_vec, unserialized);
+    }
+
+    #[cfg(feature = "miniserde")]
+    #[test]
+    fn test_miniserde_serialization() {
+        let bit_vec: BitVec = BitVec::new();
+        let serialized = miniserde::json::to_string(&bit_vec);
+        let unserialized: BitVec = miniserde::json::from_str(&serialized[..]).unwrap();
+        assert_eq!(bit_vec, unserialized);
+
+        let bools = vec![true, false, true, true];
+        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let serialized = miniserde::json::to_string(&bit_vec);
+        let unserialized = miniserde::json::from_str(&serialized[..]).unwrap();
         assert_eq!(bit_vec, unserialized);
     }
 
