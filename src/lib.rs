@@ -124,7 +124,6 @@ use core::iter::FromIterator;
 use core::mem;
 use core::ops::*;
 use core::slice;
-use core::{u8, usize};
 
 type MutBlocks<'a, B> = slice::IterMut<'a, B>;
 
@@ -613,6 +612,11 @@ impl<B: BitBlock> BitVec<B> {
     }
 
     /// Retrieves a smart pointer to the value at index `i`, without doing bounds checking.
+    ///
+    /// # Safety
+    ///
+    /// Calling this method with out-of-bounds `index` may cause undefined behavior even when
+    /// the result is not used.
     ///
     /// # Examples
     ///
@@ -2986,6 +2990,7 @@ mod tests {
         }
     }
 
+    #[test]
     fn test_get_mut() {
         let mut a = BitVec::from_elem(3, false);
         let mut a_bit_1 = a.get_mut(1).unwrap();
