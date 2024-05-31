@@ -630,9 +630,10 @@ impl<B: BitBlock> BitVec<B> {
     pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> MutBorrowedBit<B> {
         let value = self.get_unchecked(index);
         MutBorrowedBit {
+            #[cfg(debug_assertions)]
             old_value: value,
             new_value: value,
-            vec: self,
+            vec: Rc::new(RefCell::new(self)),
             index,
         }
     }
