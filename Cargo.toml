@@ -27,3 +27,6 @@ serde_std = ["std", "serde/std"]
 serde_no_std = ["serde/alloc"]
 borsh_std = ["borsh/std"]
 std = []
+
+[package.metadata.docs.rs]
+features = ["borsh", "serde", "miniserde", "nanoserde"]
