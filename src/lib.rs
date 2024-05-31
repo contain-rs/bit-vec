@@ -247,7 +247,7 @@ pub struct BitVec<B = u32> {
     /// Internal representation of the bit vector
     storage: Vec<B>,
     /// The number of valid bits in the internal representation
-    nbits: usize
+    nbits: usize,
 }
 
 // FIXME(Gankro): NopeNopeNopeNopeNope (wait for IndexGet to be a thing)
