@@ -89,6 +89,8 @@
 #[macro_use]
 extern crate std;
 #[cfg(feature = "std")]
+use std::rc::Rc;
+#[cfg(feature = "std")]
 use std::vec::Vec;
 
 #[cfg(feature = "serde")]
@@ -108,8 +110,11 @@ use nanoserde::{DeBin, DeJson, DeRon, SerBin, SerJson, SerRon};
 #[macro_use]
 extern crate alloc;
 #[cfg(not(feature = "std"))]
+use alloc::rc::Rc;
+#[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 
+use core::cell::RefCell;
 use core::cmp;
 use core::cmp::Ordering;
 use core::fmt;
@@ -583,6 +588,56 @@ impl<B: BitBlock> BitVec<B> {
         block & (B::one() << b) != B::zero()
     }
 
+    /// Retrieves a smart pointer to the value at index `i`, or `None` if the index is out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut bv = BitVec::from_bytes(&[0b01100000]);
+    /// *bv.get_mut(0).unwrap() = true;
+    /// *bv.get_mut(1).unwrap() = false;
+    /// assert!(bv.get_mut(100).is_none());
+    /// assert_eq!(bv, BitVec::from_bytes(&[0b10100000]));
+    /// ```
+    #[inline]
+    pub fn get_mut(&mut self, index: usize) -> Option<MutBorrowedBit<B>> {
+        self.get(index).map(move |value| MutBorrowedBit {
+            vec: Rc::new(RefCell::new(self)),
+            index,
+            #[cfg(debug_assertions)]
+            old_value: value,
+            new_value: value,
+        })
+    }
+
+    /// Retrieves a smart pointer to the value at index `i`, without doing bounds checking.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut bv = BitVec::from_bytes(&[0b01100000]);
+    /// unsafe {
+    ///     *bv.get_unchecked_mut(0) = true;
+    ///     *bv.get_unchecked_mut(1) = false;
+    /// }
+    /// assert_eq!(bv, BitVec::from_bytes(&[0b10100000]));
+    /// ```
+    #[inline]
+    pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> MutBorrowedBit<B> {
+        let value = self.get_unchecked(index);
+        MutBorrowedBit {
+            #[cfg(debug_assertions)]
+            old_value: value,
+            new_value: value,
+            vec: Rc::new(RefCell::new(self)),
+            index,
+        }
+    }
+
     /// Sets the value of a bit at an index `i`.
     ///
     /// # Panics
@@ -1052,6 +1107,31 @@ impl<B: BitBlock> BitVec<B> {
         Iter {
             bit_vec: self,
             range: 0..self.nbits,
+        }
+    }
+
+    /// Returns an iterator over mutable smart pointers to the elements of the vector in order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut a = BitVec::from_elem(8, false);
+    /// a.iter_mut().enumerate().for_each(|(index, mut bit)| {
+    ///     *bit = if index % 2 == 1 { true } else { false };
+    /// });
+    /// assert!(a.eq_vec(&[
+    ///    false, true, false, true, false, true, false, true
+    /// ]));
+    /// ```
+    #[inline]
+    pub fn iter_mut(&mut self) -> IterMut<B> {
+        self.ensure_invariant();
+        let nbits = self.nbits;
+        IterMut {
+            vec: Rc::new(RefCell::new(self)),
+            range: 0..nbits,
         }
     }
 
@@ -1653,6 +1733,62 @@ pub struct Iter<'a, B: 'a = u32> {
     range: Range<usize>,
 }
 
+#[derive(Debug)]
+pub struct MutBorrowedBit<'a, B: 'a + BitBlock> {
+    vec: Rc<RefCell<&'a mut BitVec<B>>>,
+    index: usize,
+    #[cfg(debug_assertions)]
+    old_value: bool,
+    new_value: bool,
+}
+
+/// An iterator for mutable references to the bits in a `BitVec`.
+pub struct IterMut<'a, B: 'a + BitBlock = u32> {
+    vec: Rc<RefCell<&'a mut BitVec<B>>>,
+    range: Range<usize>,
+}
+
+impl<'a, B: 'a + BitBlock> IterMut<'a, B> {
+    fn get(&mut self, index: Option<usize>) -> Option<MutBorrowedBit<'a, B>> {
+        let index = index?;
+        let value = (*self.vec).borrow().get(index)?;
+        Some(MutBorrowedBit {
+            vec: self.vec.clone(),
+            index,
+            #[cfg(debug_assertions)]
+            old_value: value,
+            new_value: value,
+        })
+    }
+}
+
+impl<'a, B: BitBlock> Deref for MutBorrowedBit<'a, B> {
+    type Target = bool;
+
+    fn deref(&self) -> &Self::Target {
+        &self.new_value
+    }
+}
+
+impl<'a, B: BitBlock> DerefMut for MutBorrowedBit<'a, B> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.new_value
+    }
+}
+
+impl<'a, B: BitBlock> Drop for MutBorrowedBit<'a, B> {
+    fn drop(&mut self) {
+        let mut vec = (*self.vec).borrow_mut();
+        #[cfg(debug_assertions)]
+        debug_assert_eq!(
+            Some(self.old_value),
+            vec.get(self.index),
+            "Mutably-borrowed bit was modified externally!"
+        );
+        vec.set(self.index, self.new_value);
+    }
+}
+
 impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
     type Item = bool;
 
@@ -1668,6 +1804,20 @@ impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
     }
 }
 
+impl<'a, B: BitBlock> Iterator for IterMut<'a, B> {
+    type Item = MutBorrowedBit<'a, B>;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        let index = self.range.next();
+        self.get(index)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.range.size_hint()
+    }
+}
+
 impl<'a, B: BitBlock> DoubleEndedIterator for Iter<'a, B> {
     #[inline]
     fn next_back(&mut self) -> Option<bool> {
@@ -1675,7 +1825,17 @@ impl<'a, B: BitBlock> DoubleEndedIterator for Iter<'a, B> {
     }
 }
 
+impl<'a, B: BitBlock> DoubleEndedIterator for IterMut<'a, B> {
+    #[inline]
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let index = self.range.next_back();
+        self.get(index)
+    }
+}
+
 impl<'a, B: BitBlock> ExactSizeIterator for Iter<'a, B> {}
+
+impl<'a, B: BitBlock> ExactSizeIterator for IterMut<'a, B> {}
 
 impl<'a, B: BitBlock> IntoIterator for &'a BitVec<B> {
     type Item = bool;
@@ -2824,5 +2984,22 @@ mod tests {
                 assert_eq!(2, tbits.count_zeros());
             }
         }
+    }
+
+    fn test_get_mut() {
+        let mut a = BitVec::from_elem(3, false);
+        let mut a_bit_1 = a.get_mut(1).unwrap();
+        assert_eq!(false, *a_bit_1);
+        *a_bit_1 = true;
+        drop(a_bit_1);
+        assert!(a.eq_vec(&[false, true, false]));
+    }
+    #[test]
+    fn test_iter_mut() {
+        let mut a = BitVec::from_elem(8, false);
+        a.iter_mut().enumerate().for_each(|(index, mut bit)| {
+            *bit = if index % 2 == 1 { true } else { false };
+        });
+        assert!(a.eq_vec(&[false, true, false, true, false, true, false, true]));
     }
 }
