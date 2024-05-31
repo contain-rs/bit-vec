@@ -23,4 +23,5 @@ rand_xorshift = "0.2"
 default = ["std"]
 serde_std = ["std", "serde/std"]
 serde_no_std = ["serde/alloc"]
+borsh_std = ["borsh/std"]
 std = []

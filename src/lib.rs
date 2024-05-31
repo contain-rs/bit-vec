@@ -2648,6 +2648,21 @@ mod tests {
         assert_eq!(bit_vec, unserialized);
     }
 
+    #[cfg(feature = "borsh")]
+    #[test]
+    fn test_borsh_serialization() {
+        let bit_vec: BitVec = BitVec::new();
+        let serialized = borsh::to_vec(&bit_vec).unwrap();
+        let unserialized: BitVec = borsh::from_slice(&serialized[..]).unwrap();
+        assert_eq!(bit_vec, unserialized);
+
+        let bools = vec![true, false, true, true];
+        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let serialized = borsh::to_vec(&bit_vec).unwrap();
+        let unserialized = borsh::from_slice(&serialized[..]).unwrap();
+        assert_eq!(bit_vec, unserialized);
+    }
+
     #[test]
     fn test_bit_vec_unaligned_small_append() {
         let mut a = BitVec::from_elem(8, false);
