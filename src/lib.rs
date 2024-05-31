@@ -554,14 +554,33 @@ impl<B: BitBlock> BitVec<B> {
             .map(|&block| (block & (B::one() << b)) != B::zero())
     }
 
+    /// Retrieves the value at index `i`, without doing bounds checking.
+    ///
+    /// For a safe alternative, see `get`.
+    ///
+    /// # Safety
+    ///
+    /// Calling this method with an out-of-bounds index is undefined behavior
+    /// even if the resulting reference is not used.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let bv = BitVec::from_bytes(&[0b01100000]);
+    /// unsafe {
+    ///     assert_eq!(bv.get_unchecked(0), false);
+    ///     assert_eq!(bv.get_unchecked(1), true);
+    /// }
+    /// ```
     #[inline]
-    pub fn get_unchecked(&self, i: usize) -> bool {
+    pub unsafe fn get_unchecked(&self, i: usize) -> bool {
         self.ensure_invariant();
         let w = i / B::bits();
         let b = i % B::bits();
-        self.storage.get(w).map(|&block|
-            (block & (B::one() << b)) != B::zero()
-        ).unwrap()
+        let block = *self.storage.get_unchecked(w);
+        block & (B::one() << b) != B::zero()
     }
 
     /// Sets the value of a bit at an index `i`.

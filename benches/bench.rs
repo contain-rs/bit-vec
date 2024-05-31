@@ -9,6 +9,7 @@
 // except according to those terms.
 
 #![feature(test)]
+#![feature(hint_assert_unchecked)]
 
 extern crate bit_vec;
 extern crate rand;
@@ -73,6 +74,60 @@ fn bench_bit_set_small(b: &mut Bencher) {
             bit_vec.set((r.next_u32() as usize) % U32_BITS, true);
         }
         black_box(&bit_vec);
+    });
+}
+
+#[bench]
+fn bench_bit_get_checked_small(b: &mut Bencher) {
+    let mut r = small_rng();
+    let size = 200;
+    let mut bit_vec = BitVec::from_elem(size, false);
+    for _ in 0..20 {
+        bit_vec.set((r.next_u32() as usize) % size, true);
+    }
+    let bit_vec = black_box(bit_vec);
+    b.iter(|| {
+        for _ in 0..100 {
+            black_box(bit_vec.get((r.next_u32() as usize) % size));
+        }
+    });
+}
+
+#[bench]
+fn bench_bit_get_unchecked_small(b: &mut Bencher) {
+    let mut r = small_rng();
+    let size = 200;
+    let mut bit_vec = BitVec::from_elem(size, false);
+    for _ in 0..20 {
+        bit_vec.set((r.next_u32() as usize) % size, true);
+    }
+    let bit_vec = black_box(bit_vec);
+    b.iter(|| {
+        for _ in 0..100 {
+            unsafe {
+                black_box(bit_vec.get_unchecked((r.next_u32() as usize) % size));
+            }
+        }
+    });
+}
+
+#[bench]
+fn bench_bit_get_unchecked_small_assume(b: &mut Bencher) {
+    let mut r = small_rng();
+    let size = 200;
+    let mut bit_vec = BitVec::from_elem(size, false);
+    for _ in 0..20 {
+        bit_vec.set((r.next_u32() as usize) % size, true);
+    }
+    let bit_vec = black_box(bit_vec);
+    b.iter(|| {
+        for _ in 0..100 {
+            unsafe {
+                let idx = (r.next_u32() as usize) % size;
+                ::std::hint::assert_unchecked(!(idx >= bit_vec.len()));
+                black_box(bit_vec.get(idx));
+            }
+        }
     });
 }
 
