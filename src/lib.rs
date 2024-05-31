@@ -142,6 +142,10 @@ pub trait BitBlock:
     fn from_byte(byte: u8) -> Self;
     /// Count the number of 1's in the bitwise repr
     fn count_ones(self) -> usize;
+    /// Count the number of 0's in the bitwise repr
+    fn count_zeros(self) -> usize {
+        Self::bits() - self.count_ones()
+    }
     /// Get `0`
     fn zero() -> Self;
     /// Get `1`
@@ -157,6 +161,8 @@ macro_rules! bit_block_impl {
             fn from_byte(byte: u8) -> Self { $t::from(byte) }
             #[inline]
             fn count_ones(self) -> usize { self.count_ones() as usize }
+            #[inline]
+            fn count_zeros(self) -> usize { self.count_zeros() as usize }
             #[inline]
             fn one() -> Self { 1 }
             #[inline]
@@ -952,6 +958,30 @@ impl<B: BitBlock> BitVec<B> {
         self.ensure_invariant();
         // Add the number of ones of each block.
         self.blocks().map(|elem| elem.count_ones() as u64).sum()
+    }
+
+    /// Returns the number of zeros in the binary representation.
+    ///
+    /// Also known as the opposite of
+    /// [Hamming weight](https://en.wikipedia.org/wiki/Hamming_weight).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut bv = BitVec::from_elem(100, false);
+    /// assert_eq!(bv.count_zeros(), 100);
+    ///
+    /// bv.set(50, true);
+    /// assert_eq!(bv.count_zeros(), 99);
+    /// ```
+    #[inline]
+    pub fn count_zeros(&self) -> u64 {
+        self.ensure_invariant();
+        // Add the number of zeros of each block.
+        let extra_zeros = (B::bits() - (self.len() % B::bits())) % B::bits();
+        self.blocks().map(|elem| elem.count_zeros() as u64).sum::<u64>() - extra_zeros as u64
     }
 
     /// Returns an iterator over the elements of the vector in order.
@@ -2675,6 +2705,24 @@ mod tests {
                 f.set(10, true);
                 f.set(i - 10, true);
                 assert_eq!(2, f.count_ones());
+            }
+        }
+    }
+
+    #[test]
+    fn test_count_zeros() {
+        for i in 0..1000 {
+            let mut tbits = BitVec::from_elem(i, true);
+            let mut fbits = BitVec::from_elem(i, false);
+            assert_eq!(i as u64, fbits.count_zeros());
+            assert_eq!(0 as u64, tbits.count_zeros());
+            if i > 20 {
+                fbits.set(10, true);
+                fbits.set(i - 10, true);
+                assert_eq!(i - 2, fbits.count_zeros() as usize);
+                tbits.set(10, false);
+                tbits.set(i - 10, false);
+                assert_eq!(2, tbits.count_zeros());
             }
         }
     }
