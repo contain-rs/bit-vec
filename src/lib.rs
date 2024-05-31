@@ -948,10 +948,10 @@ impl<B: BitBlock> BitVec<B> {
     /// assert_eq!(bv.count_ones(), 99);
     /// ```
     #[inline]
-    pub fn count_ones(&self) -> usize {
+    pub fn count_ones(&self) -> u64 {
         self.ensure_invariant();
         // Add the number of ones of each block.
-        self.blocks().map(|elem| elem.count_ones()).sum()
+        self.blocks().map(|elem| elem.count_ones() as u64).sum()
     }
 
     /// Returns an iterator over the elements of the vector in order.
@@ -2666,12 +2666,12 @@ mod tests {
         for i in 0..1000 {
             let mut t = BitVec::from_elem(i, true);
             let mut f = BitVec::from_elem(i, false);
-            assert_eq!(i, t.count_ones());
-            assert_eq!(0, f.count_ones());
+            assert_eq!(i as u64, t.count_ones());
+            assert_eq!(0 as u64, f.count_ones());
             if i > 20 {
                 t.set(10, false);
                 t.set(i - 10, false);
-                assert_eq!(i - 2, t.count_ones());
+                assert_eq!(i - 2, t.count_ones() as usize);
                 f.set(10, true);
                 f.set(i - 10, true);
                 assert_eq!(2, f.count_ones());
