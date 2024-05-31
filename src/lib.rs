@@ -95,6 +95,8 @@ use std::vec::Vec;
 extern crate serde;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "borsh")]
+extern crate borsh;
 
 #[cfg(not(feature = "std"))]
 #[macro_use]
@@ -218,6 +220,10 @@ static FALSE: bool = false;
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 /// ```
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(
+    feature = "borsh",
+    derive(borsh::BorshDeserialize, borsh::BorshSerialize)
+)]
 pub struct BitVec<B = u32> {
     /// Internal representation of the bit vector
     storage: Vec<B>,
@@ -2639,6 +2645,21 @@ mod tests {
         let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
         let serialized = serde_json::to_string(&bit_vec).unwrap();
         let unserialized = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(bit_vec, unserialized);
+    }
+
+    #[cfg(feature = "borsh")]
+    #[test]
+    fn test_borsh_serialization() {
+        let bit_vec: BitVec = BitVec::new();
+        let serialized = borsh::to_vec(&bit_vec).unwrap();
+        let unserialized: BitVec = borsh::from_slice(&serialized[..]).unwrap();
+        assert_eq!(bit_vec, unserialized);
+
+        let bools = vec![true, false, true, true];
+        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let serialized = borsh::to_vec(&bit_vec).unwrap();
+        let unserialized = borsh::from_slice(&serialized[..]).unwrap();
         assert_eq!(bit_vec, unserialized);
     }
 
