@@ -596,8 +596,8 @@ impl<B: BitBlock> BitVec<B> {
     /// use bit_vec::BitVec;
     ///
     /// let mut bv = BitVec::from_bytes(&[0b01100000]);
-    /// *(bv.get_mut(0).unwrap()) = true;
-    /// *(bv.get_mut(1).unwrap()) = false;
+    /// *bv.get_mut(0).unwrap() = true;
+    /// *bv.get_mut(1).unwrap() = false;
     /// assert!(bv.get_mut(100).is_none());
     /// assert_eq!(bv, BitVec::from_bytes(&[0b10100000]));
     /// ```
