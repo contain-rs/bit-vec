@@ -2323,7 +2323,7 @@ mod tests {
 
     #[test]
     fn test_from_bools() {
-        let bools = vec![true, false, true, true];
+        let bools = [true, false, true, true];
         let bit_vec: BitVec = bools.iter().copied().collect();
         assert_eq!(format!("{:?}", bit_vec), "1011");
     }
@@ -2557,16 +2557,16 @@ mod tests {
     fn test_bit_vec_push_pop() {
         let mut s = BitVec::from_elem(5 * U32_BITS - 2, false);
         assert_eq!(s.len(), 5 * U32_BITS - 2);
-        assert_eq!(s[5 * U32_BITS - 3], false);
+        assert!(!s[5 * U32_BITS - 3]);
         s.push(true);
         s.push(true);
-        assert_eq!(s[5 * U32_BITS - 2], true);
-        assert_eq!(s[5 * U32_BITS - 1], true);
+        assert!(s[5 * U32_BITS - 2]);
+        assert!(s[5 * U32_BITS - 1]);
         // Here the internal vector will need to be extended
         s.push(false);
-        assert_eq!(s[5 * U32_BITS], false);
+        assert!(!s[5 * U32_BITS]);
         s.push(false);
-        assert_eq!(s[5 * U32_BITS + 1], false);
+        assert!(!s[5 * U32_BITS + 1]);
         assert_eq!(s.len(), 5 * U32_BITS + 2);
         // Pop it all off
         assert_eq!(s.pop(), Some(false));
@@ -2615,10 +2615,10 @@ mod tests {
         s.push(true);
         s.push(false);
         s.push(true);
-        assert_eq!(s[5 * U32_BITS - 1], true);
-        assert_eq!(s[5 * U32_BITS - 0], true);
-        assert_eq!(s[5 * U32_BITS + 1], false);
-        assert_eq!(s[5 * U32_BITS + 2], true);
+        assert!(s[5 * U32_BITS - 1]);
+        assert!(s[5 * U32_BITS]);
+        assert!(!s[5 * U32_BITS + 1]);
+        assert!(s[5 * U32_BITS + 2]);
     }
 
     #[test]
@@ -2805,7 +2805,7 @@ mod tests {
 
     #[test]
     fn test_into_iter() {
-        let bools = vec![true, false, true, true];
+        let bools = [true, false, true, true];
         let bit_vec: BitVec = bools.iter().copied().collect();
         let mut iter = bit_vec.into_iter();
         assert_eq!(Some(true), iter.next());
@@ -2917,7 +2917,7 @@ mod tests {
         a.append(&mut b);
         a.append(&mut c);
 
-        assert_eq!(&[01, 00, 02, 03][..], &*a.to_bytes());
+        assert_eq!(&[1, 0, 2, 3][..], &*a.to_bytes());
     }
 
     #[test]
@@ -2960,7 +2960,7 @@ mod tests {
             let mut t = BitVec::from_elem(i, true);
             let mut f = BitVec::from_elem(i, false);
             assert_eq!(i as u64, t.count_ones());
-            assert_eq!(0 as u64, f.count_ones());
+            assert_eq!(0_u64, f.count_ones());
             if i > 20 {
                 t.set(10, false);
                 t.set(i - 10, false);
@@ -2978,7 +2978,7 @@ mod tests {
             let mut tbits = BitVec::from_elem(i, true);
             let mut fbits = BitVec::from_elem(i, false);
             assert_eq!(i as u64, fbits.count_zeros());
-            assert_eq!(0 as u64, tbits.count_zeros());
+            assert_eq!(0_u64, tbits.count_zeros());
             if i > 20 {
                 fbits.set(10, true);
                 fbits.set(i - 10, true);
@@ -2994,7 +2994,7 @@ mod tests {
     fn test_get_mut() {
         let mut a = BitVec::from_elem(3, false);
         let mut a_bit_1 = a.get_mut(1).unwrap();
-        assert_eq!(false, *a_bit_1);
+        assert!(!*a_bit_1);
         *a_bit_1 = true;
         drop(a_bit_1);
         assert!(a.eq_vec(&[false, true, false]));
@@ -3003,7 +3003,7 @@ mod tests {
     fn test_iter_mut() {
         let mut a = BitVec::from_elem(8, false);
         a.iter_mut().enumerate().for_each(|(index, mut bit)| {
-            *bit = if index % 2 == 1 { true } else { false };
+            *bit = index % 2 == 1;
         });
         assert!(a.eq_vec(&[false, true, false, true, false, true, false, true]));
     }
