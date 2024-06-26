@@ -1,6 +1,6 @@
 [package]
 name = "bit-vec"
-version = "0.6.3"
+version = "0.7.0"
 authors = ["Alexis Beingessner <a.beingessner@gmail.com>"]
 license = "MIT/Apache-2.0"
 description = "A vector of bits"
@@ -9,6 +9,7 @@ homepage = "https://github.com/contain-rs/bit-vec"
 documentation = "https://contain-rs.github.io/bit-vec/bit_vec"
 keywords = ["data-structures", "bitvec", "bitmask", "bitmap", "bit"]
 readme = "README.md"
+edition = "2015"
 
 [dependencies]
 borsh = { version = "1.5.0", default-features = false, features = ["derive"], optional = true }
@@ -18,8 +19,8 @@ nanoserde = { version = "0.1", optional = true }
 
 [dev-dependencies]
 serde_json = "1.0"
-rand = "0.7"
-rand_xorshift = "0.2"
+rand = "0.8"
+rand_xorshift = "0.3"
 
 [features]
 default = ["std"]
