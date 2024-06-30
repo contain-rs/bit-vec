@@ -1695,13 +1695,19 @@ impl<B: BitBlock> Ord for BitVec<B> {
     }
 }
 
-impl<B: BitBlock> fmt::Debug for BitVec<B> {
+impl<B: BitBlock> fmt::Display for BitVec<B> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         self.ensure_invariant();
         for bit in self {
             write!(fmt, "{}", if bit { 1 } else { 0 })?;
         }
         Ok(())
+    }
+}
+
+impl<B: BitBlock> fmt::Debug for BitVec<B> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        write!(fmt, "{}", self)
     }
 }
 
