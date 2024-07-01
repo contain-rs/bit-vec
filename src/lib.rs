@@ -1708,10 +1708,10 @@ impl<B: BitBlock> fmt::Display for BitVec<B> {
 impl<B: BitBlock> fmt::Debug for BitVec<B> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         self.ensure_invariant();
-        fmt.debug_struct("BitVec")
-            .field("storage", &format_args!("{}", self))
-            .field("nbits", &self.nbits)
-            .finish()
+        for bit in self {
+            write!(fmt, "{}", if bit { 1 } else { 0 })?;
+        }
+        Ok(())
     }
 }
 
