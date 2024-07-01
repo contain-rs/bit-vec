@@ -117,7 +117,7 @@ use alloc::vec::Vec;
 use core::cell::RefCell;
 use core::cmp;
 use core::cmp::Ordering;
-use core::fmt;
+use core::fmt::{self, Write};
 use core::hash;
 use core::iter::repeat;
 use core::iter::FromIterator;
@@ -1699,7 +1699,7 @@ impl<B: BitBlock> fmt::Display for BitVec<B> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         self.ensure_invariant();
         for bit in self {
-            write!(fmt, "{}", if bit { 1 } else { 0 })?;
+            fmt.write_char(if bit { '1' } else { '0' })?;
         }
         Ok(())
     }
@@ -1707,7 +1707,11 @@ impl<B: BitBlock> fmt::Display for BitVec<B> {
 
 impl<B: BitBlock> fmt::Debug for BitVec<B> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{}", self)
+        self.ensure_invariant();
+        fmt.debug_struct("BitVec")
+            .field("storage", &format_args!("{}", self))
+            .field("nbits", &self.nbits)
+            .finish()
     }
 }
 
