@@ -91,6 +91,8 @@ extern crate std;
 #[cfg(feature = "std")]
 use std::rc::Rc;
 #[cfg(feature = "std")]
+use std::string::String;
+#[cfg(feature = "std")]
 use std::vec::Vec;
 
 #[cfg(feature = "serde")]
@@ -111,6 +113,8 @@ use nanoserde::{DeBin, DeJson, DeRon, SerBin, SerJson, SerRon};
 extern crate alloc;
 #[cfg(not(feature = "std"))]
 use alloc::rc::Rc;
+#[cfg(not(feature = "std"))]
+use alloc::string::String;
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 
@@ -1708,10 +1712,17 @@ impl<B: BitBlock> fmt::Display for BitVec<B> {
 impl<B: BitBlock> fmt::Debug for BitVec<B> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         self.ensure_invariant();
-        for bit in self {
-            write!(fmt, "{}", if bit { 1 } else { 0 })?;
+        let mut storage = String::with_capacity(self.len() + self.len() / B::bits());
+        for (i, bit) in self.iter().enumerate() {
+            if i != 0 && i % B::bits() == 0 {
+                storage.push(' ');
+            }
+            storage.push(if bit { '1' } else { '0' });
         }
-        Ok(())
+        fmt.debug_struct("BitVec")
+            .field("storage", &storage)
+            .field("nbits", &self.nbits)
+            .finish()
     }
 }
 
@@ -1935,12 +1946,37 @@ mod tests {
     const U32_BITS: usize = 32;
 
     #[test]
-    fn test_to_str() {
-        let zerolen = BitVec::new();
-        assert_eq!(format!("{:?}", zerolen), "");
+    fn test_display_output() {
+        assert_eq!(format!("{}", BitVec::new()), "");
+        assert_eq!(format!("{}", BitVec::from_elem(1, true)), "1");
+        assert_eq!(format!("{}", BitVec::from_elem(8, false)), "00000000")
+    }
 
-        let eightbits = BitVec::from_elem(8, false);
-        assert_eq!(format!("{:?}", eightbits), "00000000")
+    #[test]
+    fn test_debug_output() {
+        assert_eq!(
+            format!("{:?}", BitVec::new()),
+            "BitVec { storage: \"\", nbits: 0 }"
+        );
+        assert_eq!(
+            format!("{:?}", BitVec::from_elem(1, true)),
+            "BitVec { storage: \"1\", nbits: 1 }"
+        );
+        assert_eq!(
+            format!("{:?}", BitVec::from_elem(8, false)),
+            "BitVec { storage: \"00000000\", nbits: 8 }"
+        );
+        assert_eq!(
+            format!("{:?}", BitVec::from_elem(33, true)),
+            "BitVec { storage: \"11111111111111111111111111111111 1\", nbits: 33 }"
+        );
+        assert_eq!(
+            format!(
+                "{:?}",
+                BitVec::from_bytes(&[0b111, 0b000, 0b1110, 0b0001, 0b11111111, 0b00000000])
+            ),
+            "BitVec { storage: \"00000111000000000000111000000001 1111111100000000\", nbits: 48 }"
+        )
     }
 
     #[test]
@@ -1966,7 +2002,7 @@ mod tests {
         let mut b = BitVec::from_elem(2, false);
         b.set(0, true);
         b.set(1, false);
-        assert_eq!(format!("{:?}", b), "10");
+        assert_eq!(format!("{}", b), "10");
         assert!(!b.none() && !b.all());
     }
 
@@ -2316,7 +2352,7 @@ mod tests {
     fn test_from_bytes() {
         let bit_vec = BitVec::from_bytes(&[0b10110110, 0b00000000, 0b11111111]);
         let str = concat!("10110110", "00000000", "11111111");
-        assert_eq!(format!("{:?}", bit_vec), str);
+        assert_eq!(format!("{}", bit_vec), str);
     }
 
     #[test]
@@ -2335,7 +2371,7 @@ mod tests {
     fn test_from_bools() {
         let bools = [true, false, true, true];
         let bit_vec: BitVec = bools.iter().copied().collect();
-        assert_eq!(format!("{:?}", bit_vec), "1011");
+        assert_eq!(format!("{}", bit_vec), "1011");
     }
 
     #[test]
