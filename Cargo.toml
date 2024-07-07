@@ -2,7 +2,7 @@
 name = "bit-vec"
 version = "0.7.0"
 authors = ["Alexis Beingessner <a.beingessner@gmail.com>"]
-license = "MIT/Apache-2.0"
+license = "Apache-2.0 OR MIT"
 description = "A vector of bits"
 repository = "https://github.com/contain-rs/bit-vec"
 homepage = "https://github.com/contain-rs/bit-vec"
