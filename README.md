@@ -37,7 +37,7 @@ Add this to your Cargo.toml:
 
 ```toml
 [dependencies]
-bit-vec = "0.6"
+bit-vec = "0.7"
 ```
 
 Since Rust 2018, `extern crate` is no longer mandatory. If your edition is old (Rust 2015),
@@ -51,28 +51,28 @@ If you want [serde](https://github.com/serde-rs/serde) support, include the feat
 
 ```toml
 [dependencies]
-bit-vec = { version = "0.6", features = ["serde"] }
+bit-vec = { version = "0.7", features = ["serde"] }
 ```
 
 If you want to use bit-vec in a program that has `#![no_std]`, just drop default features:
 
 ```toml
 [dependencies]
-bit-vec = { version = "0.6", default-features = false }
+bit-vec = { version = "0.7", default-features = false }
 ```
 
 If you want to use serde with the alloc crate instead of std, just use the `serde_no_std` feature:
 
 ```toml
 [dependencies]
-bit-vec = { version = "0.6", default-features = false, features = ["serde", "serde_no_std"] }
+bit-vec = { version = "0.7", default-features = false, features = ["serde", "serde_no_std"] }
 ```
 
 If you want [borsh-rs](https://github.com/near/borsh-rs) support, include it like this:
 
 ```toml
 [dependencies]
-bit-vec = { version = "0.6", features = ["borsh"] }
+bit-vec = { version = "0.7", features = ["borsh"] }
 ```
 
 Other available serialization libraries can be enabled with the
