@@ -451,19 +451,19 @@ impl<B: BitBlock> BitVec<B> {
         }
     }
 
-    /// Exposes the raw block storage of this BitVec
+    /// Exposes the raw block storage of this `BitVec`.
     ///
-    /// Only really intended for BitSet.
+    /// Only really intended for `BitSet`.
     #[inline]
     pub fn storage(&self) -> &[B] {
         &self.storage
     }
 
-    /// Exposes the raw block storage of this BitVec
+    /// Exposes the raw block storage of this `BitVec`.
     ///
     /// # Safety
     ///
-    /// Can probably cause unsafety. Only really intended for BitSet.
+    /// Can probably cause unsafety. Only really intended for `BitSet`.
     #[inline]
     pub unsafe fn storage_mut(&mut self) -> &mut Vec<B> {
         &mut self.storage
@@ -1525,7 +1525,7 @@ impl<B: BitBlock> BitVec<B> {
         self.fix_last_block();
     }
 
-    /// Removes the last bit from the BitVec, and returns it. Returns None if the BitVec is empty.
+    /// Removes the last bit from the `BitVec`, and returns it. Returns `None` if the `BitVec` is empty.
     ///
     /// # Examples
     ///
@@ -1585,11 +1585,11 @@ impl<B: BitBlock> BitVec<B> {
         self.nbits
     }
 
-    /// Sets the number of bits that this BitVec considers initialized.
+    /// Sets the number of bits that this `BitVec` considers initialized.
     ///
     /// # Safety
     ///
-    /// Almost certainly can cause bad stuff. Only really intended for BitSet.
+    /// Almost certainly can cause bad stuff. Only really intended for `BitSet`.
     #[inline]
     pub unsafe fn set_len(&mut self, len: usize) {
         self.nbits = len;
