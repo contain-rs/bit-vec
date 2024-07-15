@@ -1622,26 +1622,78 @@ impl<B: BitBlock> BitVec<B> {
 
     /// Inserts a given bit at index `at`
     ///
+    /// # Panics
+    /// Panics if `at > nbits`
+    ///
     /// # Examples
     ///```
     /// use bit_vec::BitVec;
+    ///
     /// let mut b = BitVec::new();
+    ///
     /// b.push(true);
-    /// b.push(false);
-    /// b.insert(1, true);
+    /// b.push(true);
+    /// b.insert(1, false);
     ///
     /// assert_eq!(b.len(), 3);
-    /// assert!(b.eq_vec(&[true, true, false]));
+    /// assert!(b.eq_vec(&[true, false, true]));
     ///```
     pub fn insert(&mut self, at: usize, bit: bool) {
         assert!(
             at <= self.nbits,
-            "insertion index (is {at}) should be <= nbits (is {len})",
-            len = self.nbits
+            "insertion index (is {at}) should be <= nbits (is {nbits})",
+            nbits = self.nbits
         );
-        let mut rem = self.split_off(at);
-        self.push(bit);
-        self.append(&mut rem);
+
+        // Initialize if inserting at index zero in a new `BitVec`
+        if self.nbits == 0 {
+            self.storage.push(B::zero());
+        }
+
+        let num_blocks = self.nbits / B::bits();
+        let w = at / B::bits(); // number of blocks
+        let b = at % B::bits(); // index within a block
+
+        self.nbits += 1;
+
+        // is it the last block?
+        if w == num_blocks {
+            let num_bits_in_last_block = self.nbits - num_blocks * B::bits();
+            // is it the first index in the last block and shifting won't "overflow" this block?
+            if b == 0 && num_bits_in_last_block < B::bits() {
+                // if both conditions are met, then we can trivially shift the last block left by one, and set the first bit to `bit`
+                // though I'm a bit skeptical about this observation, it does require a regirous testing
+                self.storage[w] = self.storage[w] << 1;
+                self.set(num_blocks * B::bits(), bit);
+                return;
+            } else {
+                if num_bits_in_last_block == B::bits() {
+                    // if this (the last) block is fully used, then only the last bit in it will be
+                    // moved to the new block
+                    let block = if self.get(self.nbits - 1).unwrap() {
+                        B::one()
+                    } else {
+                        B::zero()
+                    };
+                    self.storage.push(block);
+                }
+
+                let mut prev = self.get(at).unwrap();
+                let block_start = w * B::bits();
+                // shifting all bits at and after `at` left by one
+                for i in (at + 1)..num_bits_in_last_block {
+                    // I suspect these `get` and `set` calls can be optimized, and some neat
+                    // bit-hacks can be used because we already know with which block we are
+                    // working with
+                    let curr = self.get(block_start + i).unwrap(); // get `i`th bit
+                    self.set(block_start + i, prev);
+                    prev = curr;
+                }
+                self.set(block_start + at, bit);
+            }
+        } else {
+            todo!();
+        }
     }
 }
 
