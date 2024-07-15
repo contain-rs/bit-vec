@@ -1619,6 +1619,25 @@ impl<B: BitBlock> BitVec<B> {
     pub fn shrink_to_fit(&mut self) {
         self.storage.shrink_to_fit();
     }
+
+    /// Inserts a given bit at index `at`
+    ///
+    /// # Examples
+    ///```
+    /// use bit_vec::BitVec;
+    /// let mut b = BitVec::new();
+    /// b.push(true);
+    /// b.push(false);
+    /// b.insert(1, true);
+    ///
+    /// assert_eq!(b.len(), 3);
+    /// assert!(b.eq_vec(&[true, true, false]));
+    ///```
+    pub fn insert(&mut self, at: usize, bit: bool) {
+        let mut rem = self.split_off(at);
+        self.push(bit);
+        self.append(&mut rem);
+    }
 }
 
 impl<B: BitBlock> Default for BitVec<B> {
@@ -3052,5 +3071,20 @@ mod tests {
             *bit = index % 2 == 1;
         });
         assert!(a.eq_vec(&[false, true, false, true, false, true, false, true]));
+    }
+
+    #[test]
+    fn test_insert() {
+        let mut v = BitVec::new();
+
+        v.insert(0, true);
+        v.push(true);
+        v.push(false);
+        v.insert(1, false);
+        v.push(true);
+        v.insert(5, false);
+
+        assert_eq!(v.len(), 6);
+        assert!(v.eq_vec(&[true, false, true, false, true, false]));
     }
 }
