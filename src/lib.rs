@@ -1634,6 +1634,11 @@ impl<B: BitBlock> BitVec<B> {
     /// assert!(b.eq_vec(&[true, true, false]));
     ///```
     pub fn insert(&mut self, at: usize, bit: bool) {
+        assert!(
+            at <= self.nbits,
+            "insertion index (is {at}) should be <= nbits (is {len})",
+            len = self.nbits
+        );
         let mut rem = self.split_off(at);
         self.push(bit);
         self.append(&mut rem);
