@@ -82,7 +82,7 @@
 //! assert_eq!(num_primes, 1_229);
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/bit-vec/0.7.0")]
+#![doc(html_root_url = "https://docs.rs/bit-vec/0.8.0")]
 #![no_std]
 
 #[cfg(any(test, feature = "std"))]
