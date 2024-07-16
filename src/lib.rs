@@ -1619,6 +1619,61 @@ impl<B: BitBlock> BitVec<B> {
     pub fn shrink_to_fit(&mut self) {
         self.storage.shrink_to_fit();
     }
+
+    /// Inserts a given bit at index `at`, shifting all bits after by one
+    ///
+    /// # Panics
+    /// Panics if `at` is out of bounds for `BitVec`'s length (that is, if `at > BitVec::len()`)
+    ///
+    /// # Examples
+    ///```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut b = BitVec::new();
+    ///
+    /// b.push(true);
+    /// b.push(true);
+    /// b.insert(1, false);
+    ///
+    /// assert!(b.eq_vec(&[true, false, true]));
+    ///```
+    ///
+    /// # Time complexity                                                                                                                                                         
+    /// Takes O([`len`]) time. All items after the insertion index must be
+    /// shifted to the right. In the worst case, all elements are shifted when
+    /// the insertion index is 0.
+    ///
+    /// [`len`]: Self::len
+    pub fn insert(&mut self, at: usize, bit: bool) {
+        assert!(
+            at <= self.nbits,
+            "insertion index (is {at}) should be <= nbits (is {nbits})",
+            nbits = self.nbits
+        );
+
+        let last_block_bits = self.nbits % B::bits();
+        let block_at = at / B::bits(); // needed block
+        let bit_at = at % B::bits(); // index within the block
+
+        if last_block_bits == 0 {
+            self.storage.push(B::zero());
+        }
+
+        self.nbits += 1;
+
+        let mut carry = self.storage[block_at] >> (B::bits() - 1);
+        let lsbits_mask = (B::one() << bit_at) - B::one();
+        let set_bit = if bit { B::one() } else { B::zero() } << bit_at;
+        self.storage[block_at] = (self.storage[block_at] & lsbits_mask)
+            | ((self.storage[block_at] & !lsbits_mask) << 1)
+            | set_bit;
+
+        for block_ref in &mut self.storage[block_at + 1..] {
+            let curr_carry = *block_ref >> (B::bits() - 1);
+            *block_ref = *block_ref << 1 | carry;
+            carry = curr_carry;
+        }
+    }
 }
 
 impl<B: BitBlock> Default for BitVec<B> {
@@ -3052,5 +3107,80 @@ mod tests {
             *bit = index % 2 == 1;
         });
         assert!(a.eq_vec(&[false, true, false, true, false, true, false, true]));
+    }
+
+    #[test]
+    fn test_insert_at_zero() {
+        let mut v = BitVec::new();
+
+        v.insert(0, false);
+        v.insert(0, true);
+        v.insert(0, false);
+        v.insert(0, true);
+        v.insert(0, false);
+        v.insert(0, true);
+
+        assert_eq!(v.len(), 6);
+        assert_eq!(v.storage().len(), 1);
+        assert!(v.eq_vec(&[true, false, true, false, true, false]));
+    }
+
+    #[test]
+    fn test_insert_at_end() {
+        let mut v = BitVec::new();
+
+        v.insert(v.len(), true);
+        v.insert(v.len(), false);
+        v.insert(v.len(), true);
+        v.insert(v.len(), false);
+        v.insert(v.len(), true);
+        v.insert(v.len(), false);
+
+        assert_eq!(v.storage().len(), 1);
+        assert_eq!(v.len(), 6);
+        assert!(v.eq_vec(&[true, false, true, false, true, false]));
+    }
+
+    #[test]
+    fn test_insert_at_block_boundaries() {
+        let mut v = BitVec::from_elem(32, false);
+
+        assert_eq!(v.storage().len(), 1);
+
+        v.insert(31, true);
+
+        assert_eq!(v.len(), 33);
+
+        assert!(matches!(v.get(31), Some(true)));
+        assert!(v.eq_vec(&[
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, true, false
+        ]));
+
+        assert_eq!(v.storage().len(), 2);
+    }
+
+    #[test]
+    fn test_insert_at_block_boundaries_1() {
+        let mut v = BitVec::from_elem(64, false);
+
+        assert_eq!(v.storage().len(), 2);
+
+        v.insert(63, true);
+
+        assert_eq!(v.len(), 65);
+
+        assert!(matches!(v.get(63), Some(true)));
+        assert!(v.eq_vec(&[
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false, false, false,
+            false, false, false, true, false
+        ]));
+
+        assert_eq!(v.storage().len(), 3);
     }
 }
