@@ -85,6 +85,10 @@
 #![doc(html_root_url = "https://docs.rs/bit-vec/0.8.0")]
 #![no_std]
 
+#![forbid(clippy::shadow_reuse)]
+#![forbid(clippy::shadow_same)]
+#![forbid(clippy::shadow_unrelated)]
+
 #[cfg(any(test, feature = "std"))]
 #[macro_use]
 extern crate std;
@@ -1830,11 +1834,10 @@ pub struct IterMut<'a, B: 'a + BitBlock = u32> {
 
 impl<'a, B: 'a + BitBlock> IterMut<'a, B> {
     fn get(&mut self, index: Option<usize>) -> Option<MutBorrowedBit<'a, B>> {
-        let index = index?;
-        let value = (*self.vec).borrow().get(index)?;
+        let value = (*self.vec).borrow().get(index?)?;
         Some(MutBorrowedBit {
             vec: self.vec.clone(),
-            index,
+            index: index?,
             #[cfg(debug_assertions)]
             old_value: value,
             new_value: value,
