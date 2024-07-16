@@ -1623,7 +1623,7 @@ impl<B: BitBlock> BitVec<B> {
     /// Inserts a given bit at index `at`, shifting all bits after by one
     ///
     /// # Panics
-    /// Panics if `at > nbits`
+    /// Panics if `at` is out of bounds for `BitVec`'s length (that is, if `at > BitVec::len()`)
     ///
     /// # Examples
     ///```
@@ -1635,7 +1635,6 @@ impl<B: BitBlock> BitVec<B> {
     /// b.push(true);
     /// b.insert(1, false);
     ///
-    /// assert_eq!(b.len(), 3);
     /// assert!(b.eq_vec(&[true, false, true]));
     ///```
     ///
@@ -1643,7 +1642,8 @@ impl<B: BitBlock> BitVec<B> {
     /// Takes O([`BitVec::len`]) time. All items after the insertion index must be
     /// shifted to the right. In the worst case, all elements are shifted when
     /// the insertion index is 0.
-
+    ///
+    /// [`BitVec::len`]: Self::len
     pub fn insert(&mut self, at: usize, bit: bool) {
         assert!(
             at <= self.nbits,
@@ -3180,5 +3180,7 @@ mod tests {
             false, false, false, false, false, false, false, false, false, false, false, false,
             false, false, false, true, false
         ]));
+
+        assert_eq!(v.storage().len(), 3);
     }
 }
