@@ -1639,11 +1639,11 @@ impl<B: BitBlock> BitVec<B> {
     ///```
     ///
     /// # Time complexity                                                                                                                                                         
-    /// Takes O([`BitVec::len`]) time. All items after the insertion index must be
+    /// Takes O([`len`]) time. All items after the insertion index must be
     /// shifted to the right. In the worst case, all elements are shifted when
     /// the insertion index is 0.
     ///
-    /// [`BitVec::len`]: Self::len
+    /// [`len`]: Self::len
     pub fn insert(&mut self, at: usize, bit: bool) {
         assert!(
             at <= self.nbits,
