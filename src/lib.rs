@@ -1638,7 +1638,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert!(b.eq_vec(&[true, false, true]));
     ///```
     ///
-    /// # Time complexity                                                                                                                                                         
+    /// # Time complexity
     /// Takes O([`len`]) time. All items after the insertion index must be
     /// shifted to the right. In the worst case, all elements are shifted when
     /// the insertion index is 0.
@@ -1672,6 +1672,65 @@ impl<B: BitBlock> BitVec<B> {
             let curr_carry = *block_ref >> (B::bits() - 1);
             *block_ref = *block_ref << 1 | carry;
             carry = curr_carry;
+        }
+    }
+
+    // todo(jujumba): docs
+    pub fn insert_many(&mut self, at: usize, bits: &[bool]) {
+        // The caller *must* guarantee that insertion wouldn't cross a block
+        unsafe fn insert_many_inner<B: BitBlock>(bitvec: &mut BitVec<B>, at: usize, bits: &[bool]) {
+            let block_at = at / B::bits();
+            let bit_at = at % B::bits();
+
+            bitvec.nbits += bits.len();
+
+            let mut carry = bitvec.storage[block_at] >> (B::bits() - bits.len());
+            let mask = (B::one() << bit_at) - B::one();
+            bitvec.storage[block_at] = ((bitvec.storage[block_at] & !mask) << bits.len())
+                | (bitvec.storage[block_at] & mask);
+
+            for block in &mut bitvec.storage[block_at + 1..] {
+                let curr_carry = *block >> (B::bits() - bits.len());
+                *block = *block << bits.len() | carry;
+                carry = curr_carry;
+            }
+
+            for (index, bit) in bits
+                .into_iter()
+                .copied()
+                .map(|bit| if bit { B::one() } else { B::zero() })
+                .enumerate()
+            {
+                bitvec.storage[block_at] = bitvec.storage[block_at] | (bit << (bit_at + index));
+            }
+        }
+
+        assert!(
+            at <= self.nbits,
+            "slice insertion index (is {at}) should be <= nbits (is {nbits}),",
+            nbits = self.nbits,
+        );
+
+        let bits_in_last_block = self.nbits % B::bits();
+
+        if B::bits() - bits_in_last_block < bits.len() || bits_in_last_block == 0 {
+            self.storage.push(B::zero());
+        }
+
+        let bit_at = at % B::bits();
+
+        if bit_at + bits.len() > B::bits() {
+            // If we are crossing a block, then the idea is to split this insertion into 2
+            // non-overlaping ones, each affecting only one block
+            let bound = B::bits() - bit_at;
+            unsafe {
+                insert_many_inner(self, at, &bits[..bound]);
+                insert_many_inner(self, at + bound, &bits[bound..]);
+            }
+        } else {
+            unsafe {
+                insert_many_inner(self, at, bits);
+            }
         }
     }
 }
@@ -3182,5 +3241,22 @@ mod tests {
         ]));
 
         assert_eq!(v.storage().len(), 3);
+    }
+
+    #[test]
+    fn test_insert_many_crossing() {
+        // todo(jujumba): more test cases
+        let mut v = BitVec::from_elem(35, true);
+
+        v.insert_many(30, &[false, false, false, false]); // this insertion crosses the block
+
+        assert_eq!(v.len(), 39);
+        #[rustfmt::skip]
+        assert!(v.eq_vec(&[
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true, // each row has 10 bools...
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+            false, false, false, false, true,  true,  true,  true,  true,
+        ]));
     }
 }
