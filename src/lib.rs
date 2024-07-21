@@ -1677,60 +1677,67 @@ impl<B: BitBlock> BitVec<B> {
 
     // todo(jujumba): docs
     pub fn insert_many(&mut self, at: usize, bits: &[bool]) {
-        // The caller *must* guarantee that insertion wouldn't cross a block
-        unsafe fn insert_many_inner<B: BitBlock>(bitvec: &mut BitVec<B>, at: usize, bits: &[bool]) {
-            let block_at = at / B::bits();
-            let bit_at = at % B::bits();
-
-            bitvec.nbits += bits.len();
-
-            let mut carry = bitvec.storage[block_at] >> (B::bits() - bits.len());
-            let mask = (B::one() << bit_at) - B::one();
-            bitvec.storage[block_at] = ((bitvec.storage[block_at] & !mask) << bits.len())
-                | (bitvec.storage[block_at] & mask);
-
-            for block in &mut bitvec.storage[block_at + 1..] {
-                let curr_carry = *block >> (B::bits() - bits.len());
-                *block = *block << bits.len() | carry;
-                carry = curr_carry;
-            }
-
-            for (index, bit) in bits
-                .into_iter()
-                .copied()
-                .map(|bit| if bit { B::one() } else { B::zero() })
-                .enumerate()
-            {
-                bitvec.storage[block_at] = bitvec.storage[block_at] | (bit << (bit_at + index));
-            }
-        }
-
         assert!(
             at <= self.nbits,
-            "slice insertion index (is {at}) should be <= nbits (is {nbits}),",
-            nbits = self.nbits,
+            "insertion index (is {at}) should be <= nbits (is {nbits})",
+            nbits = self.nbits
         );
 
-        let bits_in_last_block = self.nbits % B::bits();
-
-        if B::bits() - bits_in_last_block < bits.len() || bits_in_last_block == 0 {
-            self.storage.push(B::zero());
-        }
+        self.extend_if_needed(self.nbits + bits.len());
 
         let bit_at = at % B::bits();
+        let mut offset = bits.len();
+        while offset > 0 {
+            let by = usize::min(offset, B::bits() - bit_at);
+            unsafe {
+                self.rotate(at, by);
+            }
+            offset -= by;
+        }
 
-        if bit_at + bits.len() > B::bits() {
-            // If we are crossing a block, then the idea is to split this insertion into 2
-            // non-overlaping ones, each affecting only one block
-            let bound = B::bits() - bit_at;
-            unsafe {
-                insert_many_inner(self, at, &bits[..bound]);
-                insert_many_inner(self, at + bound, &bits[bound..]);
+        self.nbits += bits.len();
+
+        for (index, bit) in bits
+            .iter()
+            .copied()
+            .map(|bit| if bit { B::one() } else { B::zero() })
+            .enumerate()
+        {
+            self.storage[(at + index) / B::bits()] = self.storage[(at + index) / B::bits()] | bit;
+        }
+    }
+
+    // todo(jujumba): does this has to be a separate function?
+    fn extend_if_needed(&mut self, up_to: usize) {
+        if self.storage.len() * B::bits() < up_to {
+            for _ in 0..(up_to % B::bits()) {
+                self.storage.push(B::zero());
             }
-        } else {
-            unsafe {
-                insert_many_inner(self, at, bits);
-            }
+        }
+    }
+    // todo(jujumba): docs
+    // `by` *must* be <= B::bits() - (at % B::bits())
+    // this function also has to be used inside `Bitvec::insert`
+    unsafe fn rotate(&mut self, at: usize, by: usize) {
+        assert!(by < B::bits());
+
+        if by == 0 || at == self.nbits {
+            return;
+        }
+
+        // todo(jujumba): assertions
+        let block_at = at / B::bits();
+        let bit_at = at % B::bits();
+
+        let mut carry = self.storage[block_at] >> (B::bits() - by);
+        let mask = (B::one() << bit_at) - B::one();
+        self.storage[block_at] =
+            ((self.storage[block_at] & !mask) << by) | (self.storage[block_at] & mask);
+
+        for block in &mut self.storage[block_at + 1..] {
+            let curr_carry = *block >> (B::bits() - by);
+            *block = (*block << by) | carry;
+            carry = curr_carry;
         }
     }
 }
@@ -3246,17 +3253,29 @@ mod tests {
     #[test]
     fn test_insert_many_crossing() {
         // todo(jujumba): more test cases
-        let mut v = BitVec::from_elem(35, true);
+        let mut v = BitVec::from_elem(60, true);
 
-        v.insert_many(30, &[false, false, false, false]); // this insertion crosses the block
+        #[rustfmt::skip]
+        v.insert_many(40, &[
+            false, false, false, false, false, false, false, false, false, false, // 10 bools per row
+            false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false,
+        ]);
 
-        assert_eq!(v.len(), 39);
+        assert_eq!(v.len(), 100);
         #[rustfmt::skip]
         assert!(v.eq_vec(&[
-            true,  true,  true,  true,  true,  true,  true,  true,  true,  true, // each row has 10 bools...
-            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
-            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
-            false, false, false, false, true,  true,  true,  true,  true,
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 10 bools
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 20
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 30
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 40
+            false, false, false, false, false, false, false, false, false, false,  // 50
+            false, false, false, false, false, false, false, false, false, false,  // 60
+            false, false, false, false, false, false, false, false, false, false,  // 70
+            false, false, false, false, false, false, false, false, false, false,  // 80
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 90
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 100
         ]));
     }
 }
