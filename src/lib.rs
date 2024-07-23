@@ -1683,17 +1683,25 @@ impl<B: BitBlock> BitVec<B> {
             nbits = self.nbits
         );
 
+        let block_at = at / B::bits();
+        let bit_at = at % B::bits();
+        let block_offset = bits.len() / B::bits();
+
         self.extend_if_needed(self.nbits + bits.len());
 
-        let bit_at = at % B::bits();
-        let mut offset = bits.len();
-        while offset > 0 {
-            let by = usize::min(offset, B::bits() - bit_at);
-            unsafe {
-                self.rotate(at, by);
-            }
-            offset -= by;
+        unsafe {
+            self.rotate(at, bits.len() % B::bits());
         }
+
+        for i in ((block_at + 1)..=(block_at + block_offset)).rev() {
+            let block = core::mem::replace(&mut self.storage[i], B::zero());
+            self.storage[i + block_offset] = block;
+        }
+
+        let mask = (B::one() << bit_at) - B::one();
+        let carry = self.storage[block_at] & !mask;
+        self.storage[block_at] = self.storage[block_at] & mask;
+        self.storage[block_at + block_offset] = self.storage[block_at + block_offset] | carry;
 
         self.nbits += bits.len();
 
@@ -1706,7 +1714,6 @@ impl<B: BitBlock> BitVec<B> {
             self.storage[(at + index) / B::bits()] = self.storage[(at + index) / B::bits()] | bit;
         }
     }
-
     // todo(jujumba): does this has to be a separate function?
     fn extend_if_needed(&mut self, up_to: usize) {
         if self.storage.len() * B::bits() < up_to {
@@ -1716,8 +1723,6 @@ impl<B: BitBlock> BitVec<B> {
         }
     }
     // todo(jujumba): docs
-    // `by` *must* be <= B::bits() - (at % B::bits())
-    // this function also has to be used inside `Bitvec::insert`
     unsafe fn rotate(&mut self, at: usize, by: usize) {
         assert!(by < B::bits());
 
@@ -3266,7 +3271,7 @@ mod tests {
         assert_eq!(v.len(), 100);
         #[rustfmt::skip]
         assert!(v.eq_vec(&[
-            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 10 bools
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 10 bools per row
             true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 20
             true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 30
             true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 40
