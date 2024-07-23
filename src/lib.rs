@@ -1638,7 +1638,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert!(b.eq_vec(&[true, false, true]));
     ///```
     ///
-    /// # Time complexity                                                                                                                                                         
+    /// # Time complexity
     /// Takes O([`len`]) time. All items after the insertion index must be
     /// shifted to the right. In the worst case, all elements are shifted when
     /// the insertion index is 0.
@@ -1671,6 +1671,77 @@ impl<B: BitBlock> BitVec<B> {
         for block_ref in &mut self.storage[block_at + 1..] {
             let curr_carry = *block_ref >> (B::bits() - 1);
             *block_ref = *block_ref << 1 | carry;
+            carry = curr_carry;
+        }
+    }
+
+    // todo(jujumba): docs
+    pub fn insert_many(&mut self, at: usize, bits: &[bool]) {
+        assert!(
+            at <= self.nbits,
+            "insertion index (is {at}) should be <= nbits (is {nbits})",
+            nbits = self.nbits
+        );
+
+        let block_at = at / B::bits();
+        let bit_at = at % B::bits();
+        let block_offset = bits.len() / B::bits();
+
+        self.extend_if_needed(self.nbits + bits.len());
+
+        unsafe {
+            self.rotate(at, bits.len() % B::bits());
+        }
+
+        for i in ((block_at + 1)..=(block_at + block_offset)).rev() {
+            let block = core::mem::replace(&mut self.storage[i], B::zero());
+            self.storage[i + block_offset] = block;
+        }
+
+        let mask = (B::one() << bit_at) - B::one();
+        let carry = self.storage[block_at] & !mask;
+        self.storage[block_at] = self.storage[block_at] & mask;
+        self.storage[block_at + block_offset] = self.storage[block_at + block_offset] | carry;
+
+        self.nbits += bits.len();
+
+        for (index, bit) in bits
+            .iter()
+            .copied()
+            .map(|bit| if bit { B::one() } else { B::zero() })
+            .enumerate()
+        {
+            self.storage[(at + index) / B::bits()] = self.storage[(at + index) / B::bits()] | bit;
+        }
+    }
+    // todo(jujumba): does this has to be a separate function?
+    fn extend_if_needed(&mut self, up_to: usize) {
+        if self.storage.len() * B::bits() < up_to {
+            for _ in 0..(up_to % B::bits()) {
+                self.storage.push(B::zero());
+            }
+        }
+    }
+    // todo(jujumba): docs
+    unsafe fn rotate(&mut self, at: usize, by: usize) {
+        assert!(by < B::bits());
+
+        if by == 0 || at == self.nbits {
+            return;
+        }
+
+        // todo(jujumba): assertions
+        let block_at = at / B::bits();
+        let bit_at = at % B::bits();
+
+        let mut carry = self.storage[block_at] >> (B::bits() - by);
+        let mask = (B::one() << bit_at) - B::one();
+        self.storage[block_at] =
+            ((self.storage[block_at] & !mask) << by) | (self.storage[block_at] & mask);
+
+        for block in &mut self.storage[block_at + 1..] {
+            let curr_carry = *block >> (B::bits() - by);
+            *block = (*block << by) | carry;
             carry = curr_carry;
         }
     }
@@ -3182,5 +3253,34 @@ mod tests {
         ]));
 
         assert_eq!(v.storage().len(), 3);
+    }
+
+    #[test]
+    fn test_insert_many_crossing() {
+        // todo(jujumba): more test cases
+        let mut v = BitVec::from_elem(60, true);
+
+        #[rustfmt::skip]
+        v.insert_many(40, &[
+            false, false, false, false, false, false, false, false, false, false, // 10 bools per row
+            false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false,
+        ]);
+
+        assert_eq!(v.len(), 100);
+        #[rustfmt::skip]
+        assert!(v.eq_vec(&[
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 10 bools per row
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 20
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 30
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 40
+            false, false, false, false, false, false, false, false, false, false,  // 50
+            false, false, false, false, false, false, false, false, false, false,  // 60
+            false, false, false, false, false, false, false, false, false, false,  // 70
+            false, false, false, false, false, false, false, false, false, false,  // 80
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 90
+            true,  true,  true,  true,  true,  true,  true,  true,  true,  true,   // 100
+        ]));
     }
 }
