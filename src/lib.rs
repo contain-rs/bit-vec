@@ -3249,6 +3249,7 @@ mod tests {
         assert!(v.push_within_capacity(false).is_ok());
 
         assert_eq!(v.get(16), Some(false));
+        assert_eq!(v.len(), 17);
     }
 
     #[test]
@@ -3259,6 +3260,7 @@ mod tests {
 
         assert_eq!(v.get(31), Some(false));
         assert_eq!(v.len(), v.capacity());
+        assert_eq!(v.len(), 32);
 
         assert_eq!(v.push_within_capacity(false), Err(false));
     }
@@ -3271,6 +3273,7 @@ mod tests {
 
         assert_eq!(v.get(95), Some(false));
         assert_eq!(v.len(), v.capacity());
+        assert_eq!(v.len(), 96);
 
         assert_eq!(v.push_within_capacity(false), Err(false));
     }
