@@ -1638,7 +1638,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert!(b.eq_vec(&[true, false, true]));
     ///```
     ///
-    /// # Time complexity                                                                                                                                                         
+    /// # Time complexity
     /// Takes O([`len`]) time. All items after the insertion index must be
     /// shifted to the right. In the worst case, all elements are shifted when
     /// the insertion index is 0.
@@ -1673,6 +1673,64 @@ impl<B: BitBlock> BitVec<B> {
             *block_ref = *block_ref << 1 | carry;
             carry = curr_carry;
         }
+    }
+
+    /// Appends an element if there is sufficient spare capacity, otherwise an error is returned
+    /// with the element.
+    ///
+    /// Unlike [`push`] this method will not reallocate when there's insufficient capacity.
+    /// The caller should use [`reserve`] to ensure that there is enough capacity.
+    ///
+    /// [`push`]: Self::push
+    /// [`reserve`]: Self::reserve
+    ///
+    /// # Examples
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut bitvec = BitVec::from_elem(63, false); // there is space for exactly one element
+    ///
+    /// assert!(bitvec.push_within_capacity(true).is_ok()); // successfully push
+    /// assert_eq!(bitvec.get(63), Some(true));
+    ///
+    /// assert_eq!(bitvec.len(), bitvec.capacity()); // no spare capacity
+    /// assert_eq!(bitvec.push_within_capacity(true), Err(true)); // so consecutive pushes won't success
+    ///
+    /// bitvec.reserve(1); // reserve 1 additional bit (in fact, additional `B::bits()` bits)
+    ///
+    /// assert!(bitvec.push_within_capacity(true).is_ok());
+    /// assert_eq!(bitvec.get(64), Some(true));
+    /// ```
+    ///
+    /// # Time Complexity
+    /// Takes *O(1)* time.
+    pub fn push_within_capacity(&mut self, bit: bool) -> Result<(), bool> {
+        let len = self.len();
+
+        if len == self.capacity() {
+            return Err(bit);
+        }
+
+        let bits = B::bits();
+
+        if len % bits == 0 {
+            self.storage.push(B::zero());
+        }
+
+        let block_at = len / bits;
+        let bit_at = len % bits;
+        let flag = B::one() << bit_at;
+
+        self.ensure_invariant();
+        self.nbits += 1;
+        let v = if bit {
+            self.storage[block_at] | flag // set the bit
+        } else {
+            self.storage[block_at] // do nothing, the invariant is uphold
+        };
+
+        self.storage[block_at] = v;
+        Ok(())
     }
 }
 
@@ -3182,5 +3240,38 @@ mod tests {
         ]));
 
         assert_eq!(v.storage().len(), 3);
+    }
+
+    #[test]
+    fn test_push_within_capacity_with_suffice_cap() {
+        let mut v = BitVec::from_elem(16, true);
+
+        assert!(v.push_within_capacity(false).is_ok());
+
+        assert_eq!(v.get(16), Some(false));
+    }
+
+    #[test]
+    fn test_push_within_capacity_at_brink() {
+        let mut v = BitVec::from_elem(31, true);
+
+        assert!(v.push_within_capacity(false).is_ok());
+
+        assert_eq!(v.get(31), Some(false));
+        assert_eq!(v.len(), v.capacity());
+
+        assert_eq!(v.push_within_capacity(false), Err(false));
+    }
+
+    #[test]
+    fn test_push_within_capacity_at_brink_with_mul_blocks() {
+        let mut v = BitVec::from_elem(95, true);
+
+        assert!(v.push_within_capacity(false).is_ok());
+
+        assert_eq!(v.get(95), Some(false));
+        assert_eq!(v.len(), v.capacity());
+
+        assert_eq!(v.push_within_capacity(false), Err(false));
     }
 }
