@@ -3248,6 +3248,10 @@ mod tests {
 
         assert!(v.push_within_capacity(false).is_ok());
 
+        for i in 0..16 {
+            assert_eq!(v.get(i), Some(true));
+        }
+
         assert_eq!(v.get(16), Some(false));
         assert_eq!(v.len(), 17);
     }
@@ -3263,6 +3267,12 @@ mod tests {
         assert_eq!(v.len(), 32);
 
         assert_eq!(v.push_within_capacity(false), Err(false));
+        assert_eq!(v.capacity(), 32);
+
+        for i in 0..31 {
+            assert_eq!(v.get(i), Some(true));
+        }
+        assert_eq!(v.get(31), Some(false));
     }
 
     #[test]
@@ -3276,5 +3286,31 @@ mod tests {
         assert_eq!(v.len(), 96);
 
         assert_eq!(v.push_within_capacity(false), Err(false));
+        assert_eq!(v.capacity(), 96);
+
+        for i in 0..95 {
+            assert_eq!(v.get(i), Some(true));
+        }
+        assert_eq!(v.get(95), Some(false));
+    }
+
+    #[test]
+    fn test_push_within_capacity_storage_push() {
+        let mut v = BitVec::with_capacity(64);
+
+        for _ in 0..32 {
+            v.push(true);
+        }
+
+        assert_eq!(v.len(), 32);
+
+        assert!(v.push_within_capacity(false).is_ok());
+
+        assert_eq!(v.len(), 33);
+
+        for i in 0..32 {
+            assert_eq!(v.get(i), Some(true));
+        }
+        assert_eq!(v.get(32), Some(false));
     }
 }
