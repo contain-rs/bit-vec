@@ -1721,17 +1721,15 @@ impl<B: BitBlock> BitVec<B> {
 
         let block_at = len / bits;
         let bit_at = len % bits;
-        let flag = B::one() << bit_at;
+        let flag = if bit { B::one() << bit_at } else { B::zero() };
 
         self.ensure_invariant();
-        self.nbits += 1;
-        let v = if bit {
-            self.storage[block_at] | flag // set the bit
-        } else {
-            self.storage[block_at] // do nothing, the invariant is uphold
-        };
 
+        self.nbits += 1;
+
+        let v = self.storage[block_at] | flag; // set the bit
         self.storage[block_at] = v;
+
         Ok(())
     }
 }
