@@ -1688,18 +1688,20 @@ impl<B: BitBlock> BitVec<B> {
     /// ```
     /// use bit_vec::BitVec;
     ///
-    /// let mut bitvec = BitVec::from_elem(63, false); // there is space for exactly one element
+    /// let initial_capacity = 64;
+    /// let mut bitvec = BitVec::with_capacity(64);
     ///
-    /// assert!(bitvec.push_within_capacity(true).is_ok()); // successfully push
-    /// assert_eq!(bitvec.get(63), Some(true));
+    /// for _ in 0..initial_capacity - 1 {
+    ///     bitvec.push(false);
+    /// }
     ///
-    /// assert_eq!(bitvec.len(), bitvec.capacity()); // no spare capacity
-    /// assert_eq!(bitvec.push_within_capacity(true), Err(true)); // so consecutive pushes won't success
+    /// assert_eq!(bitvec.len(), initial_capacity - 1); // there is space for only 1 bit
     ///
-    /// bitvec.reserve(1); // reserve 1 additional bit (in fact, additional `B::bits()` bits)
+    /// assert_eq!(bitvec.push_within_capacity(true), Ok(())); // Successfully push a bit
+    /// assert_eq!(bitvec.len(), initial_capacity); // So we can't push within capacity anymore
     ///
-    /// assert!(bitvec.push_within_capacity(true).is_ok());
-    /// assert_eq!(bitvec.get(64), Some(true));
+    /// assert_eq!(bitvec.len(), initial_capacity);
+    /// assert_eq!(bitvec.push_within_capacity(true), Err(true));
     /// ```
     ///
     /// # Time Complexity
