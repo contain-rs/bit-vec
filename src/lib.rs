@@ -1700,8 +1700,9 @@ impl<B: BitBlock> BitVec<B> {
     /// assert_eq!(bitvec.push_within_capacity(true), Ok(())); // Successfully push a bit
     /// assert_eq!(bitvec.len(), initial_capacity); // So we can't push within capacity anymore
     ///
-    /// assert_eq!(bitvec.len(), initial_capacity);
     /// assert_eq!(bitvec.push_within_capacity(true), Err(true));
+    /// assert_eq!(bitvec.len(), initial_capacity);
+    /// assert_eq!(bitvec.capacity(), initial_capacity);
     /// ```
     ///
     /// # Time Complexity
