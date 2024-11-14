@@ -1728,8 +1728,7 @@ impl<B: BitBlock> BitVec<B> {
 
         self.nbits += 1;
 
-        let v = self.storage[block_at] | flag; // set the bit
-        self.storage[block_at] = v;
+        self.storage[block_at] = self.storage[block_at] | flag; // set the bit
 
         Ok(())
     }
