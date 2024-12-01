@@ -85,9 +85,9 @@
 #![doc(html_root_url = "https://docs.rs/bit-vec/0.8.0")]
 #![no_std]
 
-#![forbid(clippy::shadow_reuse)]
-#![forbid(clippy::shadow_same)]
-#![forbid(clippy::shadow_unrelated)]
+#![deny(clippy::shadow_reuse)]
+#![deny(clippy::shadow_same)]
+#![deny(clippy::shadow_unrelated)]
 
 #[cfg(any(test, feature = "std"))]
 #[macro_use]
@@ -1845,7 +1845,7 @@ impl<'a, B: 'a + BitBlock> IterMut<'a, B> {
     }
 }
 
-impl<'a, B: BitBlock> Deref for MutBorrowedBit<'a, B> {
+impl<B: BitBlock> Deref for MutBorrowedBit<'_, B> {
     type Target = bool;
 
     fn deref(&self) -> &Self::Target {
@@ -1853,13 +1853,13 @@ impl<'a, B: BitBlock> Deref for MutBorrowedBit<'a, B> {
     }
 }
 
-impl<'a, B: BitBlock> DerefMut for MutBorrowedBit<'a, B> {
+impl<B: BitBlock> DerefMut for MutBorrowedBit<'_, B> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.new_value
     }
 }
 
-impl<'a, B: BitBlock> Drop for MutBorrowedBit<'a, B> {
+impl<B: BitBlock> Drop for MutBorrowedBit<'_, B> {
     fn drop(&mut self) {
         let mut vec = (*self.vec).borrow_mut();
         #[cfg(debug_assertions)]
@@ -1872,7 +1872,7 @@ impl<'a, B: BitBlock> Drop for MutBorrowedBit<'a, B> {
     }
 }
 
-impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
+impl<B: BitBlock> Iterator for Iter<'_, B> {
     type Item = bool;
 
     #[inline]
@@ -1901,14 +1901,14 @@ impl<'a, B: BitBlock> Iterator for IterMut<'a, B> {
     }
 }
 
-impl<'a, B: BitBlock> DoubleEndedIterator for Iter<'a, B> {
+impl<B: BitBlock> DoubleEndedIterator for Iter<'_, B> {
     #[inline]
     fn next_back(&mut self) -> Option<bool> {
         self.range.next_back().map(|i| self.bit_vec.get(i).unwrap())
     }
 }
 
-impl<'a, B: BitBlock> DoubleEndedIterator for IterMut<'a, B> {
+impl<B: BitBlock> DoubleEndedIterator for IterMut<'_, B> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         let index = self.range.next_back();
@@ -1916,9 +1916,9 @@ impl<'a, B: BitBlock> DoubleEndedIterator for IterMut<'a, B> {
     }
 }
 
-impl<'a, B: BitBlock> ExactSizeIterator for Iter<'a, B> {}
+impl<B: BitBlock> ExactSizeIterator for Iter<'_, B> {}
 
-impl<'a, B: BitBlock> ExactSizeIterator for IterMut<'a, B> {}
+impl<B: BitBlock> ExactSizeIterator for IterMut<'_, B> {}
 
 impl<'a, B: BitBlock> IntoIterator for &'a BitVec<B> {
     type Item = bool;
@@ -1973,7 +1973,7 @@ pub struct Blocks<'a, B: 'a> {
     iter: slice::Iter<'a, B>,
 }
 
-impl<'a, B: BitBlock> Iterator for Blocks<'a, B> {
+impl<B: BitBlock> Iterator for Blocks<'_, B> {
     type Item = B;
 
     #[inline]
@@ -1987,17 +1987,21 @@ impl<'a, B: BitBlock> Iterator for Blocks<'a, B> {
     }
 }
 
-impl<'a, B: BitBlock> DoubleEndedIterator for Blocks<'a, B> {
+impl<B: BitBlock> DoubleEndedIterator for Blocks<'_, B> {
     #[inline]
     fn next_back(&mut self) -> Option<B> {
         self.iter.next_back().cloned()
     }
 }
 
-impl<'a, B: BitBlock> ExactSizeIterator for Blocks<'a, B> {}
+impl<B: BitBlock> ExactSizeIterator for Blocks<'_, B> {}
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::shadow_reuse)]
+    #![allow(clippy::shadow_same)]
+    #![allow(clippy::shadow_unrelated)]
+
     use super::{BitVec, Iter, Vec};
 
     // This is stupid, but I want to differentiate from a "random" 32
