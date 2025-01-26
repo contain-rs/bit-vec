@@ -1647,7 +1647,7 @@ impl<B: BitBlock> BitVec<B> {
     pub fn insert(&mut self, at: usize, bit: bool) {
         assert!(
             at <= self.nbits,
-            "insertion index (is {at}) should be <= nbits (is {nbits})",
+            "insertion index (is {at}) should be <= len (is {nbits})",
             nbits = self.nbits
         );
 
