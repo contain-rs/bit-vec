@@ -312,7 +312,9 @@ impl BitVec<u32> {
     pub fn new() -> Self {
         Default::default()
     }
+}
 
+impl BitVec<u32> {
     /// Creates a `BitVec` that holds `nbits` elements, setting each element
     /// to `bit`.
     ///
