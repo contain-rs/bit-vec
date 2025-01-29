@@ -22,7 +22,7 @@
 [crates.io link]: https://crates.io/crates/bit-vec
 [docs.rs badge]: https://docs.rs/bit-vec/badge.svg?version=0.8.0
 [docs.rs link]: https://docs.rs/bit-vec/0.8.0/bit_vec/
-[github ci badge]: https://github.com/contain-rs/linked-hash-map/workflows/Rust/badge.svg?branch=master
+[github ci badge]: https://github.com/contain-rs/bit-vec/workflows/Rust/badge.svg?branch=master
 [rustc 1.0+]: https://img.shields.io/badge/rustc-1.0%2B-blue.svg
 [serde_derive: rustc 1.31+]: https://img.shields.io/badge/serde_derive-rustc_1.31+-lightgray.svg
 [Rust 1.0]: https://blog.rust-lang.org/2015/05/15/Rust-1.0.html
