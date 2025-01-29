@@ -90,6 +90,9 @@ jobs:
             toolchain: stable
             components: clippy
       - run: cargo clippy --workspace --tests --examples
+      - run: cargo clippy --workspace --tests --examples --features serde
+      - run: cargo clippy --workspace --tests --examples --features miniserde
+      - run: cargo clippy --workspace --tests --examples --features nanoserde
 
   docs:
     runs-on: ubuntu-latest
