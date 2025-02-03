@@ -321,11 +321,11 @@ impl BitVec<u32> {
     /// }
     /// ```
     #[inline]
-    pub fn from_elem(nbits: usize, bit: bool) -> Self {
-        let nblocks = blocks_for_bits::<B>(nbits);
+    pub fn from_elem(len: usize, bit: bool) -> Self {
+        let nblocks = blocks_for_bits::<B>(len);
         let mut bit_vec = BitVec {
             storage: vec![if bit { !B::zero() } else { B::zero() }; nblocks],
-            nbits,
+            nbits: len,
         };
         bit_vec.fix_last_block();
         bit_vec
@@ -339,9 +339,9 @@ impl BitVec<u32> {
     /// It is important to note that this function does not specify the
     /// *length* of the returned bitvector, but only the *capacity*.
     #[inline]
-    pub fn with_capacity(nbits: usize) -> Self {
+    pub fn with_capacity(capacity: usize) -> Self {
         BitVec {
-            storage: Vec::with_capacity(blocks_for_bits::<B>(nbits)),
+            storage: Vec::with_capacity(blocks_for_bits::<B>(capacity)),
             nbits: 0,
         }
     }
