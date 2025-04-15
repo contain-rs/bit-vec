@@ -1937,6 +1937,10 @@ impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
         self.range.next().map(|i| self.bit_vec.get(i).unwrap())
     }
 
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        self.range.nth(n).and_then(|i|self.bit_vec.get(i))
+    }
+
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.range.size_hint()
     }
