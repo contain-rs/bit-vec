@@ -1937,6 +1937,13 @@ impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
         self.range.next().map(|i| self.bit_vec.get(i).unwrap())
     }
 
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        // This override is used by the compiler to optimize Iterator::skip.
+        // Without this, the default implementation of Iterator::nth is used, which walks over
+        // the whole iterator up to n.
+        self.range.nth(n).and_then(|i| self.bit_vec.get(i))
+    }
+
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.range.size_hint()
     }
