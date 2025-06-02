@@ -1941,7 +1941,7 @@ impl<'a, B: BitBlock> Iterator for Iter<'a, B> {
         // This override is used by the compiler to optimize Iterator::skip.
         // Without this, the default implementation of Iterator::nth is used, which walks over
         // the whole iterator up to n.
-        self.range.nth(n).and_then(|i|self.bit_vec.get(i))
+        self.range.nth(n).and_then(|i| self.bit_vec.get(i))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {

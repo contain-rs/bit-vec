@@ -270,13 +270,13 @@ fn bench_iter_skip(b: &mut test::Bencher) {
     let mut tbl = BitVec::from_elem(end, false);
     let mut r = g;
     for i in start..end {
-        tbl.set(i, r&1 != 0);
-        r = r*g%p;
+        tbl.set(i, r & 1 != 0);
+        r = r * g % p;
     }
     b.iter(|| {
         black_box(&mut tbl);
         // start is large relative to end-start, so before Iterator::nth was implemented for bitvec this would
         // have been much slower
-        black_box(tbl.iter().skip(start).filter(|&v|v).count());
+        black_box(tbl.iter().skip(start).filter(|&v| v).count());
     });
 }
