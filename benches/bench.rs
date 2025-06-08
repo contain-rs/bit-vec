@@ -8,6 +8,7 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+#![allow(stable_features)]
 #![feature(test)]
 #![feature(hint_assert_unchecked)]
 
@@ -26,7 +27,7 @@ const BENCH_BITS: usize = 1 << 14;
 const U32_BITS: usize = 32;
 
 fn small_rng() -> XorShiftRng {
-    XorShiftRng::from_entropy()
+    XorShiftRng::from_os_rng()
 }
 
 #[bench]
@@ -59,7 +60,7 @@ fn bench_bit_set_big_variable(b: &mut Bencher) {
     let mut bit_vec = BitVec::from_elem(BENCH_BITS, false);
     b.iter(|| {
         for _ in 0..100 {
-            bit_vec.set((r.next_u32() as usize) % BENCH_BITS, r.gen());
+            bit_vec.set((r.next_u32() as usize) % BENCH_BITS, r.random());
         }
         black_box(&bit_vec);
     });
