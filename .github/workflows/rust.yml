@@ -54,23 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [1.0.0, 1.1.0]
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{matrix.rust}}
-      - run: cargo build
-      - run: cargo test
-
-  msrv-serde:
-    name: Rust ${{matrix.rust}}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        rust: [1.31.0, 1.32.0]
+        rust: [1.60.0, 1.61.0]
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v3
@@ -80,6 +64,9 @@ jobs:
       - run: cargo build
       - run: cargo test
       - run: cargo test --features serde
+      - run: cargo test --features nanoserde
+      - run: cargo test --features miniserde
+      - run: cargo test --features borsh
 
   clippy:
     runs-on: ubuntu-latest
@@ -90,6 +77,10 @@ jobs:
             toolchain: stable
             components: clippy
       - run: cargo clippy --workspace --tests --examples
+      - run: cargo clippy --workspace --tests --examples --features serde
+      - run: cargo clippy --workspace --tests --examples --features miniserde
+      - run: cargo clippy --workspace --tests --examples --features nanoserde
+      - run: cargo clippy --workspace --tests --examples --features borsh
 
   docs:
     runs-on: ubuntu-latest
