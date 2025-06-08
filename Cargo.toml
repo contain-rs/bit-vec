@@ -10,7 +10,7 @@ documentation = "https://docs.rs/bit-vec/"
 keywords = ["data-structures", "bitvec", "bitmask", "bitmap", "bit"]
 readme = "README.md"
 edition = "2021"
-rust-version = "1.63"
+rust-version = "1.65"
 
 [dependencies]
 borsh = { version = "1.5", default-features = false, features = ["derive"], optional = true }
