@@ -36,13 +36,6 @@ Add this to your Cargo.toml:
 bit-vec = "0.8"
 ```
 
-Since Rust 2018, `extern crate` is no longer mandatory. If your edition is old (Rust 2015),
-add this to your crate root:
-
-```rust
-extern crate bit_vec;
-```
-
 If you want [serde](https://github.com/serde-rs/serde) support, include the feature like this:
 
 ```toml
