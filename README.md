@@ -129,6 +129,10 @@ assert_eq!(num_primes, 1_229);
 
 <!-- cargo-rdme end -->
 
+## Related work
+
+* `bitvec`: https://github.com/ferrilab/bitvec
+
 ## License
 
 Dual-licensed for compatibility with the Rust project.
