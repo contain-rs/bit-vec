@@ -826,7 +826,7 @@ impl<B: BitBlock> BitVec<B> {
     pub fn or(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| (w1 | w2))
+        self.process(other, |w1, w2| w1 | w2)
     }
 
     /// Calculates the bitwise `and` of two bitvectors.
@@ -857,7 +857,7 @@ impl<B: BitBlock> BitVec<B> {
     pub fn and(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| (w1 & w2))
+        self.process(other, |w1, w2| w1 & w2)
     }
 
     /// Calculates the difference between two bitvectors.
@@ -896,7 +896,7 @@ impl<B: BitBlock> BitVec<B> {
     pub fn difference(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| (w1 & !w2))
+        self.process(other, |w1, w2| w1 & !w2)
     }
 
     /// Calculates the xor of two bitvectors.
@@ -927,7 +927,7 @@ impl<B: BitBlock> BitVec<B> {
     pub fn xor(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| (w1 ^ w2))
+        self.process(other, |w1, w2| w1 ^ w2)
     }
 
     /// Calculates the nand of two bitvectors.
@@ -1322,30 +1322,35 @@ impl<B: BitBlock> BitVec<B> {
     /// assert_eq!(bv.to_bytes(), [0b00100000, 0b10000000]);
     /// ```
     pub fn to_bytes(&self) -> Vec<u8> {
-        self.ensure_invariant();
-        // Oh lord, we're mapping this to bytes bit-by-bit!
-        fn bit<B: BitBlock>(bit_vec: &BitVec<B>, byte: usize, bit: usize) -> u8 {
-            let offset = byte * 8 + bit;
-            if offset >= bit_vec.nbits {
-                0
-            } else {
-                (bit_vec[offset] as u8) << (7 - bit)
+        static REVERSE_TABLE: [u8; 256] = {
+            let mut tbl = [0u8; 256];
+            let mut i: u8 = 0;
+            loop {
+                tbl[i as usize] = i.reverse_bits();
+                if i == 255 {
+                    break;
+                }
+                i += 1;
             }
-        }
+            tbl
+        };
+        self.ensure_invariant();
 
         let len = self.nbits / 8 + if self.nbits % 8 == 0 { 0 } else { 1 };
-        (0..len)
-            .map(|i| {
-                bit(self, i, 0)
-                    | bit(self, i, 1)
-                    | bit(self, i, 2)
-                    | bit(self, i, 3)
-                    | bit(self, i, 4)
-                    | bit(self, i, 5)
-                    | bit(self, i, 6)
-                    | bit(self, i, 7)
-            })
-            .collect()
+        let mut result = Vec::with_capacity(len);
+
+        for byte_idx in 0..len {
+            let mut byte = 0u8;
+            for bit_idx in 0..8 {
+                let offset = byte_idx * 8 + bit_idx;
+                if offset < self.nbits && self[offset] {
+                    byte |= 1 << bit_idx;
+                }
+            }
+            result.push(REVERSE_TABLE[byte as usize]);
+        }
+
+        result
     }
 
     /// Compares a `BitVec` to a slice of `bool`s.

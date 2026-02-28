@@ -43,6 +43,18 @@ fn bench_usize_small(b: &mut Bencher) {
 }
 
 #[bench]
+fn bench_to_bytes(b: &mut Bencher) {
+    let mut bit_vec = BitVec::from_elem(BENCH_BITS, false);
+    let mut r = small_rng();
+    for _ in 0..BENCH_BITS / 10 {
+        bit_vec.set((r.next_u32() as usize) % BENCH_BITS, true);
+    }
+    b.iter(|| {
+        black_box(bit_vec.to_bytes());
+    });
+}
+
+#[bench]
 fn bench_bit_set_big_fixed(b: &mut Bencher) {
     let mut r = small_rng();
     let mut bit_vec = BitVec::from_elem(BENCH_BITS, false);
