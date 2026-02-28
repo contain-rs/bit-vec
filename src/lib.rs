@@ -311,9 +311,7 @@ impl BitVec<u32> {
     pub fn new() -> Self {
         Default::default()
     }
-}
 
-impl BitVec<u32> {
     /// Creates a `BitVec` that holds `nbits` elements, setting each element
     /// to `bit`.
     ///
@@ -330,7 +328,7 @@ impl BitVec<u32> {
     /// ```
     #[inline]
     pub fn from_elem(len: usize, bit: bool) -> Self {
-	    BitVec::<u32>::from_elem_general(len, bit)
+        BitVec::<u32>::from_elem_general(len, bit)
     }
 
     /// Constructs a new, empty `BitVec` with the specified capacity.
@@ -342,7 +340,7 @@ impl BitVec<u32> {
     /// *length* of the returned bitvector, but only the *capacity*.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-	    BitVec::<u32>::with_capacity_general(capacity)
+        BitVec::<u32>::with_capacity_general(capacity)
     }
 
     /// Transforms a byte-vector into a `BitVec`. Each byte becomes eight bits,
@@ -361,7 +359,7 @@ impl BitVec<u32> {
     ///                     false, false, true, false]));
     /// ```
     pub fn from_bytes(bytes: &[u8]) -> Self {
-	    BitVec::<u32>::from_bytes_general(bytes)
+        BitVec::<u32>::from_bytes_general(bytes)
     }
 
     /// Creates a `BitVec` of the specified length where the value at each index
@@ -380,7 +378,7 @@ impl BitVec<u32> {
     where
         F: FnMut(usize) -> bool,
     {
-	BitVec::<u32>::from_fn_general(len, f)
+        BitVec::<u32>::from_fn_general(len, f)
     }
 }
 
