@@ -214,6 +214,8 @@ fn reverse_bits(byte: u8) -> u8 {
 static TRUE: bool = true;
 static FALSE: bool = false;
 
+type B = u32;
+
 /// The bitvector type.
 ///
 /// # Examples
