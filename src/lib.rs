@@ -3400,6 +3400,8 @@ mod tests {
         assert_eq!(v.get(32), Some(false));
     }
 
+
+
     #[test]
     fn test_insert_remove() {
         // two primes for no common divisors with 32
@@ -3408,6 +3410,16 @@ mod tests {
             let result = v.remove(i);
             v.insert(i, result);
             assert_eq!(result, i % 11 < 7);
+        }
+
+        for i in 0 .. 1024 {
+            v.insert(i, false);
+            v.remove(i);
+        }
+
+        for i in 0 .. 1024 {
+            v.insert(i, true);
+            v.remove(i);
         }
 
         for (i, result) in v.into_iter().enumerate() {
