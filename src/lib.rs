@@ -3400,24 +3400,22 @@ mod tests {
         assert_eq!(v.get(32), Some(false));
     }
 
-
-
     #[test]
     fn test_insert_remove() {
         // two primes for no common divisors with 32
         let mut v = BitVec::from_fn(1024, |i| i % 11 < 7);
-        for i in 0 .. 1024 {
+        for i in 0..1024 {
             let result = v.remove(i);
             v.insert(i, result);
             assert_eq!(result, i % 11 < 7);
         }
 
-        for i in 0 .. 1024 {
+        for i in 0..1024 {
             v.insert(i, false);
             v.remove(i);
         }
 
-        for i in 0 .. 1024 {
+        for i in 0..1024 {
             v.insert(i, true);
             v.remove(i);
         }
