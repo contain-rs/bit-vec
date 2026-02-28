@@ -826,7 +826,7 @@ impl<B: BitBlock> BitVec<B> {
     pub fn or(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| (w1 | w2))
+        self.process(other, |w1, w2| w1 | w2)
     }
 
     /// Calculates the bitwise `and` of two bitvectors.
@@ -857,7 +857,7 @@ impl<B: BitBlock> BitVec<B> {
     pub fn and(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| (w1 & w2))
+        self.process(other, |w1, w2| w1 & w2)
     }
 
     /// Calculates the difference between two bitvectors.
@@ -896,7 +896,7 @@ impl<B: BitBlock> BitVec<B> {
     pub fn difference(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| (w1 & !w2))
+        self.process(other, |w1, w2| w1 & !w2)
     }
 
     /// Calculates the xor of two bitvectors.
@@ -927,7 +927,7 @@ impl<B: BitBlock> BitVec<B> {
     pub fn xor(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| (w1 ^ w2))
+        self.process(other, |w1, w2| w1 ^ w2)
     }
 
     /// Calculates the nand of two bitvectors.
