@@ -1689,6 +1689,68 @@ impl<B: BitBlock> BitVec<B> {
         }
     }
 
+    /// Remove a bit at index `at`, shifting all bits after by one.
+    ///
+    /// # Panics
+    /// Panics if `at` is out of bounds for `BitVec`'s length (that is, if `at >= BitVec::len()`)
+    ///
+    /// # Examples
+    ///```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut b = BitVec::new();
+    ///
+    /// b.push(true);
+    /// b.push(false);
+    /// b.push(false);
+    /// b.push(true);
+    /// assert!(!b.remove(1));
+    ///
+    /// assert!(b.eq_vec(&[true, false, true]));
+    ///```
+    ///
+    /// # Time complexity
+    /// Takes O([`len`]) time. All items after the removal index must be
+    /// shifted to the left. In the worst case, all elements are shifted when
+    /// the removal index is 0.
+    ///
+    /// [`len`]: Self::len
+    pub fn remove(&mut self, at: usize) -> bool {
+        assert!(
+            at < self.nbits,
+            "removal index (is {at}) should be < len (is {nbits})",
+            nbits = self.nbits
+        );
+
+        self.nbits -= 1;
+
+        let last_block_bits = self.nbits % B::bits();
+        let block_at = at / B::bits(); // needed block
+        let bit_at = at % B::bits(); // index within the block
+
+        let lsbits_mask = (B::one() << bit_at) - B::one();
+
+        let mut carry = B::zero();
+
+        for block_ref in self.storage[block_at + 1..].iter_mut().rev() {
+            let curr_carry = *block_ref & B::one();
+            *block_ref = *block_ref >> 1 | (carry << (B::bits() - 1));
+            carry = curr_carry;
+        }
+
+        let result = (self.storage[block_at] >> bit_at) & B::one() == B::one();
+
+        self.storage[block_at] = (self.storage[block_at] & lsbits_mask)
+            | ((self.storage[block_at] & (!lsbits_mask << 1)) >> 1)
+            | carry << (B::bits() - 1);
+
+        if last_block_bits == 0 {
+            self.storage.pop();
+        }
+
+        result
+    }
+
     /// Appends an element if there is sufficient spare capacity, otherwise an error is returned
     /// with the element.
     ///
@@ -3336,5 +3398,20 @@ mod tests {
             assert_eq!(v.get(i), Some(true));
         }
         assert_eq!(v.get(32), Some(false));
+    }
+
+    #[test]
+    fn test_insert_remove() {
+        // two primes for no common divisors with 32
+        let mut v = BitVec::from_fn(1024, |i| i % 11 < 7);
+        for i in 0 .. 1024 {
+            let result = v.remove(i);
+            v.insert(i, result);
+            assert_eq!(result, i % 11 < 7);
+        }
+
+        for (i, result) in v.into_iter().enumerate() {
+            assert_eq!(result, i % 11 < 7);
+        }
     }
 }
