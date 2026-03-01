@@ -236,7 +236,7 @@ static FALSE: bool = false;
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 ///
 /// // reset bitvector to empty
-/// bv.clear();
+/// bv.fill(false);
 /// println!("{:?}", bv);
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 /// ```
@@ -705,6 +705,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert_eq!(bv, BitVec::from_bytes(&[after]));
     /// ```
     #[inline]
+    #[deprecated(since = "0.9.0", note = "please use `.fill(true)` instead")]
     pub fn set_all(&mut self) {
         self.ensure_invariant();
         for w in &mut self.storage {
@@ -1617,10 +1618,32 @@ impl<B: BitBlock> BitVec<B> {
 
     /// Clears all bits in this vector.
     #[inline]
+    #[deprecated(since = "0.9.0", note = "please use `.fill(false)` instead")]
     pub fn clear(&mut self) {
         self.ensure_invariant();
         for w in &mut self.storage {
             *w = B::zero();
+        }
+    }
+
+    /// Assigns all bits in this vector to the given boolean value.
+    ///
+    /// # Invariants
+    ///
+    /// - After a call to `.fill(true)`, the result of [`all`] is `true`.
+    /// - After a call to `.fill(false)`, the result of [`none`] is `true`.
+    ///
+    /// [`all`]: Self::all
+    /// [`none`]: Self::none
+    #[inline]
+    pub fn fill(&mut self, bit: bool) {
+        self.ensure_invariant();
+        let block = if bit { !B::zero() } else { B::zero() };
+        for w in &mut self.storage {
+            *w = block;
+        }
+        if bit {
+            self.fix_last_block();
         }
     }
 
@@ -1664,6 +1687,7 @@ impl<B: BitBlock> BitVec<B> {
             "insertion index (is {at}) should be <= len (is {nbits})",
             nbits = self.nbits
         );
+        self.ensure_invariant();
 
         let last_block_bits = self.nbits % B::bits();
         let block_at = at / B::bits(); // needed block
@@ -1721,6 +1745,7 @@ impl<B: BitBlock> BitVec<B> {
             "removal index (is {at}) should be < len (is {nbits})",
             nbits = self.nbits
         );
+        self.ensure_invariant();
 
         self.nbits -= 1;
 
@@ -2707,19 +2732,23 @@ mod tests {
     }
 
     #[test]
-    fn test_small_clear() {
+    fn test_small_fill() {
         let mut b = BitVec::from_elem(14, true);
         assert!(!b.none() && b.all());
-        b.clear();
+        b.fill(false);
         assert!(b.none() && !b.all());
+        b.fill(true);
+        assert!(!b.none() && b.all());
     }
 
     #[test]
-    fn test_big_clear() {
+    fn test_big_fill() {
         let mut b = BitVec::from_elem(140, true);
         assert!(!b.none() && b.all());
-        b.clear();
+        b.fill(false);
         assert!(b.none() && !b.all());
+        b.fill(true);
+        assert!(!b.none() && b.all());
     }
 
     #[test]
