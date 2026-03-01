@@ -239,7 +239,7 @@ type B = u32;
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 ///
 /// // reset bitvector to empty
-/// bv.clear();
+/// bv.fill(false);
 /// println!("{:?}", bv);
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 /// ```
@@ -786,6 +786,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert_eq!(bv, BitVec::from_bytes(&[after]));
     /// ```
     #[inline]
+    #[deprecated(since = "0.9.0", note = "please use `.fill(true)` instead")]
     pub fn set_all(&mut self) {
         self.ensure_invariant();
         for w in &mut self.storage {
@@ -1698,10 +1699,32 @@ impl<B: BitBlock> BitVec<B> {
 
     /// Clears all bits in this vector.
     #[inline]
+    #[deprecated(since = "0.9.0", note = "please use `.fill(false)` instead")]
     pub fn clear(&mut self) {
         self.ensure_invariant();
         for w in &mut self.storage {
             *w = B::zero();
+        }
+    }
+
+    /// Assigns all bits in this vector to the given boolean value.
+    ///
+    /// # Invariants
+    ///
+    /// - After a call to `.fill(true)`, the result of [`all`] is `true`.
+    /// - After a call to `.fill(false)`, the result of [`none`] is `true`.
+    ///
+    /// [`all`]: Self::all
+    /// [`none`]: Self::none
+    #[inline]
+    pub fn fill(&mut self, bit: bool) {
+        self.ensure_invariant();
+        let block = if bit { !B::zero() } else { B::zero() };
+        for w in &mut self.storage {
+            *w = block;
+        }
+        if bit {
+            self.fix_last_block();
         }
     }
 
@@ -1745,6 +1768,7 @@ impl<B: BitBlock> BitVec<B> {
             "insertion index (is {at}) should be <= len (is {nbits})",
             nbits = self.nbits
         );
+        self.ensure_invariant();
 
         let last_block_bits = self.nbits % B::bits();
         let block_at = at / B::bits(); // needed block
@@ -1768,6 +1792,69 @@ impl<B: BitBlock> BitVec<B> {
             *block_ref = *block_ref << 1 | carry;
             carry = curr_carry;
         }
+    }
+
+    /// Remove a bit at index `at`, shifting all bits after by one.
+    ///
+    /// # Panics
+    /// Panics if `at` is out of bounds for `BitVec`'s length (that is, if `at >= BitVec::len()`)
+    ///
+    /// # Examples
+    ///```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut b = BitVec::new();
+    ///
+    /// b.push(true);
+    /// b.push(false);
+    /// b.push(false);
+    /// b.push(true);
+    /// assert!(!b.remove(1));
+    ///
+    /// assert!(b.eq_vec(&[true, false, true]));
+    ///```
+    ///
+    /// # Time complexity
+    /// Takes O([`len`]) time. All items after the removal index must be
+    /// shifted to the left. In the worst case, all elements are shifted when
+    /// the removal index is 0.
+    ///
+    /// [`len`]: Self::len
+    pub fn remove(&mut self, at: usize) -> bool {
+        assert!(
+            at < self.nbits,
+            "removal index (is {at}) should be < len (is {nbits})",
+            nbits = self.nbits
+        );
+        self.ensure_invariant();
+
+        self.nbits -= 1;
+
+        let last_block_bits = self.nbits % B::bits();
+        let block_at = at / B::bits(); // needed block
+        let bit_at = at % B::bits(); // index within the block
+
+        let lsbits_mask = (B::one() << bit_at) - B::one();
+
+        let mut carry = B::zero();
+
+        for block_ref in self.storage[block_at + 1..].iter_mut().rev() {
+            let curr_carry = *block_ref & B::one();
+            *block_ref = *block_ref >> 1 | (carry << (B::bits() - 1));
+            carry = curr_carry;
+        }
+
+        let result = (self.storage[block_at] >> bit_at) & B::one() == B::one();
+
+        self.storage[block_at] = (self.storage[block_at] & lsbits_mask)
+            | ((self.storage[block_at] & (!lsbits_mask << 1)) >> 1)
+            | carry << (B::bits() - 1);
+
+        if last_block_bits == 0 {
+            self.storage.pop();
+        }
+
+        result
     }
 
     /// Appends an element if there is sufficient spare capacity, otherwise an error is returned
@@ -2726,19 +2813,23 @@ mod tests {
     }
 
     #[test]
-    fn test_small_clear() {
+    fn test_small_fill() {
         let mut b = BitVec::from_elem(14, true);
         assert!(!b.none() && b.all());
-        b.clear();
+        b.fill(false);
         assert!(b.none() && !b.all());
+        b.fill(true);
+        assert!(!b.none() && b.all());
     }
 
     #[test]
-    fn test_big_clear() {
+    fn test_big_fill() {
         let mut b = BitVec::from_elem(140, true);
         assert!(!b.none() && b.all());
-        b.clear();
+        b.fill(false);
         assert!(b.none() && !b.all());
+        b.fill(true);
+        assert!(!b.none() && b.all());
     }
 
     #[test]
@@ -3417,5 +3508,39 @@ mod tests {
             assert_eq!(v.get(i), Some(true));
         }
         assert_eq!(v.get(32), Some(false));
+    }
+
+    #[test]
+    fn test_insert_remove() {
+        // two primes for no common divisors with 32
+        let mut v = BitVec::from_fn(1024, |i| i % 11 < 7);
+        for i in 0..1024 {
+            let result = v.remove(i);
+            v.insert(i, result);
+            assert_eq!(result, i % 11 < 7);
+        }
+
+        for i in 0..1024 {
+            v.insert(i, false);
+            v.remove(i);
+        }
+
+        for i in 0..1024 {
+            v.insert(i, true);
+            v.remove(i);
+        }
+
+        for (i, result) in v.into_iter().enumerate() {
+            assert_eq!(result, i % 11 < 7);
+        }
+    }
+
+    #[test]
+    fn test_remove_last() {
+        let mut v = BitVec::from_fn(1025, |i| i % 11 < 7);
+        assert_eq!(v.len(), 1025);
+        assert_eq!(v.remove(1024), 1024 % 11 < 7);
+        assert_eq!(v.len(), 1024);
+        assert_eq!(v.storage().len(), 1024 / 32);
     }
 }
