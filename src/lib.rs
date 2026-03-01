@@ -3453,4 +3453,13 @@ mod tests {
             assert_eq!(result, i % 11 < 7);
         }
     }
+
+    #[test]
+    fn test_remove_last() {
+        let mut v = BitVec::from_fn(1025, |i| i % 11 < 7);
+        assert_eq!(v.len(), 1025);
+        assert_eq!(v.remove(1024), 1024 % 11 < 7);
+        assert_eq!(v.len(), 1024);
+        assert_eq!(v.storage().len(), 1024 / 32);
+    }
 }
