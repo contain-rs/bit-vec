@@ -18,7 +18,7 @@ extern crate rand_xorshift;
 extern crate test;
 
 use bit_vec::BitVec;
-use rand::{Rng, RngCore, SeedableRng};
+use rand::{Rng, RngExt, SeedableRng};
 use rand_xorshift::XorShiftRng;
 use test::{black_box, Bencher};
 
@@ -27,7 +27,7 @@ const BENCH_BITS: usize = 1 << 14;
 const U32_BITS: usize = 32;
 
 fn small_rng() -> XorShiftRng {
-    XorShiftRng::from_os_rng()
+    XorShiftRng::from_rng(&mut rand::rng())
 }
 
 #[bench]
@@ -137,7 +137,7 @@ fn bench_bit_get_unchecked_small_assume(b: &mut Bencher) {
         for _ in 0..100 {
             unsafe {
                 let idx = (r.next_u32() as usize) % size;
-                ::std::hint::assert_unchecked(!(idx >= bit_vec.len()));
+                ::std::hint::assert_unchecked(idx < bit_vec.len());
                 black_box(bit_vec.get(idx));
             }
         }
@@ -256,7 +256,7 @@ fn bench_erathostenes_set_all(b: &mut test::Bencher) {
     b.iter(|| {
         primes.clear();
         black_box(&mut sieve);
-        sieve.set_all();
+        sieve.fill(true);
         black_box(&mut sieve);
         let mut i = 2;
         while i < sieve.len() {
