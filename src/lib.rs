@@ -93,6 +93,8 @@
 #![warn(clippy::missing_safety_doc)]
 #![allow(type_alias_bounds)]
 
+#![cfg_attr(feature = "allocator_api", feature(allocator_api))]
+
 #[cfg(any(test, feature = "std"))]
 #[macro_use]
 extern crate std;
@@ -183,8 +185,10 @@ pub trait BitBlockOrStore {
 }
 
 #[allow(clippy::len_without_is_empty)]
-pub trait BitStore: Clone + Default {
+pub trait BitStore: Clone {
     type Block: BitBlock;
+    type Alloc: Default;
+    fn new_in(alloc: Self::Alloc) -> Self;
     fn slice(&self) -> &[Self::Block];
     fn slice_mut(&mut self) -> &mut [Self::Block];
     fn len(&self) -> usize {
@@ -204,10 +208,17 @@ pub trait BitStore: Clone + Default {
     where
         T: IntoIterator<Item = Self::Block>;
     fn with_capacity(capacity: usize) -> Self;
+    fn with_capacity_in(capacity: usize, alloc: Self::Alloc) -> Self;
 }
 
+#[cfg(not(feature = "allocator_api"))]
 impl<T: BitBlock> BitStore for Vec<T> {
     type Block = T;
+    type Alloc = ();
+
+    fn new_in(_alloc: Self::Alloc) -> Self {
+        Vec::new()
+    }
 
     fn slice(&self) -> &[Self::Block] {
         &self[..]
@@ -218,54 +229,134 @@ impl<T: BitBlock> BitStore for Vec<T> {
     }
 
     fn pop(&mut self) -> Option<Self::Block> {
-        self.pop()
+        Vec::pop(self)
     }
 
     fn drain<R: RangeBounds<usize>>(&mut self, range: R) -> impl Iterator<Item = Self::Block> {
-        self.drain(range)
+        Vec::drain(self, range)
     }
 
     fn capacity(&self) -> usize {
-        self.capacity()
+        Vec::capacity(self)
     }
 
     fn append(&mut self, other: &mut Self) {
-        self.append(other);
+        Vec::append(self, other);
     }
 
     fn reserve(&mut self, additional: usize) {
-        self.reserve(additional);
+        Vec::reserve(self, additional);
     }
 
     fn push(&mut self, value: Self::Block) {
-        self.push(value);
+        Vec::push(self, value);
     }
 
     fn split_off(&mut self, at: usize) -> Self {
-        self.split_off(at)
+        Vec::split_off(self, at)
     }
 
     fn truncate(&mut self, len: usize) {
-        self.truncate(len);
+        Vec::truncate(self, len);
     }
 
     fn reserve_exact(&mut self, len: usize) {
-        self.reserve_exact(len);
+        Vec::reserve_exact(self, len);
     }
 
     fn shrink_to_fit(&mut self) {
-        self.shrink_to_fit();
+        Vec::shrink_to_fit(self);
     }
 
     fn extend<I>(&mut self, iter: I)
     where
         I: IntoIterator<Item = Self::Block>,
     {
-        iter::Extend::extend(self, iter);
+        Extend::extend(self, iter);
+    }
+
+    fn with_capacity_in(capacity: usize, _alloc: Self::Alloc) -> Self {
+        Vec::with_capacity(capacity)
     }
 
     fn with_capacity(capacity: usize) -> Self {
         Vec::with_capacity(capacity)
+    }
+}
+
+#[cfg(feature = "allocator_api")]
+impl<T: BitBlock, A> BitStore for Vec<T, A>
+where
+    A: core::alloc::Allocator + Clone + Default,
+{
+    type Block = T;
+    type Alloc = A;
+
+    fn new_in(alloc: Self::Alloc) -> Self {
+        Vec::new_in(alloc)
+    }
+
+    fn slice(&self) -> &[Self::Block] {
+        &self[..]
+    }
+
+    fn slice_mut(&mut self) -> &mut [Self::Block] {
+        &mut self[..]
+    }
+
+    fn pop(&mut self) -> Option<Self::Block> {
+        Vec::pop(self)
+    }
+
+    fn drain<R: RangeBounds<usize>>(&mut self, range: R) -> impl Iterator<Item = Self::Block> {
+        Vec::drain(self, range)
+    }
+
+    fn capacity(&self) -> usize {
+        Vec::capacity(self)
+    }
+
+    fn append(&mut self, other: &mut Self) {
+        Vec::append(self, other);
+    }
+
+    fn reserve(&mut self, additional: usize) {
+        Vec::reserve(self, additional);
+    }
+
+    fn push(&mut self, value: Self::Block) {
+        Vec::push(self, value);
+    }
+
+    fn split_off(&mut self, at: usize) -> Self {
+        Vec::split_off(self, at)
+    }
+
+    fn truncate(&mut self, len: usize) {
+        Vec::truncate(self, len);
+    }
+
+    fn reserve_exact(&mut self, len: usize) {
+        Vec::reserve_exact(self, len);
+    }
+
+    fn shrink_to_fit(&mut self) {
+        Vec::shrink_to_fit(self);
+    }
+
+    fn extend<I>(&mut self, iter: I)
+    where
+        I: IntoIterator<Item = Self::Block>,
+    {
+        Extend::extend(self, iter);
+    }
+
+    fn with_capacity_in(capacity: usize, alloc: A) -> Self {
+        Vec::with_capacity_in(capacity, alloc)
+    }
+
+    fn with_capacity(capacity: usize) -> Self {
+        Vec::with_capacity_in(capacity, A::default())
     }
 }
 
@@ -287,6 +378,7 @@ where
     A::Item: BitBlock,
 {
     type Block = A::Item;
+    type Alloc = ();
 
     fn slice(&self) -> &[Self::Block] {
         &self[..]
@@ -345,6 +437,14 @@ where
     }
 
     fn with_capacity(capacity: usize) -> Self {
+        smallvec::SmallVec::with_capacity(capacity)
+    }
+
+    fn new_in(alloc: ()) -> Self {
+        smallvec::SmallVec::new()
+    }
+
+    fn with_capacity_in(capacity: usize, alloc: ()) -> Self {
         smallvec::SmallVec::with_capacity(capacity)
     }
 }
@@ -572,6 +672,12 @@ impl<B: BitBlockOrStore> BitVec<B> {
         Default::default()
     }
 
+    /// Creates an empty `BitVec` using the provided allocator.
+    #[inline]
+    pub fn new_general_in(alloc: <B::Store as BitStore>::Alloc) -> Self {
+        Self::with_capacity_general_in(0, alloc)
+    }
+
     /// Creates a `BitVec` that holds `nbits` elements, setting each element
     /// to `bit`.
     ///
@@ -613,6 +719,21 @@ impl<B: BitBlockOrStore> BitVec<B> {
     pub fn with_capacity_general(capacity: usize) -> Self {
         BitVec {
             storage: B::Store::with_capacity(blocks_for_bits::<B>(capacity)),
+            nbits: 0,
+        }
+    }
+
+    /// Constructs a new, empty `BitVec` with the specified capacity.
+    ///
+    /// The bitvector will be able to hold at least `capacity` bits without
+    /// reallocating. If `capacity` is 0, it will not allocate.
+    ///
+    /// It is important to note that this function does not specify the
+    /// *length* of the returned bitvector, but only the *capacity*.
+    #[inline]
+    pub fn with_capacity_general_in(capacity: usize, alloc: <B::Store as BitStore>::Alloc) -> Self {
+        BitVec {
+            storage: B::Store::with_capacity_in(blocks_for_bits::<B>(capacity), alloc),
             nbits: 0,
         }
     }
@@ -1492,7 +1613,7 @@ impl<B: BitBlockOrStore> BitVec<B> {
         self.ensure_invariant();
         assert!(at <= self.len(), "`at` out of bounds");
 
-        let mut other = BitVec::<B>::default();
+        let mut other = BitVec::<B>::new_general();
 
         if at == 0 {
             mem::swap(self, &mut other);
@@ -2102,7 +2223,7 @@ impl<B: BitBlockOrStore> Default for BitVec<B> {
     #[inline]
     fn default() -> Self {
         BitVec {
-            storage: B::Store::default(),
+            storage: B::Store::new_in(Default::default()),
             nbits: 0,
         }
     }
@@ -3773,4 +3894,24 @@ mod tests {
 
     #[instantiate_tests(<u8>)]
     mod integer8 {}
+}
+
+#[cfg(test)]
+#[cfg(feature = "allocator_api")]
+mod alloc_tests {
+    use std::alloc::Global;
+    use std::vec::Vec;
+
+    use crate::BitVec;
+
+    #[test]
+    fn test_new_in() {
+        let alloc = Global;
+        let mut v: BitVec<Vec<u16, Global>> = BitVec::new_general_in(alloc);
+        v.push(true);
+        v.push(false);
+        assert_eq!(v.len(), 2);
+        assert_eq!(v.pop(), Some(false));
+        assert_eq!(v.pop(), Some(true));
+    }
 }
