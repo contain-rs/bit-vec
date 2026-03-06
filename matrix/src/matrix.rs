@@ -1,24 +1,24 @@
 //! Matrix of bits.
-//! 
+//!
 //! # Examples
-//! 
+//!
 //! Gets a mutable reference to the square bit matrix within this
 //! rectangular matrix, then performs a transitive closure.
-//! 
+//!
 //! ```rust
 //! use bit_matrix::BitMatrix;
-//! 
+//!
 //! let mut matrix = BitMatrix::new(7, 5);
 //! matrix.set(1, 2, true);
 //! matrix.set(2, 3, true);
 //! matrix.set(3, 4, true);
-//! 
+//!
 //! {
 //!     let mut sub_matrix = matrix.sub_matrix_mut(1 .. 6);
 //!     sub_matrix.transitive_closure();
 //! }
 //! assert!(matrix[(1, 4)]);
-//! 
+//!
 //! matrix.reflexive_closure();
 //! assert!(matrix[(0, 0)]);
 //! assert!(matrix[(1, 1)]);
@@ -131,7 +131,7 @@ impl BitMatrix {
     pub fn sub_matrix_mut<R: RangeBounds<usize>>(&mut self, range: R) -> BitSubMatrixMut<'_> {
         let row_size = self.row_size();
         // Safety:
-        // 
+        //
         unsafe {
             BitSubMatrixMut {
                 slice: &mut self.bit_vec.storage_mut()[(
@@ -181,25 +181,25 @@ impl BitMatrix {
     /// represented by this square bit matrix.
     ///
     /// Modifies this matrix in place using Warshall's algorithm.
-    /// 
+    ///
     /// After this operation, the matrix will describe a transitive
     /// relation. This means that, for any indices `a`, `b`, `c`,
     /// if `M[(a, b)]` and `M[(b, c)]`, then `M[(a, c)]`.
-    /// 
+    ///
     /// # Complexity
-    /// 
+    ///
     /// The time complexity is **O(n^3)**, where `n` is the number
     /// of columns and rows.
-    /// 
+    ///
     /// # Panics
-    /// 
+    ///
     /// The matrix must be square for this operation to succeed.
     pub fn transitive_closure(&mut self) {
         Into::<BitSubMatrixMut>::into(self).transitive_closure();
     }
 
     /// Determines whether the number of rows equals the number of columns.
-    /// 
+    ///
     /// This means the matrix is square.
     pub fn is_square(&self) -> bool {
         self.num_rows() == self.row_bits
@@ -212,7 +212,7 @@ impl BitMatrix {
 
     /// Computes the reflexive closure of the binary relation represented by
     /// this bit matrix. The matrix can be rectangular.
-    /// 
+    ///
     /// The reflexive closure means that for every `x`` that will be within bounds,
     /// `M[(x, x)]` is true.
     ///
@@ -248,7 +248,7 @@ impl IndexMut<usize> for BitMatrix {
 }
 
 /// Returns `true` if a bit is enabled in the matrix, or `false` otherwise.
-/// 
+///
 /// The first index in the tuple is row number, and the second is column
 /// number.
 impl Index<(usize, usize)> for BitMatrix {
@@ -267,9 +267,7 @@ impl Index<(usize, usize)> for BitMatrix {
 
 impl<'a> From<&'a mut BitMatrix> for BitSubMatrixMut<'a> {
     fn from(value: &'a mut BitMatrix) -> Self {
-        unsafe {
-            BitSubMatrixMut::new(value.bit_vec.storage_mut(), value.row_bits)
-        }
+        unsafe { BitSubMatrixMut::new(value.bit_vec.storage_mut(), value.row_bits) }
     }
 }
 

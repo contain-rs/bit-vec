@@ -57,8 +57,8 @@
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
-use bit_vec::{BitBlockOrStore, BitStore};
 use bit_vec::{BitBlock, BitVec, Blocks};
+use bit_vec::{BitBlockOrStore, BitStore};
 use core::cmp;
 use core::cmp::Ordering;
 use core::fmt;
@@ -73,7 +73,8 @@ use alloc::vec::Vec;
 use nanoserde::{DeBin, DeJson, DeRon, SerBin, SerJson, SerRon};
 
 type Block<B: BitBlockOrStore> = <B::Store as BitStore>::Block;
-type MatchWords<'a, B: BitBlockOrStore> = Chain<Enumerate<Blocks<'a, B>>, Skip<Take<Enumerate<Repeat<Block<B>>>>>>;
+type MatchWords<'a, B: BitBlockOrStore> =
+    Chain<Enumerate<Blocks<'a, B>>, Skip<Take<Enumerate<Repeat<Block<B>>>>>>;
 
 /// Computes how many blocks are needed to store that many bits
 fn blocks_for_bits<B: BitBlockOrStore>(bits: usize) -> usize {

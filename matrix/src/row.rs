@@ -27,7 +27,7 @@ impl BitSlice {
     /// Iterates over bits.
     #[inline]
     pub fn iter_bits(&self, len: usize) -> impl Iterator<Item = bool> + '_ {
-        (0 .. len).map(|i| self[i])
+        (0..len).map(|i| self[i])
     }
 
     /// Iterates over the slice's blocks.
