@@ -107,8 +107,6 @@ use std::vec::Vec;
 
 #[cfg(feature = "serde")]
 extern crate serde;
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 #[cfg(feature = "borsh")]
 extern crate borsh;
 #[cfg(feature = "miniserde")]
@@ -177,7 +175,11 @@ pub trait BitBlock:
 }
 
 pub trait BitBlockOrStore {
+    #[cfg(not(feature = "nanoserde"))]
     type Store: BitStore;
+    #[cfg(feature = "nanoserde")]
+    type Store: BitStore + DeBin + DeJson + DeRon + SerBin + SerJson + SerRon;
+
     const BITS: usize = <Self::Store as BitStore>::Block::BITS_;
     const BYTES: usize = <Self::Store as BitStore>::Block::BYTES_;
     const ONE: <Self::Store as BitStore>::Block = <Self::Store as BitStore>::Block::ONE_;
@@ -365,11 +367,17 @@ where
     }
 }
 
+#[cfg(not(feature = "nanoserde"))]
 impl<T: BitBlock> BitBlockOrStore for Vec<T> {
     type Store = Self;
 }
 
-#[cfg(feature = "smallvec")]
+#[cfg(feature = "nanoserde")]
+impl<T: BitBlock + DeBin + DeJson + DeRon + SerBin + SerJson + SerRon> BitBlockOrStore for Vec<T> {
+    type Store = Self;
+}
+
+#[cfg(all(feature = "smallvec", not(feature = "nanoserde")))]
 impl<A: smallvec::Array> BitBlockOrStore for smallvec::SmallVec<A>
 where
     A::Item: BitBlock,
@@ -449,11 +457,11 @@ where
         self.clear();
     }
 
-    fn new_in(alloc: ()) -> Self {
+    fn new_in(_alloc: ()) -> Self {
         smallvec::SmallVec::new()
     }
 
-    fn with_capacity_in(capacity: usize, alloc: ()) -> Self {
+    fn with_capacity_in(capacity: usize, _alloc: ()) -> Self {
         smallvec::SmallVec::with_capacity(capacity)
     }
 }
@@ -527,6 +535,10 @@ type B = u32;
 /// println!("{:?}", bv);
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 /// ```
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Deserialize, serde::Serialize)
+)]
 #[cfg_attr(
     feature = "borsh",
     derive(borsh::BorshDeserialize, borsh::BorshSerialize)
@@ -3541,10 +3553,10 @@ mod tests {
 
     #[cfg(feature = "serde")]
     #[test]
-    fn test_serialization<S: BitBlockOrStore>() {
-        let bit_vec: BitVec = BitVec::<S>::new_general();
+    fn test_serialization<S: BitBlockOrStore>() where S::Store: serde::Serialize + for<'a> serde::Deserialize<'a> {
+        let bit_vec: BitVec<S> = BitVec::<S>::new_general();
         let serialized = serde_json::to_string(&bit_vec).unwrap();
-        let unserialized: BitVec = serde_json::from_str(&serialized).unwrap();
+        let unserialized: BitVec<S> = serde_json::from_str(&serialized[..]).unwrap();
         assert_eq!(bit_vec, unserialized);
 
         let bools = vec![true, false, true, true];
@@ -3571,16 +3583,16 @@ mod tests {
 
     #[cfg(feature = "nanoserde")]
     #[test]
-    fn test_nanoserde_json_serialization<S: BitBlockOrStore>() {
+    fn test_nanoserde_json_serialization<S: BitBlockOrStore + nanoserde::DeBin + nanoserde::DeJson + nanoserde::DeRon + nanoserde::SerBin + nanoserde::SerJson + nanoserde::SerRon>() {
         use nanoserde::{DeJson, SerJson};
 
-        let bit_vec: BitVec = BitVec::<S>::new_general();
+        let bit_vec = BitVec::<S>::new_general();
         let serialized = bit_vec.serialize_json();
-        let unserialized: BitVec = BitVec::<S>::deserialize_json(&serialized[..]).unwrap();
+        let unserialized = BitVec::<S>::deserialize_json(&serialized[..]).unwrap();
         assert_eq!(bit_vec, unserialized);
 
         let bools = vec![true, false, true, true];
-        let bit_vec: BitVec = bools.iter().map(|n| *n).collect();
+        let bit_vec: BitVec<S> = bools.iter().map(|n| *n).collect();
         let serialized = bit_vec.serialize_json();
         let unserialized = BitVec::<S>::deserialize_json(&serialized[..]).unwrap();
         assert_eq!(bit_vec, unserialized);
@@ -3924,11 +3936,11 @@ mod tests {
     #[instantiate_tests(<Vec<u32>>)]
     mod vec32 {}
 
-    #[cfg(feature = "smallvec")]
+    #[cfg(all(feature = "smallvec", not(feature = "nanoserde")))]
     #[instantiate_tests(<smallvec::SmallVec<[u32; 8]>>)]
     mod smallvec32x8 {}
 
-    #[cfg(feature = "smallvec")]
+    #[cfg(all(feature = "smallvec", not(feature = "nanoserde")))]
     #[instantiate_tests(<smallvec::SmallVec<[u64; 8]>>)]
     mod smallvec64x8 {}
 
