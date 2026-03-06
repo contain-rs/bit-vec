@@ -218,7 +218,6 @@ pub trait BitBlockOrStore {
     const ZERO: <Self::Store as BitStore>::Block = <Self::Store as BitStore>::Block::ZERO_;
 }
 
-
 macro_rules! impl_combination {
     (
         type $T:ty: [$($B:tt)*];
@@ -3631,7 +3630,9 @@ mod tests {
 
     #[cfg(feature = "miniserde")]
     #[test]
-    fn test_miniserde_serialization<S: BitBlockOrStore + miniserde::Serialize + miniserde::Deserialize>() {
+    fn test_miniserde_serialization<
+        S: BitBlockOrStore + miniserde::Serialize + miniserde::Deserialize,
+    >() {
         let bit_vec = BitVec::<S>::new_general();
         let serialized = miniserde::json::to_string(&bit_vec);
         let unserialized: BitVec<S> = miniserde::json::from_str(&serialized[..]).unwrap();
