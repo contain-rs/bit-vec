@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rust: [1.82.0, 1.83.0]
+        rust: [1.85.0, 1.86.0]
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
@@ -67,6 +67,7 @@ jobs:
       - run: cargo test --features nanoserde
       - run: cargo test --features miniserde
       - run: cargo test --features borsh
+      - run: cargo test --features borsh,serde,nanoserde
 
   clippy:
     runs-on: ubuntu-latest
