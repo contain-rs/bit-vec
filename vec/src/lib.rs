@@ -92,7 +92,6 @@
 #![warn(clippy::single_match)]
 #![warn(clippy::missing_safety_doc)]
 #![allow(type_alias_bounds)]
-
 #![cfg_attr(feature = "allocator_api", feature(allocator_api))]
 
 #[cfg(any(test, feature = "std"))]
@@ -105,14 +104,14 @@ use std::string::String;
 #[cfg(feature = "std")]
 use std::vec::Vec;
 
-#[cfg(feature = "serde")]
-extern crate serde;
 #[cfg(feature = "borsh")]
 extern crate borsh;
 #[cfg(feature = "miniserde")]
 extern crate miniserde;
 #[cfg(feature = "nanoserde")]
 extern crate nanoserde;
+#[cfg(feature = "serde")]
+extern crate serde;
 #[cfg(feature = "nanoserde")]
 use nanoserde::{DeBin, DeJson, DeRon, SerBin, SerJson, SerRon};
 
@@ -175,12 +174,20 @@ pub trait BitBlock:
 }
 
 pub trait BitBlockOrStore {
-    #[cfg(all(feature = "nanoserde", not(feature = "serde")))] 
+    #[cfg(all(feature = "nanoserde", not(feature = "serde")))]
     type Store: BitStore + DeBin + DeJson + DeRon + SerBin + SerJson + SerRon;
-    #[cfg(all(not(feature = "nanoserde"), feature = "serde"))] 
+    #[cfg(all(not(feature = "nanoserde"), feature = "serde"))]
     type Store: BitStore + serde::Serialize + for<'a> serde::Deserialize<'a>;
     #[cfg(all(feature = "nanoserde", feature = "serde"))]
-    type Store: BitStore + DeBin + DeJson + DeRon + SerBin + SerJson + SerRon + serde::Serialize + for<'a> serde::Deserialize<'a>;
+    type Store: BitStore
+        + DeBin
+        + DeJson
+        + DeRon
+        + SerBin
+        + SerJson
+        + SerRon
+        + serde::Serialize
+        + for<'a> serde::Deserialize<'a>;
     #[cfg(all(not(feature = "nanoserde"), not(feature = "serde")))]
     type Store: BitStore;
 
@@ -387,7 +394,18 @@ impl<T: BitBlock + DeBin + DeJson + DeRon + SerBin + SerJson + SerRon> BitBlockO
 }
 
 #[cfg(all(feature = "serde", feature = "nanoserde"))]
-impl<T: BitBlock + DeBin + DeJson + DeRon + SerBin + SerJson + SerRon + for<'a> serde::Deserialize<'a> + serde::Serialize> BitBlockOrStore for Vec<T> {
+impl<
+        T: BitBlock
+            + DeBin
+            + DeJson
+            + DeRon
+            + SerBin
+            + SerJson
+            + SerRon
+            + for<'a> serde::Deserialize<'a>
+            + serde::Serialize,
+    > BitBlockOrStore for Vec<T>
+{
     type Store = Self;
 }
 
@@ -549,10 +567,7 @@ type B = u32;
 /// println!("{:?}", bv);
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 /// ```
-#[cfg_attr(
-    feature = "serde",
-    derive(serde::Deserialize, serde::Serialize)
-)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(
     feature = "borsh",
     derive(borsh::BorshDeserialize, borsh::BorshSerialize)
@@ -3567,7 +3582,10 @@ mod tests {
 
     #[cfg(feature = "serde")]
     #[test]
-    fn test_serialization<S: BitBlockOrStore>() where S::Store: serde::Serialize + for<'a> serde::Deserialize<'a> {
+    fn test_serialization<S: BitBlockOrStore>()
+    where
+        S::Store: serde::Serialize + for<'a> serde::Deserialize<'a>,
+    {
         let bit_vec: BitVec<S> = BitVec::<S>::new_general();
         let serialized = serde_json::to_string(&bit_vec).unwrap();
         let unserialized: BitVec<S> = serde_json::from_str(&serialized[..]).unwrap();
@@ -3597,7 +3615,15 @@ mod tests {
 
     #[cfg(feature = "nanoserde")]
     #[test]
-    fn test_nanoserde_json_serialization<S: BitBlockOrStore + nanoserde::DeBin + nanoserde::DeJson + nanoserde::DeRon + nanoserde::SerBin + nanoserde::SerJson + nanoserde::SerRon>() {
+    fn test_nanoserde_json_serialization<
+        S: BitBlockOrStore
+            + nanoserde::DeBin
+            + nanoserde::DeJson
+            + nanoserde::DeRon
+            + nanoserde::SerBin
+            + nanoserde::SerJson
+            + nanoserde::SerRon,
+    >() {
         use nanoserde::{DeJson, SerJson};
 
         let bit_vec = BitVec::<S>::new_general();

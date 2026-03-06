@@ -1,5 +1,5 @@
 //! Defines a building block for the bit slice.
-//! 
+//!
 //! Bits are stored in blocks. When the last block
 //! is not full with bits, we waste some space.
 
