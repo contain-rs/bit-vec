@@ -16,7 +16,7 @@ rust-version = "1.82"
 borsh = { version = "1.5.7", default-features = false, features = ["derive"], optional = true }
 serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
 miniserde = { version = "0.1", optional = true }
-nanoserde = { version = "0.2", optional = true }
+nanoserde = { git = "https://github.com/not-fl3/nanoserde.git", version = "0.2.2", optional = true }
 smallvec = { version = "1.15", optional = true }
 
 [dev-dependencies]

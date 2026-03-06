@@ -11,6 +11,7 @@ cargo-fuzz = true
 [features]
 afl_fuzz = ["afl"]
 honggfuzz_fuzz = ["honggfuzz"]
+nanoserde = ["bit-vec/nanoserde"]
 
 [dependencies]
 honggfuzz = { version = "0.5", optional = true }
