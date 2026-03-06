@@ -173,29 +173,91 @@ pub trait BitBlock:
     const ONE_: Self;
 }
 
+macro_rules! bound_combination {
+    (
+        type $T:ident: [$($B:tt)*];
+        $cfg0:tt => [$($Bounds0:tt)*];
+        $(
+            $cfg:tt => [$($Bounds:tt)*];
+        )*
+    ) => {
+        #[cfg(not(feature = $cfg0))]
+        bound_combination!(
+            type $T: [$($B)*];
+            $(
+                $cfg => [$($Bounds)*];
+            )*
+        );
+        #[cfg(feature = $cfg0)]
+        bound_combination!(
+            type $T: [$($B)* + $($Bounds0)*];
+            $(
+                $cfg => [$($Bounds)*];
+            )*
+        );
+    };
+    (
+        type $T:ident: [$($B:tt)*];
+    ) => {
+        type $T: $($B)*;
+    }
+}
+
 pub trait BitBlockOrStore {
-    #[cfg(all(feature = "nanoserde", not(feature = "serde")))]
-    type Store: BitStore + DeBin + DeJson + DeRon + SerBin + SerJson + SerRon;
-    #[cfg(all(not(feature = "nanoserde"), feature = "serde"))]
-    type Store: BitStore + serde::Serialize + for<'a> serde::Deserialize<'a>;
-    #[cfg(all(feature = "nanoserde", feature = "serde"))]
-    type Store: BitStore
-        + DeBin
-        + DeJson
-        + DeRon
-        + SerBin
-        + SerJson
-        + SerRon
-        + serde::Serialize
-        + for<'a> serde::Deserialize<'a>;
-    #[cfg(all(not(feature = "nanoserde"), not(feature = "serde")))]
-    type Store: BitStore;
+    bound_combination!(
+        type Store: [BitStore];
+        "nanoserde" => [DeBin + DeJson + DeRon + SerBin + SerJson + SerRon];
+        "serde" => [serde::Serialize + for<'a> serde::Deserialize<'a>];
+        "miniserde" => [miniserde::Deserialize + miniserde::Serialize];
+        "borsh" => [borsh::BorshDeserialize + borsh::BorshSerialize];
+    );
 
     const BITS: usize = <Self::Store as BitStore>::Block::BITS_;
     const BYTES: usize = <Self::Store as BitStore>::Block::BYTES_;
     const ONE: <Self::Store as BitStore>::Block = <Self::Store as BitStore>::Block::ONE_;
     const ZERO: <Self::Store as BitStore>::Block = <Self::Store as BitStore>::Block::ZERO_;
 }
+
+
+macro_rules! impl_combination {
+    (
+        type $T:ty: [$($B:tt)*];
+        $cfg0:tt => [$($Bounds0:tt)*];
+        $(
+            $cfg:tt => [$($Bounds:tt)*];
+        )*
+    ) => {
+        #[cfg(not(feature = $cfg0))]
+        impl_combination!(
+            type $T: [$($B)*];
+            $(
+                $cfg => [$($Bounds)*];
+            )*
+        );
+        #[cfg(feature = $cfg0)]
+        impl_combination!(
+            type $T: [$($B)* + $($Bounds0)*];
+            $(
+                $cfg => [$($Bounds)*];
+            )*
+        );
+    };
+    (
+        type $T:ty: [$($B:tt)*];
+    ) => {
+        impl<T: $($B)*> BitBlockOrStore for Vec<T> {
+            type Store = Self;
+        }
+    }
+}
+
+impl_combination!(
+    type Vec<T>: [BitBlock];
+    "nanoserde" => [DeBin + DeJson + DeRon + SerBin + SerJson + SerRon];
+    "serde" => [serde::Serialize + for<'a> serde::Deserialize<'a>];
+    "miniserde" => [miniserde::Deserialize + miniserde::Serialize];
+    "borsh" => [borsh::BorshDeserialize + borsh::BorshSerialize];
+);
 
 #[allow(clippy::len_without_is_empty)]
 pub trait BitStore: Clone {
@@ -371,37 +433,6 @@ where
     fn with_capacity(capacity: usize) -> Self {
         Vec::with_capacity_in(capacity, A::default())
     }
-}
-
-#[cfg(all(not(feature = "serde"), not(feature = "nanoserde")))]
-impl<T: BitBlock> BitBlockOrStore for Vec<T> {
-    type Store = Self;
-}
-
-#[cfg(all(feature = "serde", not(feature = "nanoserde")))]
-impl<T: BitBlock + for<'a> serde::Deserialize<'a> + serde::Serialize> BitBlockOrStore for Vec<T> {
-    type Store = Self;
-}
-
-#[cfg(all(not(feature = "serde"), feature = "nanoserde"))]
-impl<T: BitBlock + DeBin + DeJson + DeRon + SerBin + SerJson + SerRon> BitBlockOrStore for Vec<T> {
-    type Store = Self;
-}
-
-#[cfg(all(feature = "serde", feature = "nanoserde"))]
-impl<
-        T: BitBlock
-            + DeBin
-            + DeJson
-            + DeRon
-            + SerBin
-            + SerJson
-            + SerRon
-            + for<'a> serde::Deserialize<'a>
-            + serde::Serialize,
-    > BitBlockOrStore for Vec<T>
-{
-    type Store = Self;
 }
 
 #[cfg(all(feature = "smallvec", not(feature = "nanoserde")))]
@@ -3572,10 +3603,10 @@ mod tests {
 
     #[cfg(feature = "miniserde")]
     #[test]
-    fn test_miniserde_serialization<S: BitBlockOrStore>() {
-        let bit_vec: BitVec = BitVec::<S>::new_general();
+    fn test_miniserde_serialization<S: BitBlockOrStore + miniserde::Serialize + miniserde::Deserialize>() {
+        let bit_vec = BitVec::<S>::new_general();
         let serialized = miniserde::json::to_string(&bit_vec);
-        let unserialized: BitVec = miniserde::json::from_str(&serialized[..]).unwrap();
+        let unserialized: BitVec<S> = miniserde::json::from_str(&serialized[..]).unwrap();
         assert_eq!(bit_vec, unserialized);
 
         let bools = vec![true, false, true, true];
@@ -3613,9 +3644,9 @@ mod tests {
     #[cfg(feature = "borsh")]
     #[test]
     fn test_borsh_serialization<S: BitBlockOrStore>() {
-        let bit_vec: BitVec = BitVec::<S>::new_general();
+        let bit_vec = BitVec::<S>::new_general();
         let serialized = borsh::to_vec(&bit_vec).unwrap();
-        let unserialized: BitVec = borsh::from_slice(&serialized[..]).unwrap();
+        let unserialized: BitVec<S> = borsh::from_slice(&serialized[..]).unwrap();
         assert_eq!(bit_vec, unserialized);
 
         let bools = vec![true, false, true, true];
