@@ -57,6 +57,7 @@
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
+use bit_vec::{BitBlockOrStore, BitStore};
 use bit_vec::{BitBlock, BitVec, Blocks};
 use core::cmp;
 use core::cmp::Ordering;
@@ -71,10 +72,11 @@ use alloc::vec::Vec;
 #[cfg(feature = "nanoserde")]
 use nanoserde::{DeBin, DeJson, DeRon, SerBin, SerJson, SerRon};
 
-type MatchWords<'a, B> = Chain<Enumerate<Blocks<'a, B>>, Skip<Take<Enumerate<Repeat<B>>>>>;
+type Block<B: BitBlockOrStore> = <B::Store as BitStore>::Block;
+type MatchWords<'a, B: BitBlockOrStore> = Chain<Enumerate<Blocks<'a, B>>, Skip<Take<Enumerate<Repeat<Block<B>>>>>>;
 
 /// Computes how many blocks are needed to store that many bits
-fn blocks_for_bits<B: BitBlock>(bits: usize) -> usize {
+fn blocks_for_bits<B: BitBlockOrStore>(bits: usize) -> usize {
     // If we want 17 bits, dividing by 32 will produce 0. So we add 1 to make sure we
     // reserve enough. But if we want exactly a multiple of 32, this will actually allocate
     // one too many. So we need to check if that's the case. We can do that by computing if
@@ -83,17 +85,17 @@ fn blocks_for_bits<B: BitBlock>(bits: usize) -> usize {
     //
     // Note that we can technically avoid this branch with the expression
     // `(nbits + BITS - 1) / 32::BITS`, but if nbits is almost usize::MAX this will overflow.
-    if bits % B::bits() == 0 {
-        bits / B::bits()
+    if bits % B::BITS == 0 {
+        bits / B::BITS
     } else {
-        bits / B::bits() + 1
+        bits / B::BITS + 1
     }
 }
 
 #[allow(clippy::iter_skip_zero)]
 // Take two BitVec's, and return iterators of their words, where the shorter one
 // has been padded with 0's
-fn match_words<'a, 'b, B: BitBlock>(
+fn match_words<'a, 'b, B: BitBlockOrStore>(
     a: &'a BitVec<B>,
     b: &'b BitVec<B>,
 ) -> (MatchWords<'a, B>, MatchWords<'b, B>) {
@@ -105,19 +107,19 @@ fn match_words<'a, 'b, B: BitBlock>(
         (
             a.blocks()
                 .enumerate()
-                .chain(iter::repeat(B::zero()).enumerate().take(b_len).skip(a_len)),
+                .chain(iter::repeat(B::ZERO).enumerate().take(b_len).skip(a_len)),
             b.blocks()
                 .enumerate()
-                .chain(iter::repeat(B::zero()).enumerate().take(0).skip(0)),
+                .chain(iter::repeat(B::ZERO).enumerate().take(0).skip(0)),
         )
     } else {
         (
             a.blocks()
                 .enumerate()
-                .chain(iter::repeat(B::zero()).enumerate().take(0).skip(0)),
+                .chain(iter::repeat(B::ZERO).enumerate().take(0).skip(0)),
             b.blocks()
                 .enumerate()
-                .chain(iter::repeat(B::zero()).enumerate().take(a_len).skip(b_len)),
+                .chain(iter::repeat(B::ZERO).enumerate().take(a_len).skip(b_len)),
         )
     }
 }
@@ -135,11 +137,11 @@ fn match_words<'a, 'b, B: BitBlock>(
     feature = "nanoserde",
     derive(DeBin, DeJson, DeRon, SerBin, SerJson, SerRon)
 )]
-pub struct BitSet<B = u32> {
+pub struct BitSet<B: BitBlockOrStore = u32> {
     bit_vec: BitVec<B>,
 }
 
-impl<B: BitBlock> Clone for BitSet<B> {
+impl<B: BitBlockOrStore> Clone for BitSet<B> {
     fn clone(&self) -> Self {
         BitSet {
             bit_vec: self.bit_vec.clone(),
@@ -151,7 +153,7 @@ impl<B: BitBlock> Clone for BitSet<B> {
     }
 }
 
-impl<B: BitBlock> Default for BitSet<B> {
+impl<B: BitBlockOrStore> Default for BitSet<B> {
     #[inline]
     fn default() -> Self {
         BitSet {
@@ -160,7 +162,7 @@ impl<B: BitBlock> Default for BitSet<B> {
     }
 }
 
-impl<B: BitBlock> FromIterator<usize> for BitSet<B> {
+impl<B: BitBlockOrStore> FromIterator<usize> for BitSet<B> {
     fn from_iter<I: IntoIterator<Item = usize>>(iter: I) -> Self {
         let mut ret = Self::default();
         ret.extend(iter);
@@ -168,7 +170,7 @@ impl<B: BitBlock> FromIterator<usize> for BitSet<B> {
     }
 }
 
-impl<B: BitBlock> Extend<usize> for BitSet<B> {
+impl<B: BitBlockOrStore> Extend<usize> for BitSet<B> {
     #[inline]
     fn extend<I: IntoIterator<Item = usize>>(&mut self, iter: I) {
         for i in iter {
@@ -177,28 +179,28 @@ impl<B: BitBlock> Extend<usize> for BitSet<B> {
     }
 }
 
-impl<B: BitBlock> PartialOrd for BitSet<B> {
+impl<B: BitBlockOrStore> PartialOrd for BitSet<B> {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<B: BitBlock> Ord for BitSet<B> {
+impl<B: BitBlockOrStore> Ord for BitSet<B> {
     #[inline]
     fn cmp(&self, other: &Self) -> Ordering {
         self.iter().cmp(other)
     }
 }
 
-impl<B: BitBlock> PartialEq for BitSet<B> {
+impl<B: BitBlockOrStore> PartialEq for BitSet<B> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.iter().eq(other)
     }
 }
 
-impl<B: BitBlock> Eq for BitSet<B> {}
+impl<B: BitBlockOrStore> Eq for BitSet<B> {}
 
 impl BitSet<u32> {
     /// Creates a new empty `BitSet`.
@@ -260,7 +262,7 @@ impl BitSet<u32> {
     }
 }
 
-impl<B: BitBlock> BitSet<B> {
+impl<B: BitBlockOrStore> BitSet<B> {
     /// Returns the capacity in bits for this bit vector. Inserting any
     /// element less than this amount will not trigger a resizing.
     ///
@@ -391,7 +393,7 @@ impl<B: BitBlock> BitSet<B> {
     #[inline]
     fn other_op<F>(&mut self, other: &Self, mut f: F)
     where
-        F: FnMut(B, B) -> B,
+        F: FnMut(Block<B>, Block<B>) -> Block<B>,
     {
         // Unwrap BitVecs
         let self_bit_vec = &mut self.bit_vec;
@@ -416,7 +418,7 @@ impl<B: BitBlock> BitSet<B> {
             let old = self_bit_vec.storage()[i];
             let new = f(old, w);
             unsafe {
-                self_bit_vec.storage_mut()[i] = new;
+                self_bit_vec.storage_mut().slice_mut()[i] = new;
             }
         }
     }
@@ -450,13 +452,13 @@ impl<B: BitBlock> BitSet<B> {
             .storage()
             .iter()
             .rev()
-            .take_while(|&&n| n == B::zero())
+            .take_while(|&&n| n == B::ZERO)
             .count();
         // Truncate away all empty trailing blocks, then shrink_to_fit
         let trunc_len = old_len - n;
         unsafe {
             bit_vec.storage_mut().truncate(trunc_len);
-            bit_vec.set_len(trunc_len * B::bits());
+            bit_vec.set_len(trunc_len * B::BITS);
         }
         bit_vec.shrink_to_fit();
     }
@@ -850,7 +852,7 @@ impl<B: BitBlock> BitSet<B> {
         // Check that `self` intersect `other` is self
         self_bit_vec.blocks().zip(other_bit_vec.blocks()).all(|(w1, w2)| w1 & w2 == w1) &&
         // Make sure if `self` has any more blocks than `other`, they're all 0
-        self_bit_vec.blocks().skip(other_blocks).all(|w| w == B::zero())
+        self_bit_vec.blocks().skip(other_blocks).all(|w| w == B::ZERO)
     }
 
     /// Returns `true` if the set is a superset of another.
@@ -894,7 +896,7 @@ impl<B: BitBlock> BitSet<B> {
     }
 }
 
-impl<B: BitBlock> fmt::Debug for BitSet<B> {
+impl<B: BitBlockOrStore> fmt::Debug for BitSet<B> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_struct("BitSet")
             .field("bit_vec", &self.bit_vec)
@@ -902,13 +904,13 @@ impl<B: BitBlock> fmt::Debug for BitSet<B> {
     }
 }
 
-impl<B: BitBlock> fmt::Display for BitSet<B> {
+impl<B: BitBlockOrStore> fmt::Display for BitSet<B> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_set().entries(self).finish()
     }
 }
 
-impl<B: BitBlock> hash::Hash for BitSet<B> {
+impl<B: BitBlockOrStore> hash::Hash for BitSet<B> {
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         for pos in self {
             pos.hash(state);
@@ -917,18 +919,18 @@ impl<B: BitBlock> hash::Hash for BitSet<B> {
 }
 
 #[derive(Clone)]
-struct BlockIter<T, B> {
-    head: B,
+struct BlockIter<T, B: BitBlockOrStore> {
+    head: Block<B>,
     head_offset: usize,
     tail: T,
 }
 
-impl<T, B: BitBlock> BlockIter<T, B>
+impl<T, B: BitBlockOrStore> BlockIter<T, B>
 where
-    T: Iterator<Item = B>,
+    T: Iterator<Item = Block<B>>,
 {
-    fn from_blocks(mut blocks: T) -> BlockIter<T, B> {
-        let h = blocks.next().unwrap_or_else(B::zero);
+    fn from_blocks(mut blocks: T) -> Self {
+        let h = blocks.next().unwrap_or(B::ZERO);
         BlockIter {
             tail: blocks,
             head: h,
@@ -939,19 +941,19 @@ where
 
 /// An iterator combining two `BitSet` iterators.
 #[derive(Clone)]
-struct TwoBitPositions<'a, B: 'a> {
+struct TwoBitPositions<'a, B: 'a + BitBlockOrStore> {
     set: Blocks<'a, B>,
     other: Blocks<'a, B>,
-    merge: fn(B, B) -> B,
+    merge: fn(Block<B>, Block<B>) -> Block<B>,
 }
 
 /// An iterator for `BitSet`.
 #[derive(Clone)]
-pub struct Iter<'a, B: 'a>(BlockIter<Blocks<'a, B>, B>);
+pub struct Iter<'a, B: 'a + BitBlockOrStore>(BlockIter<Blocks<'a, B>, B>);
 #[derive(Clone)]
-pub struct Union<'a, B: 'a>(BlockIter<TwoBitPositions<'a, B>, B>);
+pub struct Union<'a, B: 'a + BitBlockOrStore>(BlockIter<TwoBitPositions<'a, B>, B>);
 #[derive(Clone)]
-pub struct Intersection<'a, B: 'a> {
+pub struct Intersection<'a, B: 'a + BitBlockOrStore> {
     iter: BlockIter<TwoBitPositions<'a, B>, B>,
     // as an optimization, we compute the maximum possible
     // number of elements in the intersection, and count it
@@ -960,34 +962,34 @@ pub struct Intersection<'a, B: 'a> {
     n: usize,
 }
 #[derive(Clone)]
-pub struct Difference<'a, B: 'a>(BlockIter<TwoBitPositions<'a, B>, B>);
+pub struct Difference<'a, B: 'a + BitBlockOrStore>(BlockIter<TwoBitPositions<'a, B>, B>);
 #[derive(Clone)]
-pub struct SymmetricDifference<'a, B: 'a>(BlockIter<TwoBitPositions<'a, B>, B>);
+pub struct SymmetricDifference<'a, B: 'a + BitBlockOrStore>(BlockIter<TwoBitPositions<'a, B>, B>);
 
-impl<T, B: BitBlock> Iterator for BlockIter<T, B>
+impl<T, B: BitBlockOrStore> Iterator for BlockIter<T, B>
 where
-    T: Iterator<Item = B>,
+    T: Iterator<Item = Block<B>>,
 {
     type Item = usize;
 
-    fn next(&mut self) -> Option<usize> {
-        while self.head == B::zero() {
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.head == B::ZERO {
             match self.tail.next() {
                 Some(w) => self.head = w,
                 None => return None,
             }
-            self.head_offset += B::bits();
+            self.head_offset += B::BITS;
         }
 
         // from the current block, isolate the
         // LSB and subtract 1, producing k:
         // a block with a number of set bits
         // equal to the index of the LSB
-        let k = (self.head & (!self.head + B::one())) - B::one();
+        let k = (self.head & (!self.head + B::ONE)) - B::ONE;
         // update block, removing the LSB
-        self.head = self.head & (self.head - B::one());
+        self.head = self.head & (self.head - B::ONE);
         // return offset + (index of LSB)
-        Some(self.head_offset + (B::count_ones(k)))
+        Some(self.head_offset + (<B::Store as BitStore>::Block::count_ones(k)))
     }
 
     fn count(self) -> usize {
@@ -997,20 +999,20 @@ where
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self.tail.size_hint() {
-            (_, Some(h)) => (0, Some((1 + h) * B::bits())),
+            (_, Some(h)) => (0, Some((1 + h) * B::BITS)),
             _ => (0, None),
         }
     }
 }
 
-impl<B: BitBlock> Iterator for TwoBitPositions<'_, B> {
-    type Item = B;
+impl<B: BitBlockOrStore> Iterator for TwoBitPositions<'_, B> {
+    type Item = Block<B>;
 
-    fn next(&mut self) -> Option<B> {
+    fn next(&mut self) -> Option<Self::Item> {
         match (self.set.next(), self.other.next()) {
             (Some(a), Some(b)) => Some((self.merge)(a, b)),
-            (Some(a), None) => Some((self.merge)(a, B::zero())),
-            (None, Some(b)) => Some((self.merge)(B::zero(), b)),
+            (Some(a), None) => Some((self.merge)(a, B::ZERO)),
+            (None, Some(b)) => Some((self.merge)(B::ZERO, b)),
             _ => None,
         }
     }
@@ -1030,7 +1032,7 @@ impl<B: BitBlock> Iterator for TwoBitPositions<'_, B> {
     }
 }
 
-impl<B: BitBlock> Iterator for Iter<'_, B> {
+impl<B: BitBlockOrStore> Iterator for Iter<'_, B> {
     type Item = usize;
 
     #[inline]
@@ -1047,7 +1049,7 @@ impl<B: BitBlock> Iterator for Iter<'_, B> {
     }
 }
 
-impl<B: BitBlock> Iterator for Union<'_, B> {
+impl<B: BitBlockOrStore> Iterator for Union<'_, B> {
     type Item = usize;
 
     #[inline]
@@ -1064,7 +1066,7 @@ impl<B: BitBlock> Iterator for Union<'_, B> {
     }
 }
 
-impl<B: BitBlock> Iterator for Intersection<'_, B> {
+impl<B: BitBlockOrStore> Iterator for Intersection<'_, B> {
     type Item = usize;
 
     #[inline]
@@ -1091,7 +1093,7 @@ impl<B: BitBlock> Iterator for Intersection<'_, B> {
     }
 }
 
-impl<B: BitBlock> Iterator for Difference<'_, B> {
+impl<B: BitBlockOrStore> Iterator for Difference<'_, B> {
     type Item = usize;
 
     #[inline]
@@ -1108,7 +1110,7 @@ impl<B: BitBlock> Iterator for Difference<'_, B> {
     }
 }
 
-impl<B: BitBlock> Iterator for SymmetricDifference<'_, B> {
+impl<B: BitBlockOrStore> Iterator for SymmetricDifference<'_, B> {
     type Item = usize;
 
     #[inline]
@@ -1125,7 +1127,7 @@ impl<B: BitBlock> Iterator for SymmetricDifference<'_, B> {
     }
 }
 
-impl<'a, B: BitBlock> IntoIterator for &'a BitSet<B> {
+impl<'a, B: BitBlockOrStore> IntoIterator for &'a BitSet<B> {
     type Item = usize;
     type IntoIter = Iter<'a, B>;
 

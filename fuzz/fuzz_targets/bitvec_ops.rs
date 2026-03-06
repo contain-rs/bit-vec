@@ -1,5 +1,6 @@
 //! Simple fuzzer testing all available `SmallVec` operations
-use bit_vec::{BitVec, BitBlockOrStore};
+use bit_vec::{BitBlockOrStore, BitVec};
+#[cfg(not(feature = "nanoserde"))]
 use smallvec::SmallVec;
 
 // There's no point growing too much, so try not to grow
@@ -39,8 +40,7 @@ fn do_test<T: BitBlockOrStore>(data: &[u8]) -> BitVec<T> {
             2 => {
                 v = BitVec::from_bytes_general(&v.to_bytes()[..]);
             }
-            3 => {
-            }
+            3 => {}
             4 => {
                 if v.len() < CAP_GROWTH {
                     v.push(next_u8!(bytes) < 128)
@@ -122,6 +122,7 @@ fn do_test_all(data: &[u8]) {
     do_test::<u8>(data);
     do_test::<u16>(data);
     do_test::<u64>(data);
+    #[cfg(not(feature = "nanoserde"))]
     do_test::<SmallVec<[u32; 8]>>(data);
     do_test::<Vec<u16>>(data);
 }

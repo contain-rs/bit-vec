@@ -175,10 +175,14 @@ pub trait BitBlock:
 }
 
 pub trait BitBlockOrStore {
-    #[cfg(not(feature = "nanoserde"))]
-    type Store: BitStore;
-    #[cfg(feature = "nanoserde")]
+    #[cfg(all(feature = "nanoserde", not(feature = "serde")))] 
     type Store: BitStore + DeBin + DeJson + DeRon + SerBin + SerJson + SerRon;
+    #[cfg(all(not(feature = "nanoserde"), feature = "serde"))] 
+    type Store: BitStore + serde::Serialize + for<'a> serde::Deserialize<'a>;
+    #[cfg(all(feature = "nanoserde", feature = "serde"))]
+    type Store: BitStore + DeBin + DeJson + DeRon + SerBin + SerJson + SerRon + serde::Serialize + for<'a> serde::Deserialize<'a>;
+    #[cfg(all(not(feature = "nanoserde"), not(feature = "serde")))]
+    type Store: BitStore;
 
     const BITS: usize = <Self::Store as BitStore>::Block::BITS_;
     const BYTES: usize = <Self::Store as BitStore>::Block::BYTES_;
@@ -362,13 +366,23 @@ where
     }
 }
 
-#[cfg(not(feature = "nanoserde"))]
+#[cfg(all(not(feature = "serde"), not(feature = "nanoserde")))]
 impl<T: BitBlock> BitBlockOrStore for Vec<T> {
     type Store = Self;
 }
 
-#[cfg(feature = "nanoserde")]
+#[cfg(all(feature = "serde", not(feature = "nanoserde")))]
+impl<T: BitBlock + for<'a> serde::Deserialize<'a> + serde::Serialize> BitBlockOrStore for Vec<T> {
+    type Store = Self;
+}
+
+#[cfg(all(not(feature = "serde"), feature = "nanoserde"))]
 impl<T: BitBlock + DeBin + DeJson + DeRon + SerBin + SerJson + SerRon> BitBlockOrStore for Vec<T> {
+    type Store = Self;
+}
+
+#[cfg(all(feature = "serde", feature = "nanoserde"))]
+impl<T: BitBlock + DeBin + DeJson + DeRon + SerBin + SerJson + SerRon + for<'a> serde::Deserialize<'a> + serde::Serialize> BitBlockOrStore for Vec<T> {
     type Store = Self;
 }
 
