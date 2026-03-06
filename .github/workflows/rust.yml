@@ -67,6 +67,7 @@ jobs:
       - run: cargo test --features nanoserde
       - run: cargo test --features miniserde
       - run: cargo test --features borsh
+      - run: cargo test --features borsh,serde,nanoserde
 
   clippy:
     runs-on: ubuntu-latest
