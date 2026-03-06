@@ -1,5 +1,5 @@
 //! Simple fuzzer testing all available `SmallVec` operations
-use bit_vec::{BitVec, BitBlockOrStore, BitStore, BitBlock};
+use bit_vec::{BitVec, BitBlockOrStore};
 use smallvec::SmallVec;
 
 // There's no point growing too much, so try not to grow
