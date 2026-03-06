@@ -72,7 +72,9 @@ use alloc::vec::Vec;
 #[cfg(feature = "nanoserde")]
 use nanoserde::{DeBin, DeJson, DeRon, SerBin, SerJson, SerRon};
 
+#[allow(type_alias_bounds)]
 type Block<B: BitBlockOrStore> = <B::Store as BitStore>::Block;
+#[allow(type_alias_bounds)]
 type MatchWords<'a, B: BitBlockOrStore> =
     Chain<Enumerate<Blocks<'a, B>>, Skip<Take<Enumerate<Repeat<Block<B>>>>>>;
 

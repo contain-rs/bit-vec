@@ -4,6 +4,9 @@ members = [
     "vec",
     "set",
     "matrix",
+]
+
+exclude = [
     "fuzz",
 ]
 
