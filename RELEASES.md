@@ -5,6 +5,9 @@ Version 0.9.0 (TO BE RELEASED)
 
 - Minimal Supported Rust Version is now 1.82
 - `fn remove` is implemented
+- `fn fill` is implemented
+- `fn remove_all` is implemented
+- `fn clear` is **deprecated**
 - `fn push_within_capacity` is implemented
 - `.skip(n)` on our iterators is now O(1) instead of O(n) time
 - `fn to_bytes` is optimized with a lookup table

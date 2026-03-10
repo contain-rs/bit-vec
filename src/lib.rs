@@ -1857,6 +1857,18 @@ impl<B: BitBlock> BitVec<B> {
         result
     }
 
+    /// Removes all bits in this vector.
+    ///
+    /// Note: this method is not named [`clear`] to avoid confusion whenever [`.fill(false)`]
+    /// is needed.
+    ///
+    /// [`clear`]: Self::clear
+    /// [`.fill(false)`]: Self::fill
+    pub fn remove_all(&mut self) {
+        self.storage.clear();
+        self.nbits = 0;
+    }
+
     /// Appends an element if there is sufficient spare capacity, otherwise an error is returned
     /// with the element.
     ///
@@ -3542,5 +3554,17 @@ mod tests {
         assert_eq!(v.remove(1024), 1024 % 11 < 7);
         assert_eq!(v.len(), 1024);
         assert_eq!(v.storage().len(), 1024 / 32);
+    }
+
+    #[test]
+    fn test_remove_all() {
+        let mut v = BitVec::from_elem(1024, false);
+        for _ in 0..1024 {
+            let mut v2 = v.clone();
+            v2.remove_all();
+            assert_eq!(v2.len(), 0);
+            assert_eq!(v2.get(0), None);
+            assert_eq!(v2, BitVec::new());
+        }
     }
 }
