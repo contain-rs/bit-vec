@@ -82,7 +82,7 @@
 //! assert_eq!(num_primes, 1_229);
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/bit-vec/0.8.0")]
+#![doc(html_root_url = "https://docs.rs/bit-vec/0.9.0/bit_vec/")]
 #![no_std]
 #![deny(clippy::shadow_reuse)]
 #![deny(clippy::shadow_same)]
