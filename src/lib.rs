@@ -214,6 +214,7 @@ fn reverse_bits(byte: u8) -> u8 {
 static TRUE: bool = true;
 static FALSE: bool = false;
 
+#[cfg(feature = "nanoserde")]
 type B = u32;
 
 /// The bitvector type.
@@ -3558,7 +3559,7 @@ mod tests {
 
     #[test]
     fn test_remove_all() {
-        let mut v = BitVec::from_elem(1024, false);
+        let v = BitVec::from_elem(1024, false);
         for _ in 0..1024 {
             let mut v2 = v.clone();
             v2.remove_all();
