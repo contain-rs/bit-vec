@@ -17,6 +17,7 @@ borsh = { version = "1.5", default-features = false, features = ["derive"], opti
 serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
 miniserde = { version = "0.1", optional = true }
 nanoserde = { git = "https://github.com/not-fl3/nanoserde.git", optional = true }
+smallvec = { version = "1.15", optional = true }
 
 [dependencies.bit-vec]
 path = "../vec/"
@@ -29,6 +30,8 @@ serde_json = "1.0"
 [features]
 default = ["std"]
 std = ["bit-vec/std"]
+
+smallvec = ["dep:smallvec", "bit-vec/smallvec"]
 
 borsh = ["dep:borsh", "bit-vec/borsh"]
 serde = ["dep:serde", "bit-vec/serde"]

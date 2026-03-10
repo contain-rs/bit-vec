@@ -94,11 +94,7 @@ impl BitMatrix {
     /// Sets the value of all bits.
     #[inline]
     pub fn set_all(&mut self, enabled: bool) {
-        if enabled {
-            self.bit_vec.set_all();
-        } else {
-            self.bit_vec.clear();
-        }
+        self.bit_vec.fill(enabled);
     }
 
     /// Grows the matrix in-place, adding `num_rows` rows filled with `value`.
