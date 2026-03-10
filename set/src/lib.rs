@@ -1648,7 +1648,7 @@ mod tests {
         assert_eq!(a.count(), 2);
 
         let old_cap2 = a.capacity();
-        a.clear();
+        a.make_empty();
         assert_eq!(a.capacity(), old_cap2);
         assert_eq!(a.count(), 0);
         assert!(!a.contains(1));

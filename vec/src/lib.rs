@@ -568,6 +568,7 @@ static TRUE: bool = true;
 static FALSE: bool = false;
 
 #[cfg(feature = "nanoserde")]
+#[allow(dead_code)]
 type B = u32;
 
 /// The bitvector type.
@@ -3990,7 +3991,7 @@ mod tests {
         assert_eq!(v.len(), 1025);
         assert_eq!(v.remove(1024), 1024 % 11 < 7);
         assert_eq!(v.len(), 1024);
-        assert_eq!(v.storage().len(), 1024 / 32);
+        assert_eq!(v.storage().len(), 1024 / S::BITS);
     }
 
     #[test]
