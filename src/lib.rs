@@ -82,7 +82,7 @@
 //! assert_eq!(num_primes, 1_229);
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/bit-vec/0.8.0")]
+#![doc(html_root_url = "https://docs.rs/bit-vec/0.9.0/bit_vec/")]
 #![no_std]
 #![deny(clippy::shadow_reuse)]
 #![deny(clippy::shadow_same)]
@@ -214,6 +214,7 @@ fn reverse_bits(byte: u8) -> u8 {
 static TRUE: bool = true;
 static FALSE: bool = false;
 
+#[cfg(feature = "nanoserde")]
 type B = u32;
 
 /// The bitvector type.
@@ -3558,7 +3559,7 @@ mod tests {
 
     #[test]
     fn test_remove_all() {
-        let mut v = BitVec::from_elem(1024, false);
+        let v = BitVec::from_elem(1024, false);
         for _ in 0..1024 {
             let mut v2 = v.clone();
             v2.remove_all();
