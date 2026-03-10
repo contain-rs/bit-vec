@@ -9,6 +9,7 @@ Version 0.9.0
 <a id="v0.9.0"></a>
 
 - Minimal Supported Rust Version is now 1.82
+- added general initialization functions: `fn new_general`, `fn from_bit_vec_general`, `fn with_capacity_general`, `fn from_bytes_general`
 - `fn remove` is implemented
 - `fn fill` is implemented
 - `fn remove_all` is implemented
