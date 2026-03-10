@@ -1,5 +1,6 @@
-//! Simple fuzzer testing all available `SmallVec` operations
+//! Simple fuzzer testing all available `BitVec`, `BitSet` and `BitMatrix` operations
 use bit_vec::{BitBlockOrStore, BitVec};
+use bit_set::BitSet;
 #[cfg(not(feature = "nanoserde"))]
 use smallvec::SmallVec;
 
@@ -24,13 +25,18 @@ fn black_box_bit_vec<T: BitBlockOrStore>(s: &BitVec<T>) {
     print!("{}", s);
 }
 
+fn black_box_bit_set<T: BitBlockOrStore>(s: &BitSet<T>) {
+    // print to work as a black_box
+    print!("{}", s);
+}
+
 fn do_test<T: BitBlockOrStore>(data: &[u8]) -> BitVec<T> {
     let mut v = BitVec::<T>::new_general();
 
     let mut bytes = data.iter().copied();
 
     while let Some(op) = bytes.next() {
-        match op % 22 {
+        match op % 23 {
             0 => {
                 v = BitVec::new_general();
             }
@@ -69,7 +75,7 @@ fn do_test<T: BitBlockOrStore>(data: &[u8]) -> BitVec<T> {
                 }
             }
             13 => {
-                v.clear();
+                v.fill(false);
             }
             14 => {
                 if !v.is_empty() {
@@ -111,6 +117,85 @@ fn do_test<T: BitBlockOrStore>(data: &[u8]) -> BitVec<T> {
                 let slice = vec![next_u8!(bytes); next_usize!(bytes)];
                 v = BitVec::<T>::from_bytes_general(&slice[..]);
             }
+            22 => {
+                v.fill(true);
+            }
+            _ => panic!("booo"),
+        }
+    }
+    v
+}
+
+fn do_test_set<T: BitBlockOrStore>(data: &[u8]) -> BitSet<T> {
+    let mut v = BitSet::<T>::new_general();
+
+    let mut bytes = data.iter().copied();
+
+    while let Some(op) = bytes.next() {
+        match op % 17 {
+            0 => {
+                v = BitSet::new_general();
+            }
+            1 => {
+                v = BitSet::with_capacity_general(next_usize!(bytes));
+            }
+            2 => {
+                v = BitSet::from_bytes_general(&v.get_ref().to_bytes()[..]);
+            }
+            3 => {
+                if v.get_ref().len() < CAP_GROWTH {
+                    v.reserve_len(next_usize!(bytes))
+                }
+            }
+            4 => {
+                if v.get_ref().len() < CAP_GROWTH {
+                    v.reserve_len_exact(next_usize!(bytes))
+                }
+            }
+            5 => v.shrink_to_fit(),
+            6 => v.truncate(next_usize!(bytes)),
+            7 => black_box_bit_set(&v),
+            8 => {
+                if !v.is_empty() {
+                    v.remove(next_usize!(bytes) % v.len());
+                }
+            }
+            9 => {
+                v.reset();
+            }
+            10 => {
+                if !v.is_empty() {
+                    v.remove(next_usize!(bytes) % v.get_ref().len());
+                }
+            }
+            11 => {
+                let insert_pos = next_usize!(bytes) % (v.get_ref().len() + 1);
+                v.insert(insert_pos);
+            }
+
+            12 => {
+                v = BitSet::from_bytes_general(&v.get_ref().to_bytes()[..]);
+            }
+
+            13 => {
+                v = BitSet::from_bytes_general(data);
+            }
+
+            14 => {
+                if v.get_ref().len() < CAP_GROWTH {
+                    v.reserve_len(next_usize!(bytes));
+                }
+            }
+
+            15 => {
+                if v.get_ref().len() < CAP_GROWTH {
+                    v.reserve_len_exact(next_usize!(bytes));
+                }
+            }
+            16 => {
+                let slice = vec![next_u8!(bytes); next_usize!(bytes)];
+                v = BitSet::<T>::from_bytes_general(&slice[..]);
+            }
             _ => panic!("booo"),
         }
     }
@@ -125,6 +210,14 @@ fn do_test_all(data: &[u8]) {
     #[cfg(not(feature = "nanoserde"))]
     do_test::<SmallVec<[u32; 8]>>(data);
     do_test::<Vec<u16>>(data);
+
+    do_test_set::<u32>(data);
+    do_test_set::<u8>(data);
+    do_test_set::<u16>(data);
+    do_test_set::<u64>(data);
+    #[cfg(not(feature = "nanoserde"))]
+    do_test_set::<SmallVec<[u32; 8]>>(data);
+    do_test_set::<Vec<u16>>(data);
 }
 
 #[cfg(feature = "afl")]

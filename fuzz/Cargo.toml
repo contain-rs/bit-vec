@@ -9,6 +9,7 @@ publish = false
 cargo-fuzz = true
 
 [features]
+default = ["afl"]
 afl_fuzz = ["afl"]
 honggfuzz_fuzz = ["honggfuzz"]
 nanoserde = ["bit-vec/nanoserde"]
@@ -22,5 +23,5 @@ bit-matrix = { path = "../matrix/" }
 smallvec = "1.15"
 
 [[bin]]
-name = "bitvec_ops"
-path = "fuzz_targets/bitvec_ops.rs"
+name = "bit_ops"
+path = "fuzz_targets/bit_ops.rs"
