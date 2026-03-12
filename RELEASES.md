@@ -3,6 +3,13 @@ Version 0.10.0 (TO BE RELEASED)
 
 <a id="v0.10.0"></a>
 
+Version 0.9.1
+==========================
+
+<a id="v0.9.1"></a>
+
+- Fixed issue with the serde feature
+
 Version 0.9.0
 ==========================
 

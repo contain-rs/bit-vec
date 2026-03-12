@@ -1,6 +1,6 @@
 [package]
 name = "bit-vec"
-version = "0.9.0"
+version = "0.9.1"
 authors = ["Alexis Beingessner <a.beingessner@gmail.com>"]
 license = "Apache-2.0 OR MIT"
 description = "A vector of bits"
@@ -13,8 +13,8 @@ edition = "2021"
 rust-version = "1.82"
 
 [dependencies]
-borsh = { version = "1.5.7", default-features = false, features = ["derive"], optional = true }
-serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
+borsh = { version = "1.6.0", default-features = false, features = ["derive"], optional = true }
+serde = { version = "1.0", default-features = false, features = ["derive", "alloc"], optional = true }
 miniserde = { version = "0.1", optional = true }
 nanoserde = { version = "0.2", optional = true }
 
@@ -26,9 +26,9 @@ rand_xorshift = "0.4"
 [features]
 default = ["std"]
 serde_std = ["std", "serde/std"]
-serde_no_std = ["serde/alloc"]
+serde_no_std = []
 borsh_std = ["borsh/std"]
-std = []
+std = ["serde?/std"]
 
 [package.metadata.docs.rs]
 features = ["borsh", "serde", "miniserde", "nanoserde"]
