@@ -1104,18 +1104,6 @@ impl<B: BitBlockOrStore> BitVec<B> {
     /// assert_eq!(bv.to_bytes(), [0b00100000, 0b10000000]);
     /// ```
     pub fn to_bytes(&self) -> Vec<u8> {
-        static REVERSE_TABLE: [u8; 256] = {
-            let mut tbl = [0u8; 256];
-            let mut i: u8 = 0;
-            loop {
-                tbl[i as usize] = i.reverse_bits();
-                if i == 255 {
-                    break;
-                }
-                i += 1;
-            }
-            tbl
-        };
         self.ensure_invariant();
 
         let len = self.nbits / 8 + if self.nbits % 8 == 0 { 0 } else { 1 };
@@ -1129,7 +1117,7 @@ impl<B: BitBlockOrStore> BitVec<B> {
                     byte |= 1 << bit_idx;
                 }
             }
-            result.push(REVERSE_TABLE[byte as usize]);
+            result.push(util::reverse_bits(byte));
         }
 
         result
