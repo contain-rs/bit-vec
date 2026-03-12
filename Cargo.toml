@@ -17,3 +17,8 @@ resolver = "2"
 debug = false
 
 [workspace.dependencies]
+
+[workspace.package]
+# shared version of all public crates in the workspace
+version = "0.10.0"
+rust-version = "1.82.0"

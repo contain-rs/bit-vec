@@ -8,9 +8,7 @@
 [![crates.io][crates.io shield]][crates.io link]
 [![Documentation][docs.rs badge]][docs.rs link]
 ![Rust CI][github ci badge]
-![rustc 1.63+]
-![borsh: rustc 1.67+]
-![nanoserde: rustc 1.67+]
+![rustc 1.82+]
 <br />
 <br />
 [![Dependency Status][deps.rs status]][deps.rs link]
@@ -21,14 +19,12 @@
 
 [crates.io shield]: https://img.shields.io/crates/v/bit-set?label=latest
 [crates.io link]: https://crates.io/crates/bit-set
-[docs.rs badge]: https://docs.rs/bit-set/badge.svg?version=0.8.0
-[docs.rs link]: https://docs.rs/bit-set/0.8.0/bit_set/
+[docs.rs badge]: https://docs.rs/bit-set/badge.svg?version=0.10.0
+[docs.rs link]: https://docs.rs/bit-set/0.10.0/bit_set/
 [github ci badge]: https://github.com/contain-rs/bit-set/workflows/Rust/badge.svg?branch=master
-[rustc 1.63+]: https://img.shields.io/badge/rustc-1.63%2B-blue.svg
-[borsh: rustc 1.67+]: https://img.shields.io/badge/borsh:%20rustc-1.67%2B-blue.svg
-[nanoserde: rustc 1.67+]: https://img.shields.io/badge/nanoserde:%20rustc-1.67%2B-blue.svg
-[deps.rs status]: https://deps.rs/crate/bit-set/0.8.0/status.svg
-[deps.rs link]: https://deps.rs/crate/bit-set/0.8.0
+[rustc 1.82+]: https://img.shields.io/badge/rustc-1.82%2B-blue.svg
+[deps.rs status]: https://deps.rs/crate/bit-set/0.10.0/status.svg
+[deps.rs link]: https://deps.rs/crate/bit-set/0.10.0
 [shields.io download count]: https://img.shields.io/crates/d/bit-set.svg
 
 ## Usage
@@ -37,7 +33,7 @@ Add this to your Cargo.toml:
 
 ```toml
 [dependencies]
-bit-set = "0.8"
+bit-set = "0.10"
 ```
 
 Since Rust 2018, `extern crate` is no longer mandatory. If your edition is old (Rust 2015),
@@ -51,28 +47,28 @@ If you want to use `serde`, enable it with the `serde` feature:
 
 ```toml
 [dependencies]
-bit-set = { version = "0.8", features = ["serde"] }
+bit-set = { version = "0.10", features = ["serde"] }
 ```
 
 If you want to use bit-set in a program that has `#![no_std]`, just drop default features:
 
 ```toml
 [dependencies]
-bit-set = { version = "0.8", default-features = false }
+bit-set = { version = "0.10", default-features = false }
 ```
 
-If you want to use serde with the alloc crate instead of std, just use the `serde_no_std` feature:
+If you want to use serde with the alloc crate instead of std, use this:
 
 ```toml
 [dependencies]
-bit-set = { version = "0.8", default-features = false, features = ["serde", "serde_no_std"] }
+bit-set = { version = "0.10", default-features = false, features = ["serde"] }
 ```
 
 If you want [borsh-rs](https://github.com/near/borsh-rs) support, include it like this:
 
 ```toml
 [dependencies]
-bit-set = { version = "0.8", features = ["borsh"] }
+bit-set = { version = "0.10", features = ["borsh"] }
 ```
 
 Other available serialization libraries can be enabled with the
