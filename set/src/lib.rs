@@ -60,16 +60,16 @@ extern crate std;
 #[cfg(feature = "nanoserde")]
 extern crate alloc;
 
+mod iter;
 mod set;
 mod util;
-mod iter;
 
 pub mod local_prelude {
     pub use bit_vec::{BitBlock, BitBlockOrStore, BitStore, BitVec, Blocks};
     pub use core::cmp::Ordering;
-    pub use core::{hash, fmt, cmp};
     pub use core::iter::{self, Chain, Enumerate, FromIterator, Repeat, Skip, Take};
+    pub use core::{cmp, fmt, hash};
 }
 
+pub use bit_vec::{BitBlockOrStore, BitStore};
 pub use set::BitSet;
-pub use bit_vec::{BitStore, BitBlockOrStore};

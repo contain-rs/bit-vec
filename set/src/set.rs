@@ -1,5 +1,5 @@
-use crate::{local_prelude::*, util};
 use crate::util::Block;
+use crate::{local_prelude::*, util};
 
 #[cfg(feature = "nanoserde")]
 use alloc::vec::Vec;
@@ -402,7 +402,6 @@ impl<B: BitBlockOrStore> BitSet<B> {
         }
         bit_vec.shrink_to_fit();
     }
-
 
     /// Unions in-place with the specified other bit vector.
     ///

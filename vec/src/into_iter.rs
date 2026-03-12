@@ -1,4 +1,4 @@
-use crate::{BitVec, local_prelude::*};
+use crate::{local_prelude::*, BitVec};
 
 pub struct IntoIter<B: BitBlockOrStore = u32> {
     bit_vec: BitVec<B>,

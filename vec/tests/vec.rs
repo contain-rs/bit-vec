@@ -6,7 +6,7 @@ mod tests {
     #![allow(clippy::shadow_unrelated)]
     #![allow(clippy::extra_unused_type_parameters)]
 
-    use bit_vec::{BitVec, BitBlockOrStore, Iter};
+    use bit_vec::{BitBlockOrStore, BitVec, Iter};
 
     // This is stupid, but I want to differentiate from a "random" 32
     const U32_BITS: usize = 32;
