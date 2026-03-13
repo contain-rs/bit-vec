@@ -138,6 +138,8 @@ mod local_prelude {
     pub use alloc::string::String;
     #[cfg(not(feature = "std"))]
     pub use alloc::vec::Vec;
+    #[cfg(not(feature = "std"))]
+    pub use alloc::boxed::Box;
 
     #[cfg(feature = "std")]
     pub use std::rc::Rc;
@@ -145,6 +147,8 @@ mod local_prelude {
     pub use std::string::String;
     #[cfg(feature = "std")]
     pub use std::vec::Vec;
+    #[cfg(feature = "std")]
+    pub use std::boxed::Box;
 
     pub use core::cell::RefCell;
     pub use core::cmp::Ordering;

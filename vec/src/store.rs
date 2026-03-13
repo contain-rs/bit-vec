@@ -261,3 +261,80 @@ where
         smallvec::SmallVec::with_capacity(capacity)
     }
 }
+
+impl<S: BitStore> BitStore for Box<S> {
+    type Block = S::Block;
+    type Alloc = S::Alloc;
+
+    fn slice(&self) -> &[Self::Block] {
+        (**self).slice()
+    }
+
+    fn slice_mut(&mut self) -> &mut [Self::Block] {
+        (**self).slice_mut()
+    }
+
+    fn pop(&mut self) -> Option<Self::Block> {
+        (**self).pop()
+    }
+
+    fn drain<R: ops::RangeBounds<usize>>(&mut self, range: R) -> impl Iterator<Item = Self::Block> {
+        (**self).drain(range)
+    }
+
+    fn capacity(&self) -> usize {
+        (**self).capacity()
+    }
+
+    fn append(&mut self, other: &mut Self) {
+        (**self).append(other);
+    }
+
+    fn reserve(&mut self, additional: usize) {
+        (**self).reserve(additional);
+    }
+
+    fn push(&mut self, value: Self::Block) {
+        (**self).push(value);
+    }
+
+    fn split_off(&mut self, at: usize) -> Self {
+        // TODO
+        Box::new((**self).split_off(at))
+    }
+
+    fn truncate(&mut self, len: usize) {
+        (**self).truncate(len);
+    }
+
+    fn reserve_exact(&mut self, len: usize) {
+        (**self).reserve_exact(len);
+    }
+
+    fn shrink_to_fit(&mut self) {
+        (**self).shrink_to_fit();
+    }
+
+    fn extend<I>(&mut self, iter: I)
+    where
+        I: IntoIterator<Item = Self::Block>,
+    {
+        (**self).extend(iter);
+    }
+
+    fn with_capacity(capacity: usize) -> Self {
+        Box::new(S::with_capacity(capacity))
+    }
+
+    fn clear(&mut self) {
+        (**self).clear();
+    }
+
+    fn new_in(alloc: Self::Alloc) -> Self {
+        Box::new(S::new_in(alloc))
+    }
+
+    fn with_capacity_in(capacity: usize, alloc: Self::Alloc) -> Self {
+        Box::new(S::with_capacity_in(capacity, alloc))
+    }
+}

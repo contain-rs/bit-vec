@@ -69,9 +69,13 @@ macro_rules! impl_combination {
         );
     };
     (
-        type $T:ty: [$($B:tt)*];
+        type $T:ty: [$B0:tt + $($B:tt)*];
     ) => {
-        impl<T: $($B)*> BitBlockOrStore for Vec<T> {
+        impl<T: $B0 + $($B)*> BitBlockOrStore for Vec<T> {
+            type Store = Self;
+        }
+
+        impl<T: $B0 + $($B)*> BitBlockOrStore for Box<Vec<T>> where Self: $($B)* {
             type Store = Self;
         }
     }
