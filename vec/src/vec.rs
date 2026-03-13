@@ -1751,6 +1751,9 @@ impl<B: BitBlockOrStore> cmp::Eq for BitVec<B> {}
 impl<S: BitBlockOrStore<Store = Vec<S>> + BitBlock> From<Vec<S>> for BitVec<S> {
     fn from(value: Vec<S>) -> Self {
         let nbits = value.len() * S::BITS;
-        BitVec { storage: value, nbits }
+        BitVec {
+            storage: value,
+            nbits,
+        }
     }
 }

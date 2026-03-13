@@ -47,7 +47,7 @@ pub trait BitBlockOrStore {
 
 macro_rules! impl_combination {
     (
-        type $T:ty: [$($B:tt)*];
+        type $T:ty: $B0:tt + [$($B:tt)*];
         $cfg0:tt => [$($Bounds0:tt)*];
         $(
             $cfg:tt => [$($Bounds:tt)*];
@@ -55,21 +55,21 @@ macro_rules! impl_combination {
     ) => {
         #[cfg(not(feature = $cfg0))]
         impl_combination!(
-            type $T: [$($B)*];
+            type $T: $B0 + [$($B)*];
             $(
                 $cfg => [$($Bounds)*];
             )*
         );
         #[cfg(feature = $cfg0)]
         impl_combination!(
-            type $T: [$($B)* + $($Bounds0)*];
+            type $T: $B0 + [$($B)* + $($Bounds0)*];
             $(
                 $cfg => [$($Bounds)*];
             )*
         );
     };
     (
-        type $T:ty: [$B0:tt + $($B:tt)*];
+        type $T:ty: $B0:tt + [$($B:tt)*];
     ) => {
         impl<T: $B0 + $($B)*> BitBlockOrStore for Vec<T> {
             type Store = Self;
@@ -82,7 +82,7 @@ macro_rules! impl_combination {
 }
 
 impl_combination!(
-    type Vec<T>: [BitBlock];
+    type Vec<T>: BitBlock + [];
     "nanoserde" => [DeBin + DeJson + DeRon + SerBin + SerJson + SerRon];
     "serde" => [serde::Serialize + for<'a> serde::Deserialize<'a>];
     "miniserde" => [miniserde::Deserialize + miniserde::Serialize];
