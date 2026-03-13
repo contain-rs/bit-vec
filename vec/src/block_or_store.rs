@@ -47,6 +47,28 @@ pub trait BitBlockOrStore {
 
 macro_rules! impl_combination {
     (
+        type $T:ty: $B0:tt + [];
+        $cfg0:tt => [$($Bounds0:tt)*];
+        $(
+            $cfg:tt => [$($Bounds:tt)*];
+        )*
+    ) => {
+        #[cfg(not(feature = $cfg0))]
+        impl_combination!(
+            type $T: $B0 + [];
+            $(
+                $cfg => [$($Bounds)*];
+            )*
+        );
+        #[cfg(feature = $cfg0)]
+        impl_combination!(
+            type $T: $B0 + [$($Bounds0)*];
+            $(
+                $cfg => [$($Bounds)*];
+            )*
+        );
+    };
+    (
         type $T:ty: $B0:tt + [$($B:tt)*];
         $cfg0:tt => [$($Bounds0:tt)*];
         $(
