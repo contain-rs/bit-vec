@@ -1,35 +1,9 @@
 //! Matrix of bits.
-//!
-//! # Examples
-//!
-//! Gets a mutable reference to the square bit matrix within this
-//! rectangular matrix, then performs a transitive closure.
-//!
-//! ```rust
-//! use bit_matrix::BitMatrix;
-//!
-//! let mut matrix = BitMatrix::new(7, 5);
-//! matrix.set(1, 2, true);
-//! matrix.set(2, 3, true);
-//! matrix.set(3, 4, true);
-//!
-//! {
-//!     let mut sub_matrix = matrix.sub_matrix_mut(1 .. 6);
-//!     sub_matrix.transitive_closure();
-//! }
-//! assert!(matrix[(1, 4)]);
-//!
-//! matrix.reflexive_closure();
-//! assert!(matrix[(0, 0)]);
-//! assert!(matrix[(1, 1)]);
-//! assert!(matrix[(2, 2)]);
-//! assert!(matrix[(3, 3)]);
-//! ```
 
 use core::cmp;
 use core::ops::{Index, IndexMut, RangeBounds};
 
-use bit_vec::BitVec;
+use bit_vec::{BitBlockOrStore, BitStore, BitVec};
 
 use super::{FALSE, TRUE};
 use crate::local_prelude::*;
@@ -42,18 +16,18 @@ use crate::util::round_up_to_next;
     derive(miniserde::Serialize, miniserde::Deserialize)
 )]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BitMatrix {
-    bit_vec: BitVec,
+pub struct BitMatrix<B: BitBlockOrStore = u32> {
+    bit_vec: BitVec<B>,
     row_bits: usize,
 }
 
 // Matrix
 
-impl BitMatrix {
+impl<B: BitBlockOrStore> BitMatrix<B> {
     /// Create a new BitMatrix with specific numbers of bits in columns and rows.
     pub fn new(rows: usize, row_bits: usize) -> Self {
         BitMatrix {
-            bit_vec: BitVec::from_elem(round_up_to_next(row_bits, BITS) * rows, false),
+            bit_vec: BitVec::from_elem_general(round_up_to_next(row_bits, B::BITS) * rows, false),
             row_bits,
         }
     }
@@ -64,7 +38,7 @@ impl BitMatrix {
         if self.row_bits == 0 {
             0
         } else {
-            let row_blocks = round_up_to_next(self.row_bits, BITS) / BITS;
+            let row_blocks = round_up_to_next(self.row_bits, B::BITS) / B::BITS;
             self.bit_vec.storage().len() / row_blocks
         }
     }
@@ -87,7 +61,7 @@ impl BitMatrix {
     /// Panics if `(row, col)` is out of bounds.
     #[inline]
     pub fn set(&mut self, row: usize, col: usize, enabled: bool) {
-        let row_size_in_bits = round_up_to_next(self.row_bits, BITS);
+        let row_size_in_bits = round_up_to_next(self.row_bits, B::BITS);
         self.bit_vec.set(row * row_size_in_bits + col, enabled);
     }
 
@@ -100,19 +74,19 @@ impl BitMatrix {
     /// Grows the matrix in-place, adding `num_rows` rows filled with `value`.
     pub fn grow(&mut self, num_rows: usize, value: bool) {
         self.bit_vec
-            .grow(round_up_to_next(self.row_bits, BITS) * num_rows, value);
+            .grow(round_up_to_next(self.row_bits, B::BITS) * num_rows, value);
     }
 
     /// Truncates the matrix.
     pub fn truncate(&mut self, num_rows: usize) {
         self.bit_vec
-            .truncate(round_up_to_next(self.row_bits, BITS) * num_rows);
+            .truncate(round_up_to_next(self.row_bits, B::BITS) * num_rows);
     }
 
     /// Returns a slice of the matrix's rows.
     #[inline]
-    pub fn sub_matrix<R: RangeBounds<usize>>(&self, range: R) -> BitSubMatrix<'_> {
-        let row_size = round_up_to_next(self.row_bits, BITS) / BITS;
+    pub fn sub_matrix<R: RangeBounds<usize>>(&self, range: R) -> BitSubMatrix<'_, B> {
+        let row_size = round_up_to_next(self.row_bits, B::BITS) / B::BITS;
         BitSubMatrix {
             slice: &self.bit_vec.storage()[(
                 range.start_bound().map(|&s| s * row_size),
@@ -124,13 +98,13 @@ impl BitMatrix {
 
     /// Returns a slice of the matrix's rows.
     #[inline]
-    pub fn sub_matrix_mut<R: RangeBounds<usize>>(&mut self, range: R) -> BitSubMatrixMut<'_> {
+    pub fn sub_matrix_mut<R: RangeBounds<usize>>(&mut self, range: R) -> BitSubMatrixMut<'_, B> {
         let row_size = self.row_size();
         // Safety:
         //
         unsafe {
             BitSubMatrixMut {
-                slice: &mut self.bit_vec.storage_mut()[(
+                slice: &mut self.bit_vec.storage_mut().slice_mut()[(
                     range.start_bound().map(|&s| s * row_size),
                     range.end_bound().map(|&e| e * row_size),
                 )],
@@ -140,7 +114,7 @@ impl BitMatrix {
     }
 
     fn row_size(&self) -> usize {
-        round_up_to_next(self.row_bits, BITS) / BITS
+        round_up_to_next(self.row_bits, B::BITS) / B::BITS
     }
 
     /// Given a row's index, returns a slice of all rows above that row, a reference to said row,
@@ -149,7 +123,7 @@ impl BitMatrix {
     /// Functionally equivalent to `(self.sub_matrix(0..row), &self[row],
     /// self.sub_matrix(row..self.num_rows()))`.
     #[inline]
-    pub fn split_at(&self, row: usize) -> (BitSubMatrix<'_>, BitSubMatrix<'_>) {
+    pub fn split_at(&self, row: usize) -> (BitSubMatrix<'_, B>, BitSubMatrix<'_, B>) {
         (
             self.sub_matrix(0..row),
             self.sub_matrix(row..self.num_rows()),
@@ -159,9 +133,14 @@ impl BitMatrix {
     /// Given a row's index, returns a slice of all rows above that row, a reference to said row,
     /// and a slice of all rows below.
     #[inline]
-    pub fn split_at_mut(&mut self, row: usize) -> (BitSubMatrixMut<'_>, BitSubMatrixMut<'_>) {
-        let row_size = round_up_to_next(self.row_bits, BITS) / BITS;
-        let (first, second) = unsafe { self.bit_vec.storage_mut().split_at_mut(row * row_size) };
+    pub fn split_at_mut(&mut self, row: usize) -> (BitSubMatrixMut<'_, B>, BitSubMatrixMut<'_, B>) {
+        let row_size = round_up_to_next(self.row_bits, B::BITS) / B::BITS;
+        let (first, second) = unsafe {
+            self.bit_vec
+                .storage_mut()
+                .slice_mut()
+                .split_at_mut(row * row_size)
+        };
         (
             BitSubMatrixMut::new(first, self.row_bits),
             BitSubMatrixMut::new(second, self.row_bits),
@@ -191,7 +170,7 @@ impl BitMatrix {
     ///
     /// The matrix must be square for this operation to succeed.
     pub fn transitive_closure(&mut self) {
-        Into::<BitSubMatrixMut>::into(self).transitive_closure();
+        Into::<BitSubMatrixMut<B>>::into(self).transitive_closure();
     }
 
     /// Determines whether the number of rows equals the number of columns.
@@ -222,23 +201,25 @@ impl BitMatrix {
 }
 
 /// Gains immutable access to the matrix's row in the form of a `BitSlice`.
-impl Index<usize> for BitMatrix {
-    type Output = BitSlice;
+impl<B: BitBlockOrStore> Index<usize> for BitMatrix<B> {
+    type Output = BitSlice<Block<B>>;
 
     #[inline]
-    fn index(&self, row: usize) -> &BitSlice {
-        let row_size = round_up_to_next(self.row_bits, BITS) / BITS;
+    fn index(&self, row: usize) -> &Self::Output {
+        let row_size = round_up_to_next(self.row_bits, B::BITS) / B::BITS;
         BitSlice::new(&self.bit_vec.storage()[row * row_size..(row + 1) * row_size])
     }
 }
 
 /// Gains mutable access to the matrix's row in the form of a `BitSlice`.
-impl IndexMut<usize> for BitMatrix {
+impl<B: BitBlockOrStore> IndexMut<usize> for BitMatrix<B> {
     #[inline]
-    fn index_mut(&mut self, row: usize) -> &mut BitSlice {
-        let row_size = round_up_to_next(self.row_bits, BITS) / BITS;
+    fn index_mut(&mut self, row: usize) -> &mut Self::Output {
+        let row_size = round_up_to_next(self.row_bits, B::BITS) / B::BITS;
         unsafe {
-            BitSlice::new_mut(&mut self.bit_vec.storage_mut()[row * row_size..(row + 1) * row_size])
+            BitSlice::new_mut(
+                &mut self.bit_vec.storage_mut().slice_mut()[row * row_size..(row + 1) * row_size],
+            )
         }
     }
 }
@@ -247,12 +228,12 @@ impl IndexMut<usize> for BitMatrix {
 ///
 /// The first index in the tuple is row number, and the second is column
 /// number.
-impl Index<(usize, usize)> for BitMatrix {
+impl<B: BitBlockOrStore> Index<(usize, usize)> for BitMatrix<B> {
     type Output = bool;
 
     #[inline]
     fn index(&self, (row, col): (usize, usize)) -> &bool {
-        let row_size_in_bits = round_up_to_next(self.row_bits, BITS);
+        let row_size_in_bits = round_up_to_next(self.row_bits, B::BITS);
         if self.bit_vec.get(row * row_size_in_bits + col).unwrap() {
             &TRUE
         } else {
@@ -261,9 +242,9 @@ impl Index<(usize, usize)> for BitMatrix {
     }
 }
 
-impl<'a> From<&'a mut BitMatrix> for BitSubMatrixMut<'a> {
-    fn from(value: &'a mut BitMatrix) -> Self {
-        unsafe { BitSubMatrixMut::new(value.bit_vec.storage_mut(), value.row_bits) }
+impl<'a, B: BitBlockOrStore> From<&'a mut BitMatrix<B>> for BitSubMatrixMut<'a, B> {
+    fn from(value: &'a mut BitMatrix<B>) -> Self {
+        unsafe { BitSubMatrixMut::new(value.bit_vec.storage_mut().slice_mut(), value.row_bits) }
     }
 }
 
@@ -271,7 +252,7 @@ impl<'a> From<&'a mut BitMatrix> for BitSubMatrixMut<'a> {
 
 #[test]
 fn test_empty() {
-    let mut matrix = BitMatrix::new(0, 0);
+    let mut matrix = <BitMatrix>::new(0, 0);
     for _ in 0..3 {
         assert_eq!(matrix.num_rows(), 0);
         assert_eq!(matrix.size(), (0, 0));

@@ -2,7 +2,7 @@ use bit_matrix::BitMatrix;
 
 #[test]
 fn test_submatrix() {
-    let mut matrix = BitMatrix::new(5, 4);
+    let mut matrix = <BitMatrix>::new(5, 4);
     let points = &[
         (0, 0),
         (0, 1),

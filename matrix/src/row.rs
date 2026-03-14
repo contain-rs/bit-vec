@@ -2,16 +2,18 @@
 
 use core::{mem, ops};
 
+use bit_vec::BitBlock;
+
 use super::{FALSE, TRUE};
-use crate::local_prelude::*;
+// use crate::local_prelude::*;
 use crate::util::div_rem;
 
 /// A slice of bit vector's blocks.
-pub struct BitSlice {
+pub struct BitSlice<Block> {
     pub(crate) slice: [Block],
 }
 
-impl BitSlice {
+impl<Block: BitBlock> BitSlice<Block> {
     /// Creates a new slice from a slice of blocks.
     #[inline]
     pub fn new(slice: &[Block]) -> &Self {
@@ -43,21 +45,21 @@ impl BitSlice {
     /// Returns `true` if a bit is enabled in the bit vector slice, or `false` otherwise.
     #[inline]
     pub fn get(&self, bit: usize) -> bool {
-        let (block, i) = div_rem(bit, BITS);
+        let (block, i) = div_rem(bit, Block::BITS_);
         match self.slice.get(block) {
             None => false,
-            Some(b) => (b & (1 << i)) != 0,
+            Some(&b) => (b & (Block::ONE_ << i)) != Block::ZERO_,
         }
     }
 
     /// Returns a small integer-sized slice of the bit vector slice.
     #[inline]
-    pub fn small_slice_aligned(&self, bit: usize, len: u8) -> u32 {
-        let (block, i) = div_rem(bit, BITS);
+    pub fn small_slice_aligned(&self, bit: usize, len: u8) -> Block {
+        let (block, i) = div_rem(bit, Block::BITS_);
         match self.slice.get(block) {
-            None => 0,
+            None => Block::ZERO_,
             Some(&b) => {
-                let len_mask = (1 << len) - 1;
+                let len_mask = (Block::ONE_ << len as usize) - Block::ONE_;
                 (b >> i) & len_mask
             }
         }
@@ -66,16 +68,16 @@ impl BitSlice {
 
 /// Returns `true` if a bit is enabled in the bit vector slice,
 /// or `false` otherwise.
-impl ops::Index<usize> for BitSlice {
+impl<Block: BitBlock> ops::Index<usize> for BitSlice<Block> {
     type Output = bool;
 
     #[inline]
     fn index(&self, bit: usize) -> &bool {
-        let (block, i) = div_rem(bit, BITS);
+        let (block, i) = div_rem(bit, Block::BITS_);
         match self.slice.get(block) {
             None => &FALSE,
-            Some(b) => {
-                if (b & (1 << i)) != 0 {
+            Some(&b) => {
+                if (b & (Block::ONE_ << i)) != Block::ZERO_ {
                     &TRUE
                 } else {
                     &FALSE
@@ -85,11 +87,11 @@ impl ops::Index<usize> for BitSlice {
     }
 }
 
-impl ops::BitOrAssign for &mut BitSlice {
+impl<Block: BitBlock> ops::BitOrAssign for &mut BitSlice<Block> {
     fn bitor_assign(&mut self, rhs: Self) {
         debug_assert_eq!(self.slice.len(), rhs.slice.len());
         for (dst, src) in self.iter_blocks_mut().zip(rhs.iter_blocks()) {
-            *dst |= src;
+            *dst |= *src;
         }
     }
 }

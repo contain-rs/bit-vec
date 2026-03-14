@@ -1,9 +1,4 @@
-//! Defines a building block for the bit slice.
-//!
-//! Bits are stored in blocks. When the last block
-//! is not full with bits, we waste some space.
+use bit_vec::{BitBlockOrStore, BitStore};
 
-/// The number of bits in a block.
-pub const BITS: usize = 32;
-/// The type used as storage for bits.
-pub type Block = u32;
+#[allow(type_alias_bounds)]
+pub(crate) type Block<B: BitBlockOrStore> = <B::Store as BitStore>::Block;

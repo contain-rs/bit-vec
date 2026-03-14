@@ -2,7 +2,7 @@ use bit_matrix::BitMatrix;
 
 #[test]
 fn test_transitive_closure() {
-    let mut matrix = BitMatrix::new(4, 4);
+    let mut matrix = <BitMatrix>::new(4, 4);
     let points = &[
         (0, 0),
         (0, 1),
