@@ -1,8 +1,9 @@
-use crate::util::Block;
 use crate::{local_prelude::*, util};
 
 #[cfg(feature = "nanoserde")]
 use alloc::vec::Vec;
+use bit_vec::CloneableBitBlockOrStore;
+use bit_vec::block::Target;
 #[cfg(feature = "nanoserde")]
 use nanoserde::{DeBin, DeJson, DeRon, SerBin, SerJson, SerRon};
 
@@ -23,7 +24,7 @@ pub struct BitSet<B: BitBlockOrStore = u32> {
     pub(crate) bit_vec: BitVec<B>,
 }
 
-impl<B: BitBlockOrStore> Clone for BitSet<B> {
+impl<B: CloneableBitBlockOrStore> Clone for BitSet<B> {
     fn clone(&self) -> Self {
         BitSet {
             bit_vec: self.bit_vec.clone(),
@@ -333,7 +334,7 @@ impl<B: BitBlockOrStore> BitSet<B> {
     #[inline]
     fn other_op<F>(&mut self, other: &Self, mut f: F)
     where
-        F: FnMut(Block<B>, Block<B>) -> Block<B>,
+        F: FnMut(Target<B>, Target<B>) -> Target<B>,
     {
         // Unwrap BitVecs
         let self_bit_vec = &mut self.bit_vec;
@@ -355,10 +356,10 @@ impl<B: BitBlockOrStore> BitSet<B> {
 
         // Apply values found in other
         for (i, w) in other_words {
-            let old = self_bit_vec.storage()[i];
+            let old = self_bit_vec.storage()[i].load();
             let new = f(old, w);
             unsafe {
-                self_bit_vec.storage_mut().slice_mut()[i] = new;
+                *self_bit_vec.storage_mut().slice_mut()[i].get_mut() = new;
             }
         }
     }
@@ -392,7 +393,7 @@ impl<B: BitBlockOrStore> BitSet<B> {
             .storage()
             .iter()
             .rev()
-            .take_while(|&&n| n == B::ZERO)
+            .take_while(|&n| n.load() == B::ZERO)
             .count();
         // Truncate away all empty trailing blocks, then shrink_to_fit
         let trunc_len = old_len - n;
@@ -657,9 +658,9 @@ impl<B: BitBlockOrStore> BitSet<B> {
         let other_blocks = util::blocks_for_bits::<B>(other_bit_vec.len());
 
         // Check that `self` intersect `other` is self
-        self_bit_vec.blocks().zip(other_bit_vec.blocks()).all(|(w1, w2)| w1 & w2 == w1) &&
+        self_bit_vec.block_refs().zip(other_bit_vec.block_refs()).all(|(w1, w2)| { let w = w1.load(); w & w2.load() == w }) &&
         // Make sure if `self` has any more blocks than `other`, they're all 0
-        self_bit_vec.blocks().skip(other_blocks).all(|w| w == B::ZERO)
+        self_bit_vec.block_refs().skip(other_blocks).all(|w| w.load() == B::ZERO)
     }
 
     /// Returns `true` if the set is a superset of another.

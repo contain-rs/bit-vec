@@ -1,16 +1,18 @@
+use bit_vec::block::Target;
+
 use crate::util::Block;
 use crate::{local_prelude::*, set::BitSet};
 
 #[derive(Clone)]
 struct BlockIter<T, B: BitBlockOrStore> {
-    head: Block<B>,
+    head: Target<B>,
     head_offset: usize,
     tail: T,
 }
 
 impl<T, B: BitBlockOrStore> BlockIter<T, B>
 where
-    T: Iterator<Item = Block<B>>,
+    T: Iterator<Item = Target<B>>,
 {
     fn from_blocks(mut blocks: T) -> Self {
         let h = blocks.next().unwrap_or(B::ZERO);
@@ -43,7 +45,7 @@ impl<B: BitBlockOrStore> BitSet<B> {
     /// [`union_with`]: Self::union_with
     #[inline]
     pub fn union<'a>(&'a self, other: &'a Self) -> Union<'a, B> {
-        fn or<B: BitBlock>(w1: B, w2: B) -> B {
+        fn or<B: BitBlock>(w1: B::Target, w2: B::Target) -> B::Target {
             w1 | w2
         }
 
@@ -183,7 +185,7 @@ impl<B: BitBlockOrStore> BitSet<B> {
 struct TwoBitPositions<'a, B: 'a + BitBlockOrStore> {
     set: Blocks<'a, B>,
     other: Blocks<'a, B>,
-    merge: fn(Block<B>, Block<B>) -> Block<B>,
+    merge: fn(&Block<B>, &Block<B>) -> Block<B>,
 }
 
 /// An iterator for `BitSet`.

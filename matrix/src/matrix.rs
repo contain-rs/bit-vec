@@ -3,7 +3,7 @@
 use core::cmp;
 use core::ops::{Index, IndexMut, RangeBounds};
 
-use bit_vec::{BitBlockOrStore, BitStore, BitVec};
+use bit_vec::{BitStore, BitVec, CloneableBitBlockOrStore};
 
 use super::{FALSE, TRUE};
 use crate::local_prelude::*;
@@ -16,14 +16,14 @@ use crate::util::round_up_to_next;
     derive(miniserde::Serialize, miniserde::Deserialize)
 )]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BitMatrix<B: BitBlockOrStore = u32> {
+pub struct BitMatrix<B: CloneableBitBlockOrStore = u32> {
     bit_vec: BitVec<B>,
     row_bits: usize,
 }
 
 // Matrix
 
-impl<B: BitBlockOrStore> BitMatrix<B> {
+impl<B: CloneableBitBlockOrStore> BitMatrix<B> {
     /// Create a new BitMatrix with specific numbers of bits in columns and rows.
     pub fn new(rows: usize, row_bits: usize) -> Self {
         BitMatrix {
@@ -201,7 +201,7 @@ impl<B: BitBlockOrStore> BitMatrix<B> {
 }
 
 /// Gains immutable access to the matrix's row in the form of a `BitSlice`.
-impl<B: BitBlockOrStore> Index<usize> for BitMatrix<B> {
+impl<B: CloneableBitBlockOrStore> Index<usize> for BitMatrix<B> {
     type Output = BitSlice<Block<B>>;
 
     #[inline]
@@ -212,7 +212,7 @@ impl<B: BitBlockOrStore> Index<usize> for BitMatrix<B> {
 }
 
 /// Gains mutable access to the matrix's row in the form of a `BitSlice`.
-impl<B: BitBlockOrStore> IndexMut<usize> for BitMatrix<B> {
+impl<B: CloneableBitBlockOrStore> IndexMut<usize> for BitMatrix<B> {
     #[inline]
     fn index_mut(&mut self, row: usize) -> &mut Self::Output {
         let row_size = round_up_to_next(self.row_bits, B::BITS) / B::BITS;
@@ -228,7 +228,7 @@ impl<B: BitBlockOrStore> IndexMut<usize> for BitMatrix<B> {
 ///
 /// The first index in the tuple is row number, and the second is column
 /// number.
-impl<B: BitBlockOrStore> Index<(usize, usize)> for BitMatrix<B> {
+impl<B: CloneableBitBlockOrStore> Index<(usize, usize)> for BitMatrix<B> {
     type Output = bool;
 
     #[inline]
@@ -242,7 +242,7 @@ impl<B: BitBlockOrStore> Index<(usize, usize)> for BitMatrix<B> {
     }
 }
 
-impl<'a, B: BitBlockOrStore> From<&'a mut BitMatrix<B>> for BitSubMatrixMut<'a, B> {
+impl<'a, B: CloneableBitBlockOrStore> From<&'a mut BitMatrix<B>> for BitSubMatrixMut<'a, B> {
     fn from(value: &'a mut BitMatrix<B>) -> Self {
         unsafe { BitSubMatrixMut::new(value.bit_vec.storage_mut().slice_mut(), value.row_bits) }
     }

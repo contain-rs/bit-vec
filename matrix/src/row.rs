@@ -48,7 +48,7 @@ impl<Block: BitBlock> BitSlice<Block> {
         let (block, i) = div_rem(bit, Block::BITS_);
         match self.slice.get(block) {
             None => false,
-            Some(&b) => (b & (Block::ONE_ << i)) != Block::ZERO_,
+            Some(b) => (b.load() & (Block::ONE_ << i)) != Block::ZERO_,
         }
     }
 
@@ -58,11 +58,11 @@ impl<Block: BitBlock> BitSlice<Block> {
         let (block, i) = div_rem(bit, Block::BITS_);
         match self.slice.get(block) {
             None => Block::ZERO_,
-            Some(&b) => {
+            Some(b) => {
                 let len_mask = (Block::ONE_ << len as usize) - Block::ONE_;
-                (b >> i) & len_mask
+                (b.load() >> i) & len_mask
             }
-        }
+        }.into()
     }
 }
 
@@ -76,8 +76,8 @@ impl<Block: BitBlock> ops::Index<usize> for BitSlice<Block> {
         let (block, i) = div_rem(bit, Block::BITS_);
         match self.slice.get(block) {
             None => &FALSE,
-            Some(&b) => {
-                if (b & (Block::ONE_ << i)) != Block::ZERO_ {
+            Some(b) => {
+                if (b.load() & (Block::ONE_ << i)) != Block::ZERO_ {
                     &TRUE
                 } else {
                     &FALSE
@@ -91,7 +91,7 @@ impl<Block: BitBlock> ops::BitOrAssign for &mut BitSlice<Block> {
     fn bitor_assign(&mut self, rhs: Self) {
         debug_assert_eq!(self.slice.len(), rhs.slice.len());
         for (dst, src) in self.iter_blocks_mut().zip(rhs.iter_blocks()) {
-            *dst |= *src;
+            *dst.get_mut() |= src.load();
         }
     }
 }

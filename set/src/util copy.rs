@@ -8,7 +8,7 @@ use crate::local_prelude::*;
 pub(crate) type Block<B: BitBlockOrStore> = <B::Store as BitStore>::Block;
 #[allow(type_alias_bounds)]
 type MatchWords<'a, B: BitBlockOrStore> =
-    Chain<Enumerate<Map<BlockRefs<'a, B>, fn(&Block<B>) -> Target<B>>>, Skip<Take<Enumerate<Repeat<Target<B>>>>>>;
+    Chain<Enumerate<Blocks<'a, B>>, Skip<Take<Enumerate<Map<Repeat<Target<B>>, fn(Target<B>) -> Block<B>>>>>>;
 
 /// Computes how many blocks are needed to store that many bits
 pub(crate) fn blocks_for_bits<B: BitBlockOrStore>(bits: usize) -> usize {

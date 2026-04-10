@@ -110,9 +110,11 @@ extern crate serde;
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 
-mod block;
+#[cfg(feature = "portable-atomic")]
+mod atomic;
+pub mod block;
 mod block_or_store;
-mod blocks;
+pub mod blocks;
 mod blocks_mut;
 mod into_iter;
 mod iter;
@@ -122,8 +124,7 @@ mod util;
 mod vec;
 
 pub use block::BitBlock;
-pub use block_or_store::BitBlockOrStore;
-pub use blocks::Blocks;
+pub use block_or_store::{BitBlockOrStore, CloneableBitBlockOrStore};
 pub use blocks_mut::BlocksMut;
 pub use into_iter::IntoIter;
 pub use iter::Iter;
@@ -151,7 +152,6 @@ mod local_prelude {
     pub use std::vec::Vec;
 
     pub use core::cell::RefCell;
-    pub use core::cmp::Ordering;
     pub use core::fmt::Write;
     pub use core::iter::FromIterator;
     pub use core::{cmp, fmt, hash, iter, mem, ops, slice};
@@ -159,7 +159,7 @@ mod local_prelude {
     #[cfg(feature = "nanoserde")]
     pub use nanoserde::{DeBin, DeJson, DeRon, SerBin, SerJson, SerRon};
 
-    pub use crate::block::BitBlock;
+    pub use crate::block::{BitBlock, Target};
     pub use crate::block_or_store::BitBlockOrStore;
     pub use crate::store::BitStore;
     pub(crate) use crate::util::Block;

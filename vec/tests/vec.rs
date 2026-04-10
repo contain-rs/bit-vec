@@ -6,7 +6,7 @@ mod tests {
     #![allow(clippy::shadow_unrelated)]
     #![allow(clippy::extra_unused_type_parameters)]
 
-    use bit_vec::{BitBlockOrStore, BitVec, Iter};
+    use bit_vec::{BitBlockOrStore, CloneableBitBlockOrStore, BitVec, Iter};
 
     // This is stupid, but I want to differentiate from a "random" 32
     const U32_BITS: usize = 32;
@@ -1353,7 +1353,7 @@ mod tests {
     }
 
     #[test]
-    fn test_remove_all<S: BitBlockOrStore>() {
+    fn test_remove_all<S: CloneableBitBlockOrStore>() {
         let v = BitVec::<S>::from_elem_general(1024, false);
         for _ in 0..1024 {
             let mut v2 = v.clone();

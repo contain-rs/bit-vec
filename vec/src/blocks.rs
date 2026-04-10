@@ -6,23 +6,30 @@ impl<B: BitBlockOrStore> BitVec<B> {
     pub fn blocks(&self) -> Blocks<'_, B> {
         // (2)
         Blocks {
-            iter: self.storage.slice().iter(),
+            iter: self.storage.slice().iter().map(Block::<B>::load),
         }
+    }
+
+    #[inline]
+    pub fn block_refs(&self) -> BlockRefs<'_, B> {
+        self.storage.slice().iter()
     }
 }
 
 /// An iterator over the blocks of a `BitVec`.
 #[derive(Clone)]
 pub struct Blocks<'a, B: 'a + BitBlockOrStore> {
-    iter: slice::Iter<'a, Block<B>>,
+    iter: iter::Map<slice::Iter<'a, Block<B>>, fn(&'a Block<B>) -> Target<B>>,
 }
+
+pub type BlockRefs<'a, B: 'a + BitBlockOrStore> = slice::Iter<'a, Block<B>>;
 
 impl<B: BitBlockOrStore> Iterator for Blocks<'_, B> {
     type Item = Block<B>;
 
     #[inline]
     fn next(&mut self) -> Option<Block<B>> {
-        self.iter.next().cloned()
+        self.iter.next().map(|b| b.into())
     }
 
     #[inline]
@@ -34,7 +41,7 @@ impl<B: BitBlockOrStore> Iterator for Blocks<'_, B> {
 impl<B: BitBlockOrStore> DoubleEndedIterator for Blocks<'_, B> {
     #[inline]
     fn next_back(&mut self) -> Option<Block<B>> {
-        self.iter.next_back().cloned()
+        self.iter.next_back().map(|b| b.into())
     }
 }
 

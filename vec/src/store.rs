@@ -1,7 +1,7 @@
 use crate::local_prelude::*;
 
 #[allow(clippy::len_without_is_empty)]
-pub trait BitStore: Clone {
+pub trait BitStore {
     type Block: BitBlock;
     type Alloc: Default;
     fn new_in(alloc: Self::Alloc) -> Self;
@@ -222,8 +222,7 @@ where
     }
 
     fn split_off(&mut self, at: usize) -> Self {
-        // TODO
-        self.to_vec().split_off(at).into()
+        self.drain(at..).collect()
     }
 
     fn truncate(&mut self, len: usize) {

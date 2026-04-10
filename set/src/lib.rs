@@ -64,12 +64,13 @@ mod iter;
 mod set;
 mod util;
 
-pub mod local_prelude {
-    pub use bit_vec::{BitBlock, BitBlockOrStore, BitStore, BitVec, Blocks};
+mod local_prelude {
+    pub use bit_vec::{BitBlock, BitBlockOrStore, BitStore, BitVec};
+    pub use bit_vec::blocks::{BlockRefs, Blocks};
     pub use core::cmp::Ordering;
     pub use core::iter::{self, Chain, Enumerate, FromIterator, Repeat, Skip, Take};
     pub use core::{cmp, fmt, hash};
 }
 
-pub use bit_vec::{BitBlockOrStore, BitStore};
+pub use bit_vec::{BitBlockOrStore, CloneableBitBlockOrStore, BitStore};
 pub use set::BitSet;

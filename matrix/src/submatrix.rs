@@ -1,5 +1,6 @@
 //! Submatrix of bits.
 
+use bit_vec::BitBlock;
 use bit_vec::BitBlockOrStore;
 use core::cmp;
 use core::fmt;
@@ -105,9 +106,9 @@ impl<'a, B: BitBlockOrStore> BitSubMatrixMut<'a, B> {
         unsafe {
             let elt = self.slice.get_unchecked_mut(block);
             if enabled {
-                *elt |= B::ONE << i;
+                *elt.get_mut() |= B::ONE << i;
             } else {
-                *elt = *elt & !(B::ONE << i);
+                *elt.get_mut() = elt.load() & !(B::ONE << i);
             }
         }
     }
