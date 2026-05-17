@@ -990,7 +990,7 @@ mod tests {
     #[cfg(all(feature = "miniserde", not(feature = "smallvec")))]
     #[test]
     fn test_miniserde_serialization<C>()
-        where C: BitContainer<Block: miniserde::Serialize + miniserde::Deserialize>
+        where C: BitContainer<Block: miniserde::Serialize + miniserde::Deserialize> + miniserde::Serialize + miniserde::Deserialize
     {
         let bit_vec = BitVec::<C::Block, C>::new_general();
         let serialized = miniserde::json::to_string(&bit_vec);
@@ -1006,7 +1006,9 @@ mod tests {
 
     #[cfg(all(feature = "borsh", not(feature = "smallvec")))]
     #[test]
-    fn test_borsh_serialization<C: BitContainer + borsh::BorshSerialize + borsh::BorshDeserialize>() {
+    fn test_borsh_serialization<C>()
+        where C: BitContainer<Block: borsh::BorshSerialize + borsh::BorshDeserialize> + borsh::BorshSerialize + borsh::BorshDeserialize
+    {
         let bit_vec = BitVec::<C::Block, C>::new_general();
         let serialized = borsh::to_vec(&bit_vec).unwrap();
         let unserialized: BitVec<C::Block, C> = borsh::from_slice(&serialized[..]).unwrap();
