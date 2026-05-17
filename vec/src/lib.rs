@@ -97,7 +97,6 @@
 extern crate std;
 
 #[cfg(not(feature = "std"))]
-#[macro_use]
 extern crate alloc;
 
 mod block;
@@ -123,8 +122,6 @@ mod local_prelude {
     pub use alloc::rc::Rc;
     #[cfg(not(feature = "std"))]
     pub use alloc::string::String;
-    #[cfg(not(feature = "std"))]
-    pub use alloc::vec::Vec;
     #[cfg(not(feature = "std"))]
     pub use alloc::vec::Vec;
 
