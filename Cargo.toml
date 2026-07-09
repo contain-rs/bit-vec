@@ -4,6 +4,7 @@ members = [
     "vec",
     "set",
     "matrix",
+    "vec-extra",
     "fuzz",
 ]
 
