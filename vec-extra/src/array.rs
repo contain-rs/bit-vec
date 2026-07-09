@@ -49,7 +49,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let data = [0u16, 1, 2, 3];
 	/// let bits = BitArray::<_, Msb0>::new(data);
@@ -65,7 +65,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bitarr![0; 30];
 	/// let native: [usize; 1] = bits.into_inner();

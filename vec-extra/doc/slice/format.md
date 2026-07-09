@@ -23,7 +23,7 @@ digit in that word is able to use the full `0 ..= 7` numeral range.
 
 ```rust
 # #[cfg(feature = "std")] {
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let data = [
   0b000000_10u8,

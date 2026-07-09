@@ -43,7 +43,7 @@ This documentation is replicated on all `NoAlias` types; the examples will work
 for all of them, but are not specialized in the text.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use bitvec::slice::{ChunksMut, ChunksMutNoAlias};
 type Alias8 = <u8 as BitStore>::Alias;
 
@@ -60,7 +60,7 @@ This example shows how use of [`.split_at_mut()`] forces the `.remove_alias()` t
 still retain a layer of alias protection.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use bitvec::slice::{ChunksMut, ChunksMutNoAlias};
 type Alias8 = <u8 as BitStore>::Alias;
 type Alias8Alias = <Alias8 as BitStore>::Alias;
@@ -79,7 +79,7 @@ And this example shows how to use `.bit_domain_mut()` in order to undo the
 effects of `.split_at_mut()`, so that `.remove_alias()` can complete its work.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use bitvec::slice::{ChunksMut, ChunksMutNoAlias};
 type Alias8 = <u8 as BitStore>::Alias;
 

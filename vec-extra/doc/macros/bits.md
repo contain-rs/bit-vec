@@ -59,7 +59,7 @@ can prevent *some* of this unsafety by preventing direct access to the created
 the same underlying buffer.
 
 ```rust,ignore
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 fn unsound() -> &'static mut BitSlice<usize, Lsb0> {
   unsafe { bits![static mut 0; 64] }
@@ -83,7 +83,7 @@ existing alias-protection behavior suffices.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use core::cell::Cell;
 use radium::types::*;
 

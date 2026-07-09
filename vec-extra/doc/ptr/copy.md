@@ -46,7 +46,7 @@ it follows the ordering parameter for the source and destination regions as it
 walks each bit individually.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use bitvec::ptr as bv_ptr;
 
 let start = 0b1011u8;
@@ -67,7 +67,7 @@ memory with different ordering is not defined, and `bitvec` does not specify any
 result.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use bitvec::ptr as bv_ptr;
 
 let mut x = 0b1111_0010u8;

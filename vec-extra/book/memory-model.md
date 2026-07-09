@@ -185,7 +185,7 @@ first step to reducing unnecessary synchrony, but not good enough. Consider the
 following:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let mut data = [0u8; 2];
 let bits = data.view_bits_mut::<Lsb0>();

@@ -17,7 +17,7 @@ as it is required to use them in its implementation.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use bitvec::ptr as bv_ptr;
 
 let mut data = 2u8;

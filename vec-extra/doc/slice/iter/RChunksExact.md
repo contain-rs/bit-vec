@@ -16,7 +16,7 @@ It is created by the [`BitSlice::rchunks_exact`] method.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bits = bits![0, 1, 0, 0, 0, 1, 1, 1];
 let mut chunks = bits.rchunks_exact(3);

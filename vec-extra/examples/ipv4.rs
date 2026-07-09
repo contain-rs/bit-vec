@@ -19,7 +19,7 @@ use std::{
 	ops::Range,
 };
 
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use wyz::fmt::FmtForward;
 
 #[cfg(feature = "std")]

@@ -6,7 +6,7 @@ a sample of the various operations that can be applied to it.
 This example prints **a lot** of text to the console.
 !*/
 
-use bitvec::prelude::{
+use bit_vec_extra::prelude::{
 	bits,
 	BitOrder,
 	BitSlice,

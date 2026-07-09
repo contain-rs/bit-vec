@@ -117,7 +117,7 @@ bitvec = "1"
 Once Cargo knows about it, bring its prelude into scope:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 ```
 
 You can read the [prelude reëxports][prelude] to see exactly which symbols are
@@ -137,7 +137,7 @@ project.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 // All data-types have macro
 // constructors.
@@ -221,7 +221,7 @@ used for more advanced buffer manipulation:
 #[cfg(feature = "alloc")]
 fn main() {
 
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let mut bv = bitvec![u8, Msb0;];
 bv.push(false);
@@ -242,7 +242,7 @@ instead provides a proxy structure that can be used as *nearly* an `&mut bit`
 reference:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bits = bits![mut 0];
 // `bit` is not a reference, so

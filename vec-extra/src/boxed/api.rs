@@ -46,7 +46,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bb = bitbox![0; 80];
 	/// let ptr: *mut BitSlice = BitBox::into_raw(bb);
@@ -78,7 +78,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bb = bitbox![0; 80];
 	/// let ptr = BitBox::into_raw(bb);
@@ -109,7 +109,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bb = bitbox![0; 80];
 	/// let static_ref: &'static mut BitSlice = BitBox::leak(bb);

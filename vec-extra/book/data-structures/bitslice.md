@@ -51,7 +51,7 @@ Rust data. The [`BitView`] trait, available in the [prelude], implements methods
 on the supported unsigned integers, all arrays of them, and their slices.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let byte = 0u8;
 let bits = byte.view_bits::<LocalBits>();
@@ -97,7 +97,7 @@ The macro syntax extends that of `vec!`. The simplest invocations are sequences
 or repetitions of expressions, which can optionally be made `mut`able:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let r = bits![0, 1, 0, 1];
 let w = bits![mut 0, 1, 0, 1];
@@ -118,7 +118,7 @@ specify them, the macro uses the default parameters of `usize` storage and
 `Lsb0` ordering.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let in_bytes = bits![u8, LocalBits; 0, 1, 0, 1];
 let in_shorts = bits![u16, Lsb0; 0, 1, 0, 1];
@@ -197,7 +197,7 @@ to use dedicated bit-counting instructions where processors provide them.
 > bit-slices.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let mut or  =  bits![mut 0, 0, 1, 1];
         or |=  bits![    0, 1, 0, 1];
@@ -224,7 +224,7 @@ or you can set one bit in a region to a new value by using either the `.set` or
 `&mut bool` reference slot.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bits = bits![0; 4];
 assert!(bits.not_any());

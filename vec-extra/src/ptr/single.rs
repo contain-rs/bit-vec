@@ -485,7 +485,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let data = 1u8;
 	/// let ptr = BitPtr::<_, _, Lsb0>::from_ref(&data);
@@ -528,7 +528,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let data = 5u8;
 	/// let ptr = BitPtr::<_, _, Lsb0>::from_ref(&data);
@@ -588,7 +588,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let data = 0u32;
 	/// let mut ptr = BitPtr::<_, _, Lsb0>::from_ref(&data);
@@ -635,7 +635,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let data = 0u32;
 	/// let base = BitPtr::<_, _, Lsb0>::from_ref(&data);
@@ -656,7 +656,7 @@ where
 	/// well-formed.
 	///
 	/// ```rust,no_run
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let a = 0u8;
 	/// let b = !0u8;
@@ -909,7 +909,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let data = [0u8; 3];
 	/// let ptr = BitPtr::<_, _, Lsb0>::from_slice(&data);
@@ -976,7 +976,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut data = 0u8;
 	/// let ptr = BitPtr::<_, _, Lsb0>::from_mut(&mut data);

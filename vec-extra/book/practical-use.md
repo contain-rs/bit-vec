@@ -23,7 +23,7 @@ vector of either ordinary integers, or their wrapper equivalents provided by
 `bitvec`:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let array = [0u8; 8];
 let boxed: Box<[u16]> = Box::new([0u16; 4]);
@@ -40,7 +40,7 @@ containers borrow themselves as `BitSlices` just like standard-library
 containers borrow themselves as slices:
 
 ```rust
-# use bitvec::prelude::*;
+# use bit_vec_extra::prelude::*;
 # let array = [0u8; 8];
 # let boxed: Box<[u16]> = Box::new([0u16; 4]);
 # let vec = vec![0u32; 2];

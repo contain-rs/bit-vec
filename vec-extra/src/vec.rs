@@ -79,7 +79,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let zeros = BitVec::<u8, Msb0>::repeat(false, 50);
 	/// let ones = BitVec::<u16, Lsb0>::repeat(true, 50);
@@ -109,7 +109,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 0, 0, 1];
 	/// let bv = BitVec::from_bitslice(bits);
@@ -146,7 +146,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bv = BitVec::<_, Msb0>::from_element(1u8);
 	/// assert!(bv[7]);
@@ -168,7 +168,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let slice = &[0u8, 1, 2, 3];
 	/// let bv = BitVec::<_, Lsb0>::from_slice(slice);
@@ -188,7 +188,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let slice = &[0u8, 1, 2, 3];
 	/// let bv = BitVec::<_, Lsb0>::try_from_slice(slice).unwrap();
@@ -211,7 +211,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let v = vec![0u8, 1, 2, 3];
 	/// let bv = BitVec::<_, Msb0>::from_vec(v);
@@ -232,7 +232,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let v = vec![0u8; 20];
 	/// assert_eq!(BitVec::<_, Msb0>::try_from_vec(v).unwrap().len(), 160);
@@ -270,7 +270,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0, 1];
 	/// bv.extend_from_bitslice(bits![0, 1, 0, 0, 1]);
@@ -382,7 +382,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bv = bitvec![0, 1, 0, 0, 1];
 	/// let bb = bv.into_boxed_bitslice();
@@ -410,7 +410,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bv = bitvec![u8, Msb0; 0, 1, 0, 0, 1];
 	/// let v = bv.into_vec();
@@ -459,7 +459,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![u8, Msb0; 0; 20];
 	/// assert_eq!(bv.as_raw_slice(), [0; 3]);
@@ -490,7 +490,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = 0b1101_1100u8.view_bits::<Lsb0>().to_bitvec();
 	/// assert_eq!(bv.as_raw_slice()[0], 0b1101_1100u8);
@@ -531,7 +531,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let data = 0b00_1111_00u8;
 	/// let bits = data.view_bits::<Msb0>();

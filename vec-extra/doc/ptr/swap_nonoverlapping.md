@@ -19,7 +19,7 @@ entirely disjoint. They can be adjacent, but no bit can be in both.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use bitvec::ptr as bv_ptr;
 
 let mut x = [0u8; 2];

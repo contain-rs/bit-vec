@@ -74,7 +74,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let data = 0b0101_1011u8;
 	/// let bits = data.view_bits::<Msb0>();
@@ -102,7 +102,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let boxed: Box<[u8]> = Box::new([0; 40]);
 	/// let addr = boxed.as_ptr();
@@ -129,7 +129,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let boxed: Box<[u8]> = Box::new([0u8; 40]);
 	/// let addr = boxed.as_ptr();
@@ -158,7 +158,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bb = bitbox![0; 5];
 	/// let addr = bb.as_raw_slice().as_ptr();
@@ -195,7 +195,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bb = bitbox![0, 1, 0, 0, 1];
 	/// let bv = bb.into_bitvec();
@@ -275,7 +275,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = 0b1011_0101u8.view_bits::<Msb0>();
 	/// let mut bb = BitBox::from_bitslice(&bits[2 .. 6]);
@@ -319,7 +319,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = &0b10_1101_01u8.view_bits::<Msb0>()[2 .. 6];
 	/// let mut bb = BitBox::from_bitslice(bits);

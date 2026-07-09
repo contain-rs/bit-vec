@@ -20,7 +20,7 @@ Because this performs a dereference of memory, it inherits the original
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use bitvec::ptr as bv_ptr;
 
 

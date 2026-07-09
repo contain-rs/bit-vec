@@ -24,7 +24,7 @@ For example, to trim all the bits off either edge that match a condition, you
 could write
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 fn trim<T: BitStore, O: BitOrder>(
   bits: &BitSlice<T, O>,
@@ -226,7 +226,7 @@ appropriate buffer in the local scope. The macro expands to a borrowed
 [`BitArray`] temporary, which will live for the duration of the bound name.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let immut = bits![u8, Lsb0; 0, 1, 0, 0, 1, 0, 0, 1];
 let mutable: &mut BitSlice<_, _> = bits![mut u8, Msb0; 0; 8];
@@ -249,7 +249,7 @@ from them. These are the most basic ways to borrow memory and view it as bits;
 however, you should prefer the [`BitView`] trait methods instead.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let data = [0u16; 3];
 let local_borrow = BitSlice::<_, Lsb0>::from_slice(&data);
@@ -266,7 +266,7 @@ imported in the crate prelude, is *probably* the easiest way for you to borrow
 memory as bits.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let data = [0u32; 5];
 let trait_view = data.view_bits::<Lsb0>();
@@ -283,7 +283,7 @@ viewed as a `BitSlice` by default, you can use one of the [`BitArray`],
 the borrowing constructors.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let slice = bits![0; 27];
 let array = bitarr![u8, LocalBits; 0; 10];

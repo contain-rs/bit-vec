@@ -52,7 +52,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bv = BitVec::<u8, Msb0>::new();
 	/// assert!(bv.is_empty());
@@ -80,7 +80,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv: BitVec = BitVec::with_capacity(128);
 	///
@@ -131,7 +131,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bv = bitvec![0, 1, 0, 0, 1];
 	/// let (bitptr, len, capa) = bv.into_raw_parts();
@@ -198,7 +198,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bv = bitvec![0, 1, 0, 0, 1];
 	/// ```
@@ -235,7 +235,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv: BitVec = BitVec::with_capacity(80);
 	/// assert!(bv.capacity() >= 80);
@@ -271,7 +271,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv: BitVec = BitVec::with_capacity(80);
 	/// assert!(bv.capacity() >= 80);
@@ -297,7 +297,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv: BitVec = BitVec::with_capacity(1000);
 	/// bv.push(true);
@@ -342,7 +342,7 @@ where
 	/// Truncating a five-bit vector to two bits:
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0, 1, 0, 0, 1];
 	/// bv.truncate(2);
@@ -423,7 +423,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0, 1, 0, 0, 1];
 	/// unsafe {
@@ -469,7 +469,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0, 1, 0, 0, 1];
 	/// assert!(!bv.swap_remove(2));
@@ -548,7 +548,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0, 1, 0, 0, 1];
 	/// bv.retain(|idx, _| idx % 2 == 0);
@@ -607,7 +607,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0, 0];
 	/// bv.push(true);
@@ -640,7 +640,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0, 1];
 	/// assert!(bv.pop().unwrap());
@@ -681,7 +681,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv1 = bitvec![u16, Msb0; 0; 10];
 	/// let mut bv2 = bitvec![u32, Lsb0; 1; 10];
@@ -721,7 +721,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0, 1, 0, 0, 1];
 	/// let bv2 = bv.drain(1 ..= 3).collect::<BitVec>();
@@ -749,7 +749,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0, 1, 0, 0, 1];
 	/// bv.clear();
@@ -800,7 +800,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0, 1, 0, 0, 1];
 	/// let bv2 = bv.split_off(2);
@@ -837,7 +837,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![1; 2];
 	/// bv.resize_with(5, |idx| idx % 2 == 1);
@@ -877,7 +877,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bv = bitvec![0, 0, 1];
 	/// let static_bits: &'static mut BitSlice = bv.leak();
@@ -906,7 +906,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0; 2];
 	/// bv.resize(5, true);
@@ -954,7 +954,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0, 1, 0, 0, 1];
 	/// bv.extend_from_within(1 .. 4);
@@ -998,7 +998,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bv = bitvec![0, 1, 1];
 	/// //                   a  b  c

@@ -14,7 +14,7 @@ parameter you need to provide when calling these methods is the bit-ordering.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let a = 0u16;
 let a_bits: &BitSlice<u16, Lsb0> = a.view_bits::<Lsb0>();

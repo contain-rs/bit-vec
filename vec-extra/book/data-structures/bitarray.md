@@ -10,7 +10,7 @@ must take the entire region it contains as a type parameter. The full type
 declaration is
 
 ```rust,ignore
-# use bitvec::prelude::*;
+# use bit_vec_extra::prelude::*;
 pub struct BitArray<
   A: BitViewSized,
   O: BitOrder,

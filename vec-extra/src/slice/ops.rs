@@ -134,7 +134,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![u8, Msb0; 0, 1, 0];
 	/// assert!(!bits[0]); // -----^  |  |
@@ -149,7 +149,7 @@ where
 	/// valid.
 	///
 	/// ```rust,should_panic
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0,  ];
 	/// bits[1]; // --------^

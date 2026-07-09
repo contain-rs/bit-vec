@@ -112,7 +112,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 0, 1, 1];
 	/// let mut iter = bits.iter();
@@ -146,7 +146,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1];
 	/// let mut iter = bits.iter().by_refs();
@@ -187,7 +187,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1];
 	/// let mut iter = bits.iter().by_vals();
@@ -312,7 +312,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0, 0, 1, 1];
 	/// let mut iter = bits.iter_mut();
@@ -349,7 +349,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0; 4];
 	/// let mut iter = bits.iter_mut();
@@ -999,7 +999,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0; 5];
 	/// let mut chunks = bits.chunks_exact_mut(3);
@@ -1410,7 +1410,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0; 5];
 	/// let mut chunks = bits.rchunks_exact_mut(3);

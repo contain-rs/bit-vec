@@ -2,7 +2,7 @@
 
 #![allow(clippy::unusual_byte_groupings)]
 
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 /** Test case for [Issue #10], opened by [@overminder].
 

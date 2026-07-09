@@ -39,7 +39,7 @@ This panics if `self.len()` is 0, or greater than `I::BITS`.
 Let us consider an `i32` value stored in 24 bits of a `BitSlice<u8, Lsb0>`:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let mut raw = [0u8; 4];
 let bits = raw.view_bits_mut::<Lsb0>();
@@ -57,7 +57,7 @@ sign-extended through the highest byte.
 Let us now look at the memory representation of this value:
 
 ```rust
-# use bitvec::prelude::*;
+# use bit_vec_extra::prelude::*;
 # let mut raw = [0u8; 4];
 # let bits = raw.view_bits_mut::<Lsb0>();
 # bits[4 .. 28].store_be::<u32>(0x00B4963Cu32);
@@ -87,7 +87,7 @@ Now let’s look at the way different `BitOrder` parameters interpret the
 placement of bit indices within memory:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let raw = [
 // Bit index   14 ←

@@ -35,7 +35,7 @@ equivalent loop.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let a = bits![mut 0, 0, 1, 1];
 let b = bits![    0, 1, 0, 1];

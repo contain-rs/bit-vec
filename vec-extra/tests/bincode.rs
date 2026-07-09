@@ -20,7 +20,7 @@ format, but only if its data buffer can be reconstituted from the slice model.
 
 #![cfg(feature = "serde")]
 
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 #[test]
 fn serialize_bitarr_bincode() {

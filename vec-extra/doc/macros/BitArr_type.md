@@ -18,7 +18,7 @@ type parameters are set to the crate default type parameters of `Lsb0` and
 `usize`.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use core::cell::Cell;
 
 let a: BitArr!(for 100) = BitArray::ZERO;

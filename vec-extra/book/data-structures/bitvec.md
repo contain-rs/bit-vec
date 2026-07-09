@@ -21,7 +21,7 @@ and produces an owned allocation instead of a stack temporary. You can also
 construct a `BitVec` by `.collect`ing any iterator of `bool`s.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let a: BitVec = BitVec::new();
 let b = bits![0, 1, 0, 1].to_bitvec();

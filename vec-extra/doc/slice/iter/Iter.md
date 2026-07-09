@@ -18,7 +18,7 @@ can be converted to an iterator of `bool` values with [`.by_vals()`].
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bits = bits![0, 1];
 for bit in bits.iter() {

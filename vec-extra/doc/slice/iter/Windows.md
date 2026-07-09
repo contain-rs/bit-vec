@@ -15,7 +15,7 @@ It is created by the [`BitSlice::windows`] method.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bits = bits![0, 0, 1, 1, 0];
 let mut windows = bits.windows(2);

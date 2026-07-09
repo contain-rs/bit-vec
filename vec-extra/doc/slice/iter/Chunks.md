@@ -15,7 +15,7 @@ It is created by the [`BitSlice::chunks`] method.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bits = bits![0, 0, 0, 1, 1, 1, 0, 1];
 let mut chunks = bits.chunks(3);

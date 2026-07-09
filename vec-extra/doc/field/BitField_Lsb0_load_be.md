@@ -20,7 +20,7 @@ In each memory element, the `Lsb0` ordering counts indices leftward from the
 right edge:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let raw = 0b00_10110_0u8;
 //           76 54321 0
@@ -43,7 +43,7 @@ In bit-slices that span multiple elements, the big-endian element ordering means
 that the slice index increases while numeric significance decreases:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let raw = [
   0b0010_1111u8,

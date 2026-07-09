@@ -20,7 +20,7 @@ In each memory element, the `Msb0` ordering counts indices rightward from the
 left edge:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let raw = 0b00_10110_0u8;
 //           01 23456 7
@@ -43,7 +43,7 @@ In bit-slices that span multiple elements, the little-endian element ordering
 means that the slice index increases with numerical significance:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let raw = [
   0xF_8u8,

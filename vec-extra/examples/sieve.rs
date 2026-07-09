@@ -34,7 +34,7 @@ use std::{
 	process,
 };
 
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 macro_rules! qprintln {
 	($($t:tt)*) => {

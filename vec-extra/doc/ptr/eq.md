@@ -21,7 +21,7 @@ standard-library `ptr::eq`, and does not need an override.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use bitvec::ptr as bv_ptr;
 use core::cell::Cell;
 

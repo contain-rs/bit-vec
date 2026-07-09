@@ -28,7 +28,7 @@ remove or reörder! They are *not* an atomic synchronizer.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use bitvec::ptr as bv_ptr;
 
 let data = 128u8;

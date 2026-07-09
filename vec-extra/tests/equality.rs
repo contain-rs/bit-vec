@@ -5,7 +5,7 @@ combinations of equality and comparison are correctly present.
 
 use core::cmp::Ordering;
 
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 #[test]
 fn slice_only() {

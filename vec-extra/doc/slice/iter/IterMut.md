@@ -17,7 +17,7 @@ it.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bits = bits![mut 0, 1];
 for mut bit in bits.iter_mut() {

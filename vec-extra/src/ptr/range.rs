@@ -94,7 +94,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	/// use bitvec::ptr::BitPtrRange;
 	///
 	/// let data = 0u8;
@@ -129,7 +129,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	/// use bitvec::ptr::BitPtrRange;
 	/// use core::cell::Cell;
 	///

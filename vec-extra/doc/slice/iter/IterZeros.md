@@ -10,7 +10,7 @@ It is created by the [`.iter_zeros()`] method on bit-slices.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bits = bits![1, 0, 1, 1, 0];
 let mut zeros = bits.iter_zeros();

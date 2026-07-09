@@ -132,7 +132,7 @@ Step one: create any `BitSlice`-capable buffer. This can be any of the
 Rust-native sequence types, or any of the `bitvec` types.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let mut data = [0u8; 4];
 let bits = data.view_bits_mut::<Msb0>();
@@ -145,7 +145,7 @@ easiest way to narrow a `BitSlice` (or buffer type that dereferences to it) is
 by using range indexing, `[start .. end]`.
 
 ```rust
-# use bitvec::prelude::*;
+# use bit_vec_extra::prelude::*;
 # let bits = bits![mut u8, Msb0; 0; 32];
 bits[10 ..][.. 13].store_be::<u16>(0x765);
 assert_eq!(bits[10 .. 23].load_be::<u16>(), 0x765);

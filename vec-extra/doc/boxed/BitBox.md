@@ -41,7 +41,7 @@ a `BitVec` with [`BitVec::into_boxed_bitslice`].
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let a = BitBox::from_bitslice(bits![1, 0, 1, 1, 0]);
 let b = bitbox![0, 1, 0, 0, 1];

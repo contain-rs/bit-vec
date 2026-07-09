@@ -48,7 +48,7 @@ loading integers out of, that subset. As an example, transporting four ten-bit
 integers can be done in five bytes instead of eight like so:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let mut bv = bitvec![u8, Msb0; 0; 40];
 bv[0 .. 10].store::<u16>(0x3A8);
@@ -69,7 +69,7 @@ of `Vec<T>`’s behaviors. As a brief tour:
 ### Push and Pop
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let mut bv: BitVec = BitVec::new();
 bv.push(false);
@@ -89,7 +89,7 @@ because that is not yet possible. Instead, [`.get_mut()`] can produce a proxy
 reference, or [`.set()`] can take an index and a value to write.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let mut bv: BitVec = BitVec::new();
 bv.push(false);
@@ -108,7 +108,7 @@ run-time, this buffer is copied into the heap as a `BitVec` with no extra cost
 beyond the allocation.
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bv = bitvec![0; 10];
 let bv = bitvec![0, 1, 0, 0, 1];
@@ -121,7 +121,7 @@ let bv = bitvec![u16, Msb0; 1; 20];
 view or modify the contained data without affecting the allocation:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 fn read_bitslice(bits: &BitSlice) {
   // …

@@ -25,7 +25,7 @@ Values of that type can then be built from the [`bitarr!`] *value*-constructor
 macro:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 type Example = BitArr!(for 43, in u32, Msb0);
 let example: Example = bitarr!(u32, Msb0; 1; 33);
@@ -75,7 +75,7 @@ contained `BitSlice` region.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 const WELL_KNOWN: BitArr!(for 16, in u8, Lsb0) = BitArray::<[u8; 2], Lsb0> {
   data: *b"bv",

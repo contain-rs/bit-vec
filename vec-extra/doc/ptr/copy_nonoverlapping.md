@@ -40,7 +40,7 @@ if you are sensitive to performance.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use bitvec::ptr as bv_ptr;
 
 let start = 0b1011u8;

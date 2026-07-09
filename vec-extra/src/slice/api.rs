@@ -78,7 +78,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// assert_eq!(bits![].len(), 0);
 	/// assert_eq!(bits![0; 10].len(), 10);
@@ -97,7 +97,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// assert!(bits![].is_empty());
 	/// assert!(!bits![0; 10].is_empty());
@@ -122,7 +122,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![1, 0, 0];
 	/// assert_eq!(bits.first().as_deref(), Some(&true));
@@ -150,7 +150,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0; 3];
 	/// if let Some(mut first) = bits.first_mut() {
@@ -180,7 +180,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![1, 0, 0];
 	/// let (first, rest) = bits.split_first().unwrap();
@@ -214,7 +214,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0; 3];
 	/// if let Some((mut first, rest)) = bits.split_first_mut() {
@@ -251,7 +251,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 0, 1];
 	/// let (last, rest) = bits.split_last().unwrap();
@@ -285,7 +285,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0; 3];
 	/// if let Some((mut last, rest)) = bits.split_last_mut() {
@@ -322,7 +322,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 0, 1];
 	/// assert_eq!(bits.last().as_deref(), Some(&true));
@@ -353,7 +353,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0; 3];
 	/// if let Some(mut last) = bits.last_mut() {
@@ -392,7 +392,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 0];
 	/// assert_eq!(bits.get(1).as_deref(), Some(&true));
@@ -427,7 +427,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0; 3];
 	///
@@ -464,7 +464,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let data = 0b0001_0010u8;
 	/// let bits = &data.view_bits::<Lsb0>()[.. 3];
@@ -505,7 +505,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut data = 0u8;
 	/// let bits = &mut data.view_bits_mut::<Lsb0>()[.. 3];
@@ -589,7 +589,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0, 1];
 	/// bits.swap(0, 1);
@@ -614,7 +614,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0, 0, 1, 0, 1, 1, 0, 0, 1];
 	/// bits.reverse();
@@ -648,7 +648,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 0, 1];
 	/// let mut iter = bits.iter();
@@ -688,7 +688,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0; 4];
 	/// let mut iter = bits.iter_mut();
@@ -724,7 +724,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 0, 0, 1];
 	/// let mut iter = bits.windows(3);
@@ -765,7 +765,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 0, 0, 1];
 	/// let mut iter = bits.chunks(2);
@@ -813,7 +813,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut u8, Msb0; 0; 5];
 	///
@@ -861,7 +861,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 0, 0, 1];
 	/// let mut iter = bits.chunks_exact(2);
@@ -915,7 +915,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut u8, Msb0; 0; 5];
 	/// let mut iter = bits.chunks_exact_mut(2);
@@ -969,7 +969,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 0, 0, 1];
 	/// let mut iter = bits.rchunks(2);
@@ -1018,7 +1018,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut u8, Msb0; 0; 5];
 	/// for (idx, chunk) in unsafe {
@@ -1066,7 +1066,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 0, 0, 1];
 	/// let mut iter = bits.rchunks_exact(2);
@@ -1117,7 +1117,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut u8, Msb0; 0; 5];
 	/// let mut iter = bits.rchunks_exact_mut(2);
@@ -1168,7 +1168,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 0, 0, 1, 1, 1];
 	/// let base = bits.as_bitptr();
@@ -1222,7 +1222,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut u8, Msb0; 0; 6];
 	/// let base = bits.as_mut_bitptr();
@@ -1275,7 +1275,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 1, 0];
 	/// //                     ^
@@ -1292,7 +1292,7 @@ where
 	/// yielded.
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 0, 1];
 	/// //                     ^
@@ -1307,7 +1307,7 @@ where
 	/// be yielded between them:
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![1, 0, 0, 1];
 	/// //                  ^  ^
@@ -1362,7 +1362,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0, 0, 1, 0, 1, 0];
 	/// //                         ^     ^
@@ -1407,7 +1407,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 0, 1, 0, 1];
 	/// //                     ^     ^
@@ -1457,7 +1457,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0, 0, 0, 0, 0];
 	/// //                         ^
@@ -1506,7 +1506,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 1, 0];
 	/// //                     ^
@@ -1523,7 +1523,7 @@ where
 	/// yielded.
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 0, 1];
 	/// //                     ^
@@ -1538,7 +1538,7 @@ where
 	/// be yielded between them:
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![1, 0, 0, 1];
 	/// //                  ^  ^
@@ -1591,7 +1591,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0, 0, 1, 0, 1, 0];
 	/// //                         ^     ^
@@ -1637,7 +1637,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 0, 1, 0, 1, 0];
 	/// let mut iter = bits.splitn(2, |_pos, bit| *bit);
@@ -1689,7 +1689,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0, 0, 1, 0, 1, 0];
 	/// for group in bits.splitn_mut(2, |_pos, bit| *bit) {
@@ -1734,7 +1734,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 0, 1, 1, 0];
 	/// //                        ^
@@ -1787,7 +1787,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0, 0, 1, 0, 0, 1, 0, 0, 0];
 	/// for group in bits.rsplitn_mut(2, |_idx, bit| *bit) {
@@ -1821,7 +1821,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 0, 1, 0, 1, 1, 0, 0];
 	/// assert!( bits.contains(bits![0, 1, 1, 0]));
@@ -1850,7 +1850,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 1, 0];
 	/// assert!( bits.starts_with(bits![0, 1]));
@@ -1860,7 +1860,7 @@ where
 	/// This always returns `true` if the needle is empty:
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 0];
 	/// let empty = bits![];
@@ -1891,7 +1891,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 1, 0];
 	/// assert!( bits.ends_with(bits![1, 0]));
@@ -1901,7 +1901,7 @@ where
 	/// This always returns `true` if the needle is empty:
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 0];
 	/// let empty = bits![];
@@ -1938,7 +1938,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 0, 0, 1, 0, 1, 1, 0];
 	/// assert_eq!(bits.strip_prefix(bits![0, 1]).unwrap(), bits[2 ..]);
@@ -1983,7 +1983,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![0, 1, 0, 0, 1, 0, 1, 1, 0];
 	/// assert_eq!(bits.strip_suffix(bits![1, 0]).unwrap(), bits[.. 7]);
@@ -2026,7 +2026,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0, 0, 1, 0, 1, 0];
 	/// //      split occurs here ^
@@ -2074,7 +2074,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0, 0, 1, 1, 1, 0];
 	/// //            split occurs here ^
@@ -2119,7 +2119,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0; 5];
 	/// bits.fill(true);
@@ -2160,7 +2160,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 0; 5];
 	/// bits.fill_with(|idx| idx % 2 == 0);
@@ -2216,7 +2216,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bits = bits![mut 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0];
 	/// bits.copy_within(1 .. 5, 8);
@@ -2277,7 +2277,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let bytes: [u8; 7] = [1, 2, 3, 4, 5, 6, 7];
 	/// let bits = bytes.view_bits::<Lsb0>();
@@ -2329,7 +2329,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// let mut bytes: [u8; 7] = [1, 2, 3, 4, 5, 6, 7];
 	/// let bits = bytes.view_bits_mut::<Lsb0>();
@@ -2382,7 +2382,7 @@ where
 	/// ## Examples
 	///
 	/// ```rust
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// assert_eq!(bits![0, 1].repeat(3), bitvec![0, 1, 0, 1, 0, 1]);
 	/// ```
@@ -2390,7 +2390,7 @@ where
 	/// This panics by exceeding bit-vector maximum capacity:
 	///
 	/// ```rust,should_panic
-	/// use bitvec::prelude::*;
+	/// use bit_vec_extra::prelude::*;
 	///
 	/// bits![0, 1].repeat(BitSlice::<usize, Lsb0>::MAX_BITS);
 	/// ```

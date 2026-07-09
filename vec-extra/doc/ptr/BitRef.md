@@ -29,7 +29,7 @@ an item definition.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bits = bits![mut 0; 2];
 

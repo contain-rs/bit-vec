@@ -1,6 +1,6 @@
 #![cfg(all(feature = "alloc", feature = "serde"))]
 
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 #[test]
 fn serdes_slice() {

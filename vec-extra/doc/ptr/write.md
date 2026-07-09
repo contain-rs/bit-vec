@@ -27,7 +27,7 @@ the ISA, but this is not specified in any way.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use bitvec::ptr as bv_ptr;
 
 let mut data = 0u8;

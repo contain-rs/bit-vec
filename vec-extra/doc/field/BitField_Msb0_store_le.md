@@ -20,7 +20,7 @@ from a 4-bit slice, become the value `2i8`.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let mut raw = 0u8;
 raw.view_bits_mut::<Msb0>()
@@ -38,7 +38,7 @@ In bit-slices that span multiple elements, the little-endian element ordering
 means that the slice index increases with numerical significance:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let mut raw = [!0u8; 3];
 raw.view_bits_mut::<Msb0>()

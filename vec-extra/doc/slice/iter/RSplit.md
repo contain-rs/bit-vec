@@ -21,7 +21,7 @@ information when splitting.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bits = bits![0, 0, 0, 1, 1, 1, 0, 1];
 let mut split = bits.rsplit(|idx, _bit| idx % 3 == 2);

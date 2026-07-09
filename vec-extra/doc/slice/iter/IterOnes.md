@@ -10,7 +10,7 @@ It is created by the [`.iter_ones()`] method on bit-slices.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bits = bits![0, 1, 0, 0, 1];
 let mut ones = bits.iter_ones();

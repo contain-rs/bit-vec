@@ -42,7 +42,7 @@ together.
 ## Examples
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use core::{cell::Cell, mem};
 use radium::types::*;
 

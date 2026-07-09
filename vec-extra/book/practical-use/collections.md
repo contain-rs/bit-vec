@@ -20,7 +20,7 @@ is reshaped, you will need to use one of these two alternatives:
 Subslicing works:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let bits = bits![0, 0, 0, 0, 1, 1, 1, 1];
 assert!(bits[.. 4].not_any());
@@ -30,7 +30,7 @@ assert!(bits[4 ..].all());
 Incremental munching works:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 
 let mut bits = bits![0, 0, 1, 1, 1, 0, 0, 0];
 //  ^^^ modify the slice handle, not the slice contents
@@ -49,7 +49,7 @@ assert_eq!(bits, bits![1; 3]);
 Mutation works:
 
 ```rust
-use bitvec::prelude::*;
+use bit_vec_extra::prelude::*;
 use std::{iter, thread};
 
 let bits: &'static mut BitSlice = bits![mut 0; 8];
