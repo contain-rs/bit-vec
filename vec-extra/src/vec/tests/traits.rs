@@ -89,7 +89,7 @@ fn format() {
 
 	let text = format!("{:?}", bitvec![u8, Msb0; 0, 1, 0, 0]);
 	assert!(
-		text.starts_with("BitVec<u8, bitvec::order::Msb0> { addr: 0x"),
+		text.starts_with("BitVec<u8, bit_vec_extra::order::Msb0> { addr: 0x"),
 		"{}",
 		text
 	);

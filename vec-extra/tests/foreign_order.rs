@@ -5,9 +5,9 @@ This test ensures that [`bitvec`] provides a sufficient API to implement
 system as peers of the provided orderings.
 !*/
 
-extern crate bitvec;
+extern crate bit_vec_extra;
 
-use bitvec::{
+use bit_vec_extra::{
 	index::{
 		BitIdx,
 		BitPos,

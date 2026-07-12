@@ -4,5 +4,5 @@
 /// on external `use` statements.
 #[test]
 fn issue_149() {
-	let _ = bitvec::bitarr![0; 256];
+	let _ = bit_vec_extra::bitarr![0; 256];
 }

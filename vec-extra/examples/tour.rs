@@ -112,7 +112,7 @@ are dominant."
 		qprintln!("{:?}", bs.domain());
 		qprintln!("Show the bits in memory");
 		for elt in bs.domain() {
-			qprintln!("{:0w$b} ", elt, w = bitvec::mem::bits_of::<T::Mem>());
+			qprintln!("{:0w$b} ", elt, w = bit_vec_extra::mem::bits_of::<T::Mem>());
 		}
 		qprintln!();
 	}
