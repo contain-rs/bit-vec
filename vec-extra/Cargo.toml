@@ -55,6 +55,7 @@ std = [
 ]
 testing = [
 ]
+extra = []
 
 [dependencies]
 radium = "0.7"

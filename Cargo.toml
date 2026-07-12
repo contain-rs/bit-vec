@@ -12,6 +12,7 @@ default-members = [
     "vec",
     "set",
     "matrix",
+    "vec-extra",
 ]
 
 resolver = "2"
