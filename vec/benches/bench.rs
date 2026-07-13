@@ -8,290 +8,355 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#![allow(stable_features)]
-#![feature(test)]
-#![feature(hint_assert_unchecked)]
-
-extern crate bit_vec;
-extern crate rand;
-extern crate rand_xorshift;
-extern crate test;
+use std::hint::black_box;
 
 use bit_vec::BitVec;
-use rand::{Rng, RngExt, SeedableRng};
+use criterion::{criterion_group, criterion_main, Criterion, Throughput};
+use rand::{RngExt, SeedableRng};
 use rand_xorshift::XorShiftRng;
-use test::{black_box, Bencher};
 
 const HUGE_BENCH_BITS: usize = 1 << 20;
 const BENCH_BITS: usize = 1 << 14;
-const U32_BITS: usize = 32;
 
 fn small_rng() -> XorShiftRng {
     XorShiftRng::from_rng(&mut rand::rng())
 }
 
-#[bench]
-fn bench_usize_small(b: &mut Bencher) {
+fn usize_small(c: &mut Criterion) {
     let mut r = small_rng();
     let mut bit_vec = 0_usize;
-    b.iter(|| {
-        for _ in 0..100 {
-            bit_vec |= 1 << ((r.next_u32() as usize) % U32_BITS);
-        }
-        black_box(&bit_vec);
+
+    c.bench_function("usize_small", |b| {
+        b.iter(|| {
+            for _ in 0..100 {
+                bit_vec |= 1 << (r.random::<u32>() as usize % u32::BITS as usize);
+            }
+
+            black_box(&bit_vec);
+        });
     });
 }
 
-#[bench]
-fn bench_to_bytes(b: &mut Bencher) {
+fn to_bytes(c: &mut Criterion) {
     let mut bit_vec = BitVec::from_elem(BENCH_BITS, false);
     let mut r = small_rng();
+
     for _ in 0..BENCH_BITS / 10 {
-        bit_vec.set((r.next_u32() as usize) % BENCH_BITS, true);
+        bit_vec.set((r.random::<u32>() as usize) % BENCH_BITS, true);
     }
-    b.iter(|| {
-        black_box(bit_vec.to_bytes());
+
+    c.bench_function("to_bytes", |b| {
+        b.iter(|| {
+            black_box(bit_vec.to_bytes());
+        });
     });
 }
 
-#[bench]
-fn bench_bit_set_big_fixed(b: &mut Bencher) {
+fn bit_set_big_fixed(c: &mut Criterion) {
     let mut r = small_rng();
     let mut bit_vec = BitVec::from_elem(BENCH_BITS, false);
-    b.iter(|| {
-        for _ in 0..100 {
-            bit_vec.set((r.next_u32() as usize) % BENCH_BITS, true);
-        }
-        black_box(&bit_vec);
+
+    c.bench_function("bit_set_big_fixed", |b| {
+        b.iter(|| {
+            for _ in 0..100 {
+                bit_vec.set((r.random::<u32>() as usize) % BENCH_BITS, true);
+            }
+
+            black_box(&bit_vec);
+        });
     });
 }
 
-#[bench]
-fn bench_bit_set_big_variable(b: &mut Bencher) {
+fn bit_set_big_variable(c: &mut Criterion) {
     let mut r = small_rng();
     let mut bit_vec = BitVec::from_elem(BENCH_BITS, false);
-    b.iter(|| {
-        for _ in 0..100 {
-            bit_vec.set((r.next_u32() as usize) % BENCH_BITS, r.random());
-        }
-        black_box(&bit_vec);
-    });
-}
 
-#[bench]
-fn bench_bit_set_small(b: &mut Bencher) {
-    let mut r = small_rng();
-    let mut bit_vec = BitVec::from_elem(U32_BITS, false);
-    b.iter(|| {
-        for _ in 0..100 {
-            bit_vec.set((r.next_u32() as usize) % U32_BITS, true);
-        }
-        black_box(&bit_vec);
-    });
-}
-
-#[bench]
-fn bench_bit_get_checked_small(b: &mut Bencher) {
-    let mut r = small_rng();
-    let size = 200;
-    let mut bit_vec = BitVec::from_elem(size, false);
-    for _ in 0..20 {
-        bit_vec.set((r.next_u32() as usize) % size, true);
-    }
-    let bit_vec = black_box(bit_vec);
-    b.iter(|| {
-        for _ in 0..100 {
-            black_box(bit_vec.get((r.next_u32() as usize) % size));
-        }
-    });
-}
-
-#[bench]
-fn bench_bit_get_unchecked_small(b: &mut Bencher) {
-    let mut r = small_rng();
-    let size = 200;
-    let mut bit_vec = BitVec::from_elem(size, false);
-    for _ in 0..20 {
-        bit_vec.set((r.next_u32() as usize) % size, true);
-    }
-    let bit_vec = black_box(bit_vec);
-    b.iter(|| {
-        for _ in 0..100 {
-            // Safety: This is just a benchmark of an unsafe fn.
-            unsafe {
-                black_box(bit_vec.get_unchecked((r.next_u32() as usize) % size));
+    c.bench_function("bit_set_big_variable", |b| {
+        b.iter(|| {
+            for _ in 0..100 {
+                bit_vec.set((r.random::<u32>() as usize) % BENCH_BITS, r.random());
             }
-        }
+
+            black_box(&bit_vec);
+        });
     });
 }
 
-#[bench]
-fn bench_bit_get_unchecked_small_assume(b: &mut Bencher) {
+fn bit_set_small(c: &mut Criterion) {
+    let mut r = small_rng();
+    let mut bit_vec = BitVec::from_elem(u32::BITS as usize, false);
+
+    c.bench_function("bit_set_small", |b| {
+        b.iter(|| {
+            for _ in 0..100 {
+                bit_vec.set((r.random::<u32>() as usize) % u32::BITS as usize, true);
+            }
+
+            black_box(&bit_vec);
+        });
+    });
+}
+
+fn bit_get_checked_small(c: &mut Criterion) {
     let mut r = small_rng();
     let size = 200;
     let mut bit_vec = BitVec::from_elem(size, false);
+
     for _ in 0..20 {
-        bit_vec.set((r.next_u32() as usize) % size, true);
+        bit_vec.set((r.random::<u32>() as usize) % size, true);
     }
+
     let bit_vec = black_box(bit_vec);
-    b.iter(|| {
-        for _ in 0..100 {
-            // Safety: This is just a benchmark with an unsafe fn call.
-            unsafe {
-                let idx = (r.next_u32() as usize) % size;
-                ::std::hint::assert_unchecked(idx < bit_vec.len());
-                black_box(bit_vec.get(idx));
+    c.bench_function("bit_get_checked_small", |b| {
+        b.iter(|| {
+            for _ in 0..100 {
+                black_box(bit_vec.get((r.random::<u32>() as usize) % size));
             }
-        }
+        });
     });
 }
 
-#[bench]
-fn bench_bit_vec_big_or(b: &mut Bencher) {
-    let mut b1 = BitVec::from_elem(BENCH_BITS, false);
-    let b2 = BitVec::from_elem(BENCH_BITS, false);
-    b.iter(|| b1.or(&b2))
+fn bit_get_unchecked_small(c: &mut Criterion) {
+    let mut r = small_rng();
+    let size = 200;
+    let mut bit_vec = BitVec::from_elem(size, false);
+
+    for _ in 0..20 {
+        bit_vec.set((r.random::<u32>() as usize) % size, true);
+    }
+
+    let bit_vec = black_box(bit_vec);
+    c.bench_function("bit_get_unchecked_small", |b| {
+        b.iter(|| {
+            for _ in 0..100 {
+                // Safety: This is just a benchmark of an unsafe fn.
+                unsafe {
+                    black_box(bit_vec.get_unchecked((r.random::<u32>() as usize) % size));
+                }
+            }
+        });
+    });
 }
 
-#[bench]
-fn bench_bit_vec_big_xnor(b: &mut Bencher) {
-    let mut b1 = BitVec::from_elem(BENCH_BITS, false);
-    let b2 = BitVec::from_elem(BENCH_BITS, false);
-    b.iter(|| b1.xnor(&b2))
+fn bit_get_unchecked_small_assume(c: &mut Criterion) {
+    let mut r = small_rng();
+    let size = 200;
+    let mut bit_vec = BitVec::from_elem(size, false);
+
+    for _ in 0..20 {
+        bit_vec.set((r.random::<u32>() as usize) % size, true);
+    }
+
+    let bit_vec = black_box(bit_vec);
+    c.bench_function("bit_get_unchecked_small_assume", |b| {
+        b.iter(|| {
+            for _ in 0..100 {
+                // Safety: This is just a benchmark with an unsafe fn call.
+                unsafe {
+                    let idx = (r.random::<u32>() as usize) % size;
+
+                    std::hint::assert_unchecked(idx < bit_vec.len());
+                    black_box(bit_vec.get(idx));
+                }
+            }
+        });
+    });
 }
 
-#[bench]
-fn bench_bit_vec_big_negate_xor(b: &mut Bencher) {
+fn bit_vec_big_or(c: &mut Criterion) {
     let mut b1 = BitVec::from_elem(BENCH_BITS, false);
     let b2 = BitVec::from_elem(BENCH_BITS, false);
-    b.iter(|| {
-        let res = b1.xor(&b2);
-        b1.negate();
-        res
-    })
+
+    c.bench_function("bit_vec_big_or", |b| b.iter(|| b1.or(&b2)));
 }
 
-#[bench]
-fn bench_bit_vec_huge_xnor(b: &mut Bencher) {
+fn bit_vec_big_xnor(c: &mut Criterion) {
+    let mut b1 = BitVec::from_elem(BENCH_BITS, false);
+    let b2 = BitVec::from_elem(BENCH_BITS, false);
+
+    c.bench_function("bit_vec_big_xnor", |b| b.iter(|| b1.xnor(&b2)));
+}
+
+fn bit_vec_big_negate_xor(c: &mut Criterion) {
+    let mut b1 = BitVec::from_elem(BENCH_BITS, false);
+    let b2 = BitVec::from_elem(BENCH_BITS, false);
+
+    c.bench_function("bit_vec_big_negate_xor", |b| {
+        b.iter(|| {
+            let res = b1.xor(&b2);
+            b1.negate();
+            res
+        })
+    });
+}
+
+fn bit_vec_huge_xnor(c: &mut Criterion) {
     let mut b1 = BitVec::from_elem(HUGE_BENCH_BITS, false);
     let b2 = BitVec::from_elem(HUGE_BENCH_BITS, false);
-    b.iter(|| b1.xnor(&b2))
+
+    c.bench_function("bit_vec_huge_xnor", |b| b.iter(|| b1.xnor(&b2)));
 }
 
-#[bench]
-fn bench_bit_vec_huge_negate_xor(b: &mut Bencher) {
+fn bit_vec_huge_negate_xor(c: &mut Criterion) {
     let mut b1 = BitVec::from_elem(HUGE_BENCH_BITS, false);
     let b2 = BitVec::from_elem(HUGE_BENCH_BITS, false);
-    b.iter(|| {
-        let res = b1.xor(&b2);
-        b1.negate();
-        res
-    })
+
+    c.bench_function("bit_vec_huge_negate_xor", |b| {
+        b.iter(|| {
+            let res = b1.xor(&b2);
+            b1.negate();
+            res
+        })
+    });
 }
 
-#[bench]
-fn bench_bit_vec_small_iter(b: &mut Bencher) {
-    let bit_vec = BitVec::from_elem(U32_BITS, false);
-    b.iter(|| {
-        let mut sum = 0;
-        for _ in 0..10 {
+fn bit_vec_small_iter(c: &mut Criterion) {
+    let bit_vec = BitVec::from_elem(u32::BITS as usize, false);
+
+    c.bench_function("bit_vec_small_iter", |b| {
+        b.iter(|| {
+            let mut sum = 0;
+            for _ in 0..10 {
+                for pres in &bit_vec {
+                    sum += pres as usize;
+                }
+            }
+            sum
+        })
+    });
+}
+
+fn bit_vec_big_iter(c: &mut Criterion) {
+    let bit_vec = BitVec::from_elem(BENCH_BITS, false);
+
+    c.bench_function("bit_vec_big_iter", |b| {
+        b.iter(|| {
+            let mut sum = 0;
             for pres in &bit_vec {
                 sum += pres as usize;
             }
-        }
-        sum
-    })
+            sum
+        })
+    });
 }
 
-#[bench]
-fn bench_bit_vec_big_iter(b: &mut Bencher) {
-    let bit_vec = BitVec::from_elem(BENCH_BITS, false);
-    b.iter(|| {
-        let mut sum = 0;
-        for pres in &bit_vec {
-            sum += pres as usize;
-        }
-        sum
-    })
-}
-
-#[bench]
-fn bench_from_elem(b: &mut Bencher) {
+fn from_elem(c: &mut Criterion) {
     let cap = black_box(BENCH_BITS);
     let bit = black_box(true);
-    b.iter(|| {
-        // create a BitVec and popcount it
-        BitVec::from_elem(cap, bit)
-            .blocks()
-            .fold(0, |acc, b| acc + b.count_ones())
+    let mut group = c.benchmark_group("from_elem");
+
+    group.throughput(Throughput::Bytes(cap as u64 / 8));
+    group.bench_function("from_elem", |b| {
+        b.iter(|| {
+            // create a BitVec and popcount it
+            BitVec::from_elem(cap, bit)
+                .blocks()
+                .fold(0, |acc, b| acc + b.count_ones())
+        });
     });
-    b.bytes = cap as u64 / 8;
+    group.finish();
 }
 
-#[bench]
-fn bench_eratosthenes(b: &mut test::Bencher) {
+fn eratosthenes(c: &mut Criterion) {
     let mut primes = vec![];
-    b.iter(|| {
-        primes.clear();
-        let mut sieve = BitVec::from_elem(1 << 16, true);
-        black_box(&mut sieve);
-        let mut i = 2;
-        while i < sieve.len() {
-            if sieve[i] {
-                primes.push(i);
+
+    c.bench_function("eratosthenes", |b| {
+        b.iter(|| {
+            primes.clear();
+
+            let mut sieve = BitVec::from_elem(1 << 16, true);
+            black_box(&mut sieve);
+            let mut i = 2;
+
+            while i < sieve.len() {
+                if sieve[i] {
+                    primes.push(i);
+                }
+                let mut j = i;
+                while j < sieve.len() {
+                    sieve.set(j, false);
+                    j += i;
+                }
+                i += 1;
             }
-            let mut j = i;
-            while j < sieve.len() {
-                sieve.set(j, false);
-                j += i;
-            }
-            i += 1;
-        }
-        black_box(&mut sieve);
+            black_box(&mut sieve);
+        });
     });
 }
 
-#[bench]
-fn bench_eratosthenes_set_all(b: &mut test::Bencher) {
+fn eratosthenes_set_all(c: &mut Criterion) {
     let mut primes = vec![];
     let mut sieve = BitVec::from_elem(1 << 16, true);
-    b.iter(|| {
-        primes.clear();
-        black_box(&mut sieve);
-        sieve.fill(true);
-        black_box(&mut sieve);
-        let mut i = 2;
-        while i < sieve.len() {
-            if sieve[i] {
-                primes.push(i);
+
+    c.bench_function("eratosthenes_set_all", |b| {
+        b.iter(|| {
+            primes.clear();
+
+            black_box(&mut sieve);
+            sieve.fill(true);
+            black_box(&mut sieve);
+            let mut i = 2;
+
+            while i < sieve.len() {
+                if sieve[i] {
+                    primes.push(i);
+                }
+                let mut j = i;
+                while j < sieve.len() {
+                    sieve.set(j, false);
+                    j += i;
+                }
+                i += 1;
             }
-            let mut j = i;
-            while j < sieve.len() {
-                sieve.set(j, false);
-                j += i;
-            }
-            i += 1;
-        }
-        black_box(&mut sieve);
+
+            black_box(&mut sieve);
+        });
     });
 }
 
-#[bench]
-fn bench_iter_skip(b: &mut test::Bencher) {
+fn iter_skip(c: &mut Criterion) {
     let start = 3 << 20;
     let p = 16411;
     let g = 9749; // 9749 is a primitive root modulo 16411, so we can generate numbers mod p in a seemingly random order
     let end = start + p;
     let mut tbl = BitVec::from_elem(end, false);
     let mut r = g;
+
     for i in start..end {
         tbl.set(i, r & 1 != 0);
         r = r * g % p;
     }
-    b.iter(|| {
-        black_box(&mut tbl);
-        // start is large relative to end-start, so before Iterator::nth was implemented for bitvec this would
-        // have been much slower
-        black_box(tbl.iter().skip(start).filter(|&v| v).count());
+
+    c.bench_function("iter_skip", |b| {
+        b.iter(|| {
+            black_box(&mut tbl);
+            // start is large relative to end-start, so before Iterator::nth was
+            // implemented for bitvec this would have been much slower
+            black_box(tbl.iter().skip(start).filter(|&v| v).count());
+        });
     });
 }
+
+criterion_group!(
+    benches,
+    usize_small,
+    to_bytes,
+    bit_set_big_fixed,
+    bit_set_big_variable,
+    bit_set_small,
+    bit_get_checked_small,
+    bit_get_unchecked_small,
+    bit_get_unchecked_small_assume,
+    bit_vec_big_or,
+    bit_vec_big_xnor,
+    bit_vec_big_negate_xor,
+    bit_vec_huge_xnor,
+    bit_vec_huge_negate_xor,
+    bit_vec_small_iter,
+    bit_vec_big_iter,
+    from_elem,
+    eratosthenes,
+    eratosthenes_set_all,
+    iter_skip,
+);
+criterion_main!(benches);
