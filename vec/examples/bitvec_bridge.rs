@@ -1,9 +1,5 @@
 use bit_vec::BitVec;
-use bitvec::{
-    field::BitField,
-    order::Lsb0,
-    view::BitView,
-};
+use bitvec::{field::BitField, order::Lsb0, view::BitView};
 
 fn main() {
     let mut bv = BitVec::<u32>::from_elem(80, false);
