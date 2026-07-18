@@ -40,6 +40,7 @@ use crate::{
 	slice::BitSlice,
 	store::BitStore,
 	view::BitView,
+	vec::BitVecLike,
 };
 
 #[doc = include_str!("../../doc/vec/iter/Extend_bool.md")]

@@ -15,6 +15,7 @@ use crate::{
 	slice::BitSlice,
 	store::BitStore,
 	vec::BitVec,
+	vec::BitVecLike,
 };
 
 #[doc = include_str!("../../doc/field/io/Read_BitSlice.md")]

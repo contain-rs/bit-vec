@@ -73,5 +73,6 @@ pub mod prelude {
 		bitvec,
 		boxed::BitBox,
 		vec::BitVec,
+		vec::BitVecLike,
 	};
 }

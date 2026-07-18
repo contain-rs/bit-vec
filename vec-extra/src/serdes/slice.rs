@@ -49,6 +49,7 @@ use crate::{
 	},
 	slice::BitSlice,
 	store::BitStore,
+	vec::BitVecLike,
 };
 
 impl<T, O> Serialize for BitSlice<T, O>

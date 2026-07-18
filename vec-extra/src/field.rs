@@ -28,6 +28,7 @@ use crate::{
 	slice::BitSlice,
 	store::BitStore,
 	view::BitViewSized,
+	vec::BitVecLike,
 };
 #[cfg(feature = "alloc")]
 use crate::{

@@ -25,6 +25,7 @@ use crate::{
 	ptr::BitSpan,
 	slice::BitSlice,
 	store::BitStore,
+	vec::BitVecLike,
 };
 
 #[cfg(not(tarpaulin_include))]

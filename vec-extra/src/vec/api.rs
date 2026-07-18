@@ -17,6 +17,7 @@ use wyz::{
 
 use super::{
 	BitVec,
+	BitVecLike,
 	Drain,
 	Splice,
 };

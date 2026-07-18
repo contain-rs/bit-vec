@@ -35,6 +35,7 @@ use crate::{
 	slice::BitSlice,
 	store::BitStore,
 	view::BitViewSized,
+	vec::BitVecLike,
 };
 
 #[cfg(not(tarpaulin_include))]
