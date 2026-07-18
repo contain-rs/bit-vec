@@ -12,6 +12,7 @@ use core::{
 	ptr,
 	slice,
 };
+use std::ops::{BitOr, Index};
 
 use tap::Pipe;
 use wyz::comu::{
@@ -25,22 +26,15 @@ pub use self::iter::{
 };
 pub use crate::boxed::IntoIter;
 use crate::{
-	boxed::BitBox,
-	index::BitIdx,
-	mem::bits_of,
-	order::{
+	boxed::BitBox, index::{BitEnd, BitIdx}, mem::bits_of, order::{
 		BitOrder,
 		Lsb0,
-	},
-	ptr::{
+	}, ptr::{
 		AddressExt,
 		BitPtr,
 		BitSpan,
 		BitSpanError,
-	},
-	slice::BitSlice,
-	store::BitStore,
-	view::BitView,
+	}, slice::{BitSlice, BitSliceIndex}, store::BitStore, view::BitView,
 };
 
 mod api;
@@ -60,6 +54,104 @@ where
 	bitspan:  BitSpan<Mut, T, O>,
 	/// Allocation capacity, measured in `T` elements.
 	capacity: usize,
+}
+
+pub trait BitVecLike: Sized {
+	type Store: BitStore;
+	type Order: BitOrder;
+
+	const EMPTY: Self;
+
+	fn from_bitslice(slice: &BitSlice<Self::Store, Self::Order>) -> Self;
+
+	fn as_bitslice(&self) -> &BitSlice<Self::Store, Self::Order>;
+
+	fn as_mut_bitslice(&mut self) -> &mut BitSlice<Self::Store, Self::Order>;
+
+	fn new() -> Self {
+		Self::from_bitslice(BitSlice::empty())
+	}
+
+	fn from_element(elem: Self::Store) -> Self {
+		Self::from_bitslice(BitSlice::from_element(&elem))
+	}
+
+	fn try_from_slice(slice: &[Self::Store]) -> Result<Self, BitSpanError<Self::Store>> {
+		BitSlice::<Self::Store, Self::Order>::try_from_slice(slice).map(Self::from_bitslice)
+	}
+
+	fn from_slice(slice: &[Self::Store]) -> Self {
+		Self::try_from_slice(slice).unwrap()
+	}
+
+	fn len(&self) -> usize {
+		self.as_bitslice().len()
+	}
+
+	fn push(&mut self, value: bool);
+
+	unsafe fn get_unchecked_mut<'a, I>(&'a mut self, index: I) -> I::Mut where I: BitSliceIndex<'a, Self::Store, Self::Order> {
+		self.as_mut_bitslice().get_unchecked_mut(index)
+	}
+
+	fn insert(&mut self, index: usize, value: bool) {
+		self.as_bitslice().assert_in_bounds(index, 0 ..= self.len());
+		self.push(value);
+		unsafe { self.get_unchecked_mut(index ..) }.rotate_right(1);
+	}
+}
+
+impl<T, O> BitVecLike for BitVec<T, O> where T: BitStore, O: BitOrder {
+	type Store = T;
+	type Order = O;
+
+	const EMPTY: Self = Self {
+		bitspan:  BitSpan::EMPTY,
+		capacity: 0,
+	};
+
+	fn push(&mut self, value: bool) {
+		let len = self.len();
+		let new_len = len + 1;
+		Self::assert_len_encodable(new_len);
+		//  Push a new `T` into the underlying buffer if needed.
+		if len == 0 || self.bitspan.tail() == BitEnd::MAX {
+			self.with_vec(|vec| vec.push(T::ZERO));
+		}
+		//  Write `value` into the now-safely-allocated `len` slot.
+		unsafe {
+			self.set_len_unchecked(new_len);
+			self.set_unchecked(len, value);
+		}
+	}
+
+	fn from_bitslice(slice: &BitSlice<Self::Store, Self::Order>) -> Self {
+		let bitspan = slice.as_bitspan();
+
+		let mut vec = bitspan
+			.elements()
+			.pipe(Vec::with_capacity)
+			.pipe(ManuallyDrop::new);
+		vec.extend(slice.domain());
+
+		let bitspan = unsafe {
+			BitSpan::new_unchecked(
+				vec.as_mut_ptr().cast::<T>().into_address(),
+				bitspan.head(),
+				bitspan.len(),
+			)
+		};
+		let capacity = vec.capacity();
+		Self { bitspan, capacity }
+	}
+
+	fn as_bitslice(&self) -> &BitSlice<T, O> {
+		unsafe { self.bitspan.into_bitslice_ref() }
+	}
+
+	fn as_mut_bitslice(&mut self) -> &mut BitSlice<Self::Store, Self::Order> {
+		unsafe { self.bitspan.into_bitslice_mut() }
+	}
 }
 
 /// Constructors.
@@ -310,12 +402,6 @@ where
 	T: BitStore,
 	O: BitOrder,
 {
-	/// Explicitly views the bit-vector as a bit-slice.
-	#[inline]
-	pub fn as_bitslice(&self) -> &BitSlice<T, O> {
-		unsafe { self.bitspan.into_bitslice_ref() }
-	}
-
 	/// Explicitly views the bit-vector as a mutable bit-slice.
 	#[inline]
 	pub fn as_mut_bitslice(&mut self) -> &mut BitSlice<T, O> {
