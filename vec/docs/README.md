@@ -180,6 +180,7 @@ bit_block_impl! {
     (u16, 16),
     (u32, 32),
     (u64, 64),
+    (u128, 128),
     (usize, core::mem::size_of::<usize>() * 8)
 }
 ```
