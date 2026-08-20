@@ -1,14 +1,17 @@
 use crate::local_prelude::*;
 
+#[cfg(any(feature = "serde", feature = "borsh"))]
 use core::{error, fmt};
 
 #[cfg(any(feature = "serde", feature = "borsh", feature = "miniserde"))]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize))]
 #[cfg_attr(feature = "borsh", derive(borsh::BorshDeserialize))]
-#[cfg_attr(feature = "miniserde", derive(miniserde::Deserialize))]
-struct UncheckedBitVec<C: BitContainer> {
-    storage: C,
-    nbits: usize,
+#[cfg(any(feature = "serde", feature = "borsh"))]
+pub struct UncheckedBitVec<B: BitBlock = u32, C: BitContainer<Block = B> = Vec<B>> {
+    /// Internal representation of the bit vector
+    pub(crate) storage: C,
+    /// The number of valid bits in the internal representation
+    pub(crate) nbits: usize,
 }
 
 #[cfg(feature = "serde")]
@@ -21,7 +24,7 @@ where
         D: serde::Deserializer<'de>,
     {
         use serde::de::Error;
-        UncheckedBitVec::<C>::deserialize(deserializer).and_then(|unchecked| {
+        UncheckedBitVec::<C::Block, C>::deserialize(deserializer).and_then(|unchecked| {
             let result = BitVec {
                 storage: unchecked.storage,
                 nbits: unchecked.nbits,
@@ -43,7 +46,7 @@ where
     C: borsh::BorshDeserialize,
 {
     fn deserialize_reader<R: borsh::io::Read>(reader: &mut R) -> borsh::io::Result<Self> {
-        UncheckedBitVec::<C>::deserialize_reader(reader).and_then(|unchecked| {
+        UncheckedBitVec::<C::Block, C>::deserialize_reader(reader).and_then(|unchecked| {
             let result = BitVec {
                 storage: unchecked.storage,
                 nbits: unchecked.nbits,
@@ -72,9 +75,10 @@ struct BitVecBuilder<'a, C: BitContainer> {
 }
 
 #[cfg(feature = "miniserde")]
-impl<B: BitBlock> miniserde::de::Visitor for Place<BitVec<B>>
+impl<C: BitContainer> miniserde::de::Visitor for Place<BitVec<C::Block, C>>
 where
-    B: miniserde::Deserialize,
+    C: miniserde::Deserialize,
+    C::Block: miniserde::Deserialize,
 {
     fn map(&mut self) -> miniserde::Result<Box<dyn miniserde::de::Map + '_>> {
         Ok(Box::new(BitVecBuilder {
@@ -112,22 +116,25 @@ where
 }
 
 #[cfg(feature = "miniserde")]
-impl<B: BitBlock> miniserde::Deserialize for BitVec<B>
+impl<C: BitContainer> miniserde::Deserialize for BitVec<C::Block, C>
 where
-    B: miniserde::Deserialize,
+    C: miniserde::Deserialize,
+    C::Block: miniserde::Deserialize,
 {
     fn begin(out: &mut Option<Self>) -> &mut dyn miniserde::de::Visitor {
         Place::new(out)
     }
 }
 
+#[cfg(any(feature = "serde", feature = "borsh"))]
 #[derive(Debug)]
 pub enum DeserializeError {
     StorageLenMismatch,
     TrailingBits,
 }
 
-impl core::fmt::Display for DeserializeError {
+#[cfg(any(feature = "serde", feature = "borsh"))]
+impl fmt::Display for DeserializeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(self.simple_description())
     }
@@ -140,8 +147,10 @@ impl From<DeserializeError> for String {
     }
 }
 
+#[cfg(any(feature = "serde", feature = "borsh"))]
 impl error::Error for DeserializeError {}
 
+#[cfg(any(feature = "serde", feature = "borsh"))]
 impl DeserializeError {
     fn simple_description(&self) -> &str {
         match self {
