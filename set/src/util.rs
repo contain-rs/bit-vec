@@ -1,3 +1,5 @@
+use bit_vec::BitContainer;
+
 use crate::local_prelude::*;
 
 #[allow(type_alias_bounds)]
@@ -14,19 +16,19 @@ pub(crate) fn blocks_for_bits<B: BitBlock>(bits: usize) -> usize {
     //
     // Note that we can technically avoid this branch with the expression
     // `(nbits + BITS - 1) / 32::BITS`, but if nbits is almost usize::MAX this will overflow.
-    if bits % B::bits() == 0 {
-        bits / B::bits()
+    if bits % B::BITS == 0 {
+        bits / B::BITS
     } else {
-        bits / B::bits() + 1
+        bits / B::BITS + 1
     }
 }
 
 #[allow(clippy::iter_skip_zero)]
 // Take two BitVec's, and return iterators of their words, where the shorter one
 // has been padded with 0's
-pub(crate) fn match_words<'a, 'b, B: BitBlock>(
-    a: &'a BitVec<B>,
-    b: &'b BitVec<B>,
+pub(crate) fn match_words<'a, 'b, B: BitBlock, C: BitContainer<Block = B>>(
+    a: &'a BitVec<B, C>,
+    b: &'b BitVec<B, C>,
 ) -> (MatchWords<'a, B>, MatchWords<'b, B>) {
     let a_len = a.storage().len();
     let b_len = b.storage().len();
@@ -36,19 +38,19 @@ pub(crate) fn match_words<'a, 'b, B: BitBlock>(
         (
             a.blocks()
                 .enumerate()
-                .chain(iter::repeat(B::zero()).enumerate().take(b_len).skip(a_len)),
+                .chain(iter::repeat(B::ZERO).enumerate().take(b_len).skip(a_len)),
             b.blocks()
                 .enumerate()
-                .chain(iter::repeat(B::zero()).enumerate().take(0).skip(0)),
+                .chain(iter::repeat(B::ZERO).enumerate().take(0).skip(0)),
         )
     } else {
         (
             a.blocks()
                 .enumerate()
-                .chain(iter::repeat(B::zero()).enumerate().take(0).skip(0)),
+                .chain(iter::repeat(B::ZERO).enumerate().take(0).skip(0)),
             b.blocks()
                 .enumerate()
-                .chain(iter::repeat(B::zero()).enumerate().take(a_len).skip(b_len)),
+                .chain(iter::repeat(B::ZERO).enumerate().take(a_len).skip(b_len)),
         )
     }
 }

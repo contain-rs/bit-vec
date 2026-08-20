@@ -61,6 +61,9 @@
 #[cfg(any(test, feature = "std"))]
 extern crate std;
 
+#[cfg(not(feature = "std"))]
+extern crate alloc;
+
 mod iter;
 mod set;
 mod util;
@@ -70,6 +73,14 @@ pub(crate) mod local_prelude {
     pub use core::cmp::Ordering;
     pub use core::iter::{self, Chain, Enumerate, FromIterator, Repeat, Skip, Take};
     pub use core::{cmp, fmt, hash};
+
+    #[cfg(feature = "std")]
+    pub use std::vec::Vec;
+
+    #[cfg(not(feature = "std"))]
+    pub use alloc::vec::Vec;
+
+    pub(crate) use crate::util;
 }
 
 pub use bit_vec::BitBlock;

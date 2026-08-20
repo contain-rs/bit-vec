@@ -39,7 +39,7 @@ impl<'a, B: BitBlock> BitSubMatrix<'a, B> {
         BitSubMatrix {
             slice: slice::from_raw_parts(
                 ptr,
-                round_up_to_next(row_bits, B::bits()) / B::bits() * rows,
+                round_up_to_next(row_bits, B::BITS) / B::BITS * rows,
             ),
             row_bits,
         }
@@ -53,12 +53,12 @@ impl<'a, B: BitBlock> BitSubMatrix<'a, B> {
             // We wish the layout of DSTs were defined.
             unsafe { mem::transmute(arg) }
         }
-        let row_size = round_up_to_next(self.row_bits, B::bits()) / B::bits();
+        let row_size = round_up_to_next(self.row_bits, B::BITS) / B::BITS;
         self.slice.chunks(row_size).map(f::<B>)
     }
 
     fn row_size(&self) -> usize {
-        round_up_to_next(self.row_bits, B::bits()) / B::bits()
+        round_up_to_next(self.row_bits, B::BITS) / B::BITS
     }
 }
 
@@ -78,7 +78,7 @@ impl<'a, B: BitBlock> BitSubMatrixMut<'a, B> {
         BitSubMatrixMut {
             slice: slice::from_raw_parts_mut(
                 ptr,
-                round_up_to_next(row_bits, B::bits()) / B::bits() * rows,
+                round_up_to_next(row_bits, B::BITS) / B::BITS * rows,
             ),
             row_bits,
         }
@@ -103,9 +103,9 @@ impl<'a, B: BitBlock> BitSubMatrixMut<'a, B> {
     /// Panics if `(row, col)` is out of bounds.
     #[inline]
     pub fn set(&mut self, row: usize, col: usize, enabled: bool) {
-        let row_size_in_bits = round_up_to_next(self.row_bits, B::bits());
+        let row_size_in_bits = round_up_to_next(self.row_bits, B::BITS);
         let bit = row * row_size_in_bits + col;
-        let (block, i) = div_rem(bit, B::bits());
+        let (block, i) = div_rem(bit, B::BITS);
         assert!(
             block < self.slice.len() && col < self.row_bits,
             "invalid index given to `BitSubMatrixMut::set`"
@@ -115,9 +115,9 @@ impl<'a, B: BitBlock> BitSubMatrixMut<'a, B> {
             // We check for `block` being within bounds in the assert above.
             let elt = self.slice.get_unchecked_mut(block);
             if enabled {
-                *elt |= B::one() << i;
+                *elt |= B::ONE << i;
             } else {
-                *elt = *elt & !(B::one() << i);
+                *elt = *elt & !(B::ONE << i);
             }
         }
     }
@@ -129,17 +129,17 @@ impl<'a, B: BitBlock> BitSubMatrixMut<'a, B> {
     /// Unsafe if `(row, col)` is out of bounds.
     #[inline]
     pub unsafe fn set_unchecked(&mut self, row: usize, col: usize, enabled: bool) {
-        let row_size_in_bits = round_up_to_next(self.row_bits, B::bits());
+        let row_size_in_bits = round_up_to_next(self.row_bits, B::BITS);
         let bit = row * row_size_in_bits + col;
-        let (block, i) = div_rem(bit, B::bits());
+        let (block, i) = div_rem(bit, B::BITS);
         unsafe {
             // Safety:
             // Unsafe if `(row, col)` is out of bounds.
             let elt = self.slice.get_unchecked_mut(block);
             if enabled {
-                *elt |= B::one() << i;
+                *elt |= B::ONE << i;
             } else {
-                *elt = *elt & !(B::one() << i);
+                *elt = *elt & !(B::ONE << i);
             }
         }
     }
@@ -242,7 +242,7 @@ impl<'a, B: BitBlock> BitSubMatrixMut<'a, B> {
     }
 
     fn row_size(&self) -> usize {
-        round_up_to_next(self.row_bits, B::bits()) / B::bits()
+        round_up_to_next(self.row_bits, B::BITS) / B::BITS
     }
 }
 
