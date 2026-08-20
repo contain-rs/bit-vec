@@ -82,7 +82,7 @@
 //! assert_eq!(num_primes, 1_229);
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/bit-vec/0.9.0/bit_vec/")]
+#![doc(html_root_url = "https://docs.rs/bit-vec/0.11.0/bit_vec/")]
 #![no_std]
 #![deny(clippy::shadow_reuse)]
 #![deny(clippy::shadow_same)]
@@ -103,16 +103,17 @@ extern crate alloc;
 mod block;
 mod blocks;
 mod blocks_mut;
-mod vec;
-mod util;
 mod container;
 mod iter;
+mod serde;
 mod smart_mut;
+mod util;
+mod vec;
 
 mod local_prelude {
-    pub use crate::vec::BitVec;
     pub use crate::block::BitBlock;
     pub use crate::container::BitContainer;
+    pub use crate::vec::BitVec;
 
     #[cfg(all(not(feature = "std"), feature = "borsh"))]
     pub use alloc::borrow::ToOwned;
@@ -139,9 +140,9 @@ mod local_prelude {
     pub use std::vec::Vec;
 }
 
-pub use vec::BitVec;
 pub use block::BitBlock;
+pub use blocks::Blocks;
 pub use container::BitContainer;
 pub use iter::Iter;
 pub use smart_mut::IterMut;
-pub use blocks::Blocks;
+pub use vec::BitVec;

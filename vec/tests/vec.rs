@@ -14,7 +14,10 @@ mod tests {
     #[test]
     fn test_display_output<C: BitContainer>() {
         assert_eq!(format!("{}", BitVec::<C::Block, C>::new_general()), "");
-        assert_eq!(format!("{}", BitVec::<C::Block, C>::from_elem_general(1, true)), "1");
+        assert_eq!(
+            format!("{}", BitVec::<C::Block, C>::from_elem_general(1, true)),
+            "1"
+        );
         assert_eq!(
             format!("{}", BitVec::<C::Block, C>::from_elem_general(8, false)),
             "00000000"
@@ -422,7 +425,8 @@ mod tests {
 
     #[test]
     fn test_from_bytes<C: BitContainer>() {
-        let bit_vec = BitVec::<C::Block, C>::from_bytes_general(&[0b10110110, 0b00000000, 0b11111111]);
+        let bit_vec =
+            BitVec::<C::Block, C>::from_bytes_general(&[0b10110110, 0b00000000, 0b11111111]);
         let str = concat!("10110110", "00000000", "11111111");
         assert_eq!(format!("{}", bit_vec), str);
     }
@@ -702,17 +706,29 @@ mod tests {
     fn test_bit_vec_truncate<C: BitContainer>() {
         let mut s = BitVec::<C::Block, C>::from_elem_general(5 * U32_BITS, true);
 
-        assert_eq!(s, BitVec::<C::Block, C>::from_elem_general(5 * U32_BITS, true));
+        assert_eq!(
+            s,
+            BitVec::<C::Block, C>::from_elem_general(5 * U32_BITS, true)
+        );
         assert_eq!(s.len(), 5 * U32_BITS);
         s.truncate(4 * U32_BITS);
-        assert_eq!(s, BitVec::<C::Block, C>::from_elem_general(4 * U32_BITS, true));
+        assert_eq!(
+            s,
+            BitVec::<C::Block, C>::from_elem_general(4 * U32_BITS, true)
+        );
         assert_eq!(s.len(), 4 * U32_BITS);
         // Truncating to a size > s.len() should be a noop
         s.truncate(5 * U32_BITS);
-        assert_eq!(s, BitVec::<C::Block, C>::from_elem_general(4 * U32_BITS, true));
+        assert_eq!(
+            s,
+            BitVec::<C::Block, C>::from_elem_general(4 * U32_BITS, true)
+        );
         assert_eq!(s.len(), 4 * U32_BITS);
         s.truncate(3 * U32_BITS - 10);
-        assert_eq!(s, BitVec::<C::Block, C>::from_elem_general(3 * U32_BITS - 10, true));
+        assert_eq!(
+            s,
+            BitVec::<C::Block, C>::from_elem_general(3 * U32_BITS - 10, true)
+        );
         assert_eq!(s.len(), 3 * U32_BITS - 10);
         s.truncate(0);
         assert_eq!(s, BitVec::<C::Block, C>::from_elem_general(0, true));
@@ -745,7 +761,8 @@ mod tests {
 
     #[test]
     fn test_bit_vec_grow<C: BitContainer>() {
-        let mut bit_vec = BitVec::<C::Block, C>::from_bytes_general(&[0b10110110, 0b00000000, 0b10101010]);
+        let mut bit_vec =
+            BitVec::<C::Block, C>::from_bytes_general(&[0b10110110, 0b00000000, 0b10101010]);
         bit_vec.grow(32, true);
         assert_eq!(
             bit_vec,
@@ -772,7 +789,8 @@ mod tests {
 
     #[test]
     fn test_bit_vec_extend<C: BitContainer>() {
-        let mut bit_vec = BitVec::<C::Block, C>::from_bytes_general(&[0b10110110, 0b00000000, 0b11111111]);
+        let mut bit_vec =
+            BitVec::<C::Block, C>::from_bytes_general(&[0b10110110, 0b00000000, 0b11111111]);
         let ext = BitVec::<C::Block, C>::from_bytes_general(&[0b01001001, 0b10010010, 0b10111101]);
         bit_vec.extend(ext.iter());
         assert_eq!(
@@ -786,8 +804,9 @@ mod tests {
     #[test]
     fn test_bit_vec_append<C: BitContainer>() {
         // Append to BitVec that holds a multiple of U32_BITS bits
-        let mut a =
-            BitVec::<C::Block, C>::from_bytes_general(&[0b10100000, 0b00010010, 0b10010010, 0b00110011]);
+        let mut a = BitVec::<C::Block, C>::from_bytes_general(&[
+            0b10100000, 0b00010010, 0b10010010, 0b00110011,
+        ]);
         let mut b = BitVec::<C::Block, C>::new_general();
         b.push(false);
         b.push(true);
@@ -973,7 +992,9 @@ mod tests {
     #[test]
     fn test_serialization<C>()
     where
-        C: BitContainer<Block: serde::Serialize + for<'a> serde::Deserialize<'a>> + serde::Serialize + for<'a> serde::Deserialize<'a>,
+        C: BitContainer<Block: serde::Serialize + for<'a> serde::Deserialize<'a>>
+            + serde::Serialize
+            + for<'a> serde::Deserialize<'a>,
     {
         let bit_vec = BitVec::<C::Block, C>::new_general();
         let serialized = serde_json::to_string(&bit_vec).unwrap();
@@ -990,7 +1011,10 @@ mod tests {
     #[cfg(all(feature = "miniserde", not(feature = "smallvec")))]
     #[test]
     fn test_miniserde_serialization<C>()
-        where C: BitContainer<Block: miniserde::Serialize + miniserde::Deserialize> + miniserde::Serialize + miniserde::Deserialize
+    where
+        C: BitContainer<Block: miniserde::Serialize + miniserde::Deserialize>
+            + miniserde::Serialize
+            + miniserde::Deserialize,
     {
         let bit_vec = BitVec::<C::Block, C>::new_general();
         let serialized = miniserde::json::to_string(&bit_vec);
@@ -1007,7 +1031,10 @@ mod tests {
     #[cfg(all(feature = "borsh", not(feature = "smallvec")))]
     #[test]
     fn test_borsh_serialization<C>()
-        where C: BitContainer<Block: borsh::BorshSerialize + borsh::BorshDeserialize> + borsh::BorshSerialize + borsh::BorshDeserialize
+    where
+        C: BitContainer<Block: borsh::BorshSerialize + borsh::BorshDeserialize>
+            + borsh::BorshSerialize
+            + borsh::BorshDeserialize,
     {
         let bit_vec = BitVec::<C::Block, C>::new_general();
         let serialized = borsh::to_vec(&bit_vec).unwrap();

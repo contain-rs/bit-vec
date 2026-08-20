@@ -1,8 +1,8 @@
 use crate::local_prelude::*;
-use core::{iter, ops, mem, cmp, fmt, hash};
+use crate::util;
 use core::cmp::Ordering;
 use core::fmt::Write;
-use crate::util;
+use core::{cmp, fmt, hash, iter, mem, ops};
 
 /// The bitvector type.
 ///
@@ -31,15 +31,9 @@ use crate::util;
 /// println!("{:?}", bv);
 /// println!("total bits set to true: {}", bv.iter().filter(|x| *x).count());
 /// ```
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(
-    feature = "borsh",
-    derive(borsh::BorshDeserialize, borsh::BorshSerialize)
-)]
-#[cfg_attr(
-    feature = "miniserde",
-    derive(miniserde::Deserialize, miniserde::Serialize)
-)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
+#[cfg_attr(feature = "borsh", derive(borsh::BorshSerialize))]
+#[cfg_attr(feature = "miniserde", derive(miniserde::Serialize))]
 pub struct BitVec<B: BitBlock = u32, C: BitContainer<Block = B> = Vec<B>> {
     /// Internal representation of the bit vector
     pub(crate) storage: C,
@@ -277,9 +271,8 @@ impl<C: BitContainer> BitVec<C::Block, C> {
         for i in 0..complete_words {
             let mut accumulator = C::ZERO;
             for idx in 0..C::BYTES {
-                accumulator |= C::Block::from_byte(util::reverse_bits(
-                    bytes[i * C::BYTES + idx],
-                )) << (idx * 8)
+                accumulator |=
+                    C::Block::from_byte(util::reverse_bits(bytes[i * C::BYTES + idx])) << (idx * 8)
             }
             bit_vec.storage.push(accumulator);
         }
@@ -287,8 +280,7 @@ impl<C: BitContainer> BitVec<C::Block, C> {
         if extra_bytes > 0 {
             let mut last_word = C::ZERO;
             for (i, &byte) in bytes[complete_words * C::BYTES..].iter().enumerate() {
-                last_word |=
-                    C::Block::from_byte(util::reverse_bits(byte)) << (i * 8);
+                last_word |= C::Block::from_byte(util::reverse_bits(byte)) << (i * 8);
             }
             bit_vec.storage.push(last_word);
         }
@@ -399,12 +391,17 @@ impl<C: BitContainer> BitVec<C::Block, C> {
     }
 
     /// Check whether last block's invariant is fine.
-    fn is_last_block_fixed(&self) -> bool {
+    pub(crate) fn is_last_block_fixed(&self) -> bool {
         if let Some((last_block, used_bits)) = self.last_block_with_mask() {
             last_block & !used_bits == C::ZERO
         } else {
             true
         }
+    }
+
+    /// Checks whether our `nbits` fits within our storage.
+    pub(crate) fn storage_len_matches_nbits(&self) -> bool {
+        self.storage.len() == blocks_for_bits::<C::Block>(self.nbits)
     }
 
     /// Ensure the invariant for the last block.
@@ -417,6 +414,7 @@ impl<C: BitContainer> BitVec<C::Block, C> {
     #[inline]
     pub(crate) fn ensure_invariant(&self) {
         if cfg!(test) {
+            debug_assert!(self.storage_len_matches_nbits());
             debug_assert!(self.is_last_block_fixed());
         }
     }

@@ -12,7 +12,10 @@ impl<C: BitContainer> BitVec<C::Block, C> {
 
 pub struct BlocksMut<'a, B: BitBlock>(slice::IterMut<'a, B>);
 
-impl<'a, B> Iterator for BlocksMut<'a, B> where B: BitBlock {
+impl<'a, B> Iterator for BlocksMut<'a, B>
+where
+    B: BitBlock,
+{
     type Item = &'a mut B;
 
     #[inline]

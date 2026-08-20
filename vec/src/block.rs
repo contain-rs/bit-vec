@@ -1,5 +1,5 @@
-use core::ops::*;
 use core::hash;
+use core::ops::*;
 
 /// Abstracts over a pile of bits (basically unsigned primitives)
 pub trait BitBlock:

@@ -37,10 +37,7 @@ impl<'a, B: BitBlock> BitSubMatrix<'a, B> {
     #[inline]
     pub unsafe fn from_raw_parts(ptr: *const B, rows: usize, row_bits: usize) -> Self {
         BitSubMatrix {
-            slice: slice::from_raw_parts(
-                ptr,
-                round_up_to_next(row_bits, B::BITS) / B::BITS * rows,
-            ),
+            slice: slice::from_raw_parts(ptr, round_up_to_next(row_bits, B::BITS) / B::BITS * rows),
             row_bits,
         }
     }
