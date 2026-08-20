@@ -104,6 +104,7 @@ mod blocks;
 mod blocks_mut;
 mod container;
 mod iter;
+#[cfg(any(feature = "miniserde", feature = "serde", feature = "borsh"))]
 mod serde;
 mod smart_mut;
 mod util;
