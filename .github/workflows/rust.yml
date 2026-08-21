@@ -115,4 +115,6 @@ jobs:
       - run: cargo doc --workspace --no-deps
 
   success:
+    runs-on: ubuntu-latest
     needs: [fmt, clippy, miri, msrv]
+    steps: []
