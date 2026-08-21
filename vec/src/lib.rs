@@ -92,6 +92,9 @@
 #![warn(clippy::single_match)]
 #![warn(clippy::missing_safety_doc)]
 
+// FIXME https://github.com/near/borsh/issues/159
+#![allow(clippy::multiple_crate_versions)]
+
 #[cfg(any(test, feature = "std"))]
 #[macro_use]
 extern crate std;

@@ -213,10 +213,7 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.head == B::ZERO {
-            match self.tail.next() {
-                Some(w) => self.head = w,
-                None => return None,
-            }
+            self.head = self.tail.next()?;
             self.head_offset += B::BITS;
         }
 
