@@ -12,7 +12,7 @@ where
     T: Iterator<Item = B>,
 {
     fn from_blocks(mut blocks: T) -> Self {
-        let h = blocks.next().unwrap_or(B::zero());
+        let h = blocks.next().unwrap_or(B::ZERO);
         BlockIter {
             tail: blocks,
             head: h,
@@ -212,21 +212,18 @@ where
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while self.head == B::zero() {
-            match self.tail.next() {
-                Some(w) => self.head = w,
-                None => return None,
-            }
-            self.head_offset += B::bits();
+        while self.head == B::ZERO {
+            self.head = self.tail.next()?;
+            self.head_offset += B::BITS;
         }
 
         // from the current block, isolate the
         // LSB and subtract 1, producing k:
         // a block with a number of set bits
         // equal to the index of the LSB
-        let k = (self.head & (!self.head + B::one())) - B::one();
+        let k = (self.head & (!self.head + B::ONE)) - B::ONE;
         // update block, removing the LSB
-        self.head = self.head & (self.head - B::one());
+        self.head = self.head & (self.head - B::ONE);
         // return offset + (index of LSB)
         Some(self.head_offset + B::count_ones(k))
     }
@@ -238,7 +235,7 @@ where
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         match self.tail.size_hint() {
-            (_, Some(h)) => (0, Some((1 + h) * B::bits())),
+            (_, Some(h)) => (0, Some((1 + h) * B::BITS)),
             _ => (0, None),
         }
     }
@@ -250,8 +247,8 @@ impl<B: BitBlock> Iterator for TwoBitPositions<'_, B> {
     fn next(&mut self) -> Option<Self::Item> {
         match (self.set.next(), self.other.next()) {
             (Some(a), Some(b)) => Some((self.merge)(a, b)),
-            (Some(a), None) => Some((self.merge)(a, B::zero())),
-            (None, Some(b)) => Some((self.merge)(B::zero(), b)),
+            (Some(a), None) => Some((self.merge)(a, B::ZERO)),
+            (None, Some(b)) => Some((self.merge)(B::ZERO, b)),
             _ => None,
         }
     }

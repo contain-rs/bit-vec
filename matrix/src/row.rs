@@ -17,7 +17,7 @@ impl<Block: BitBlock> BitSlice<Block> {
     #[inline]
     pub fn new(slice: &[Block]) -> &Self {
         // Safety:
-        // This is the only way to construct a custom DST.
+        // This is currently the only way to construct a custom DST.
         // We wish the layout of DSTs were defined.
         unsafe { mem::transmute(slice) }
     }
@@ -26,7 +26,7 @@ impl<Block: BitBlock> BitSlice<Block> {
     #[inline]
     pub fn new_mut(slice: &mut [Block]) -> &mut Self {
         // Safety:
-        // This is the only way to construct a custom DST.
+        // This is currently the only way to construct a custom DST.
         // We wish the layout of DSTs were defined.
         unsafe { mem::transmute(slice) }
     }
@@ -50,21 +50,21 @@ impl<Block: BitBlock> BitSlice<Block> {
     /// Returns `true` if a bit is enabled in the bit vector slice, or `false` otherwise.
     #[inline]
     pub fn get(&self, bit: usize) -> bool {
-        let (block, i) = div_rem(bit, Block::bits());
+        let (block, i) = div_rem(bit, Block::BITS);
         match self.slice.get(block) {
             None => false,
-            Some(&b) => (b & (Block::one() << i)) != Block::zero(),
+            Some(&b) => (b & (Block::ONE << i)) != Block::ZERO,
         }
     }
 
     /// Returns a small integer-sized slice of the bit vector slice.
     #[inline]
     pub fn small_slice_aligned(&self, bit: usize, len: u8) -> Block {
-        let (block, i) = div_rem(bit, Block::bits());
+        let (block, i) = div_rem(bit, Block::BITS);
         match self.slice.get(block) {
-            None => Block::zero(),
+            None => Block::ZERO,
             Some(&b) => {
-                let len_mask = (Block::one() << len as usize) - Block::one();
+                let len_mask = (Block::ONE << len as usize) - Block::ONE;
                 (b >> i) & len_mask
             }
         }
@@ -78,11 +78,11 @@ impl<Block: BitBlock> ops::Index<usize> for BitSlice<Block> {
 
     #[inline]
     fn index(&self, bit: usize) -> &bool {
-        let (block, i) = div_rem(bit, Block::bits());
+        let (block, i) = div_rem(bit, Block::BITS);
         match self.slice.get(block) {
             None => &FALSE,
             Some(&b) => {
-                if (b & (Block::one() << i)) != Block::zero() {
+                if (b & (Block::ONE << i)) != Block::ZERO {
                     &TRUE
                 } else {
                     &FALSE

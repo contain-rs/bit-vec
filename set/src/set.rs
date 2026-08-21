@@ -1,4 +1,6 @@
-use crate::{local_prelude::*, util};
+use bit_vec::BitContainer;
+
+use crate::local_prelude::*;
 
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(
@@ -9,8 +11,8 @@ use crate::{local_prelude::*, util};
     feature = "miniserde",
     derive(miniserde::Deserialize, miniserde::Serialize)
 )]
-pub struct BitSet<B: BitBlock = u32> {
-    pub(crate) bit_vec: BitVec<B>,
+pub struct BitSet<B: BitBlock = u32, C: BitContainer<Block = B> = Vec<B>> {
+    pub(crate) bit_vec: BitVec<B, C>,
 }
 
 impl<B: BitBlock> Clone for BitSet<B> {
@@ -365,8 +367,8 @@ impl<B: BitBlock> BitSet<B> {
             unsafe {
                 self_bit_vec.storage_mut()[i] = new;
             }
-            if i == self_bit_vec.storage().len() - 1 && self_bit_vec.len() % B::bits() > 0 {
-                debug_assert!(new >> (self_bit_vec.len() % B::bits()) == B::zero());
+            if i == self_bit_vec.storage().len() - 1 && self_bit_vec.len() % B::BITS > 0 {
+                debug_assert!(new >> (self_bit_vec.len() % B::BITS) == B::ZERO);
             }
         }
     }
@@ -400,7 +402,7 @@ impl<B: BitBlock> BitSet<B> {
             .storage()
             .iter()
             .rev()
-            .take_while(|&&n| n == B::zero())
+            .take_while(|&&n| n == B::ZERO)
             .count();
         // Truncate away all empty trailing blocks, then shrink_to_fit
         let trunc_len = old_len - n;
@@ -411,7 +413,7 @@ impl<B: BitBlock> BitSet<B> {
         // thus maintaining the trailing bit invariant.
         unsafe {
             bit_vec.storage_mut().truncate(trunc_len);
-            bit_vec.set_len(trunc_len * B::bits());
+            bit_vec.set_len(trunc_len * B::BITS);
         }
         bit_vec.shrink_to_fit();
     }
@@ -672,7 +674,7 @@ impl<B: BitBlock> BitSet<B> {
         // Check that `self` intersect `other` is self
         self_bit_vec.blocks().zip(other_bit_vec.blocks()).all(|(w1, w2)| w1 & w2 == w1) &&
         // Make sure if `self` has any more blocks than `other`, they're all 0
-        self_bit_vec.blocks().skip(other_blocks).all(|w| w == B::zero())
+        self_bit_vec.blocks().skip(other_blocks).all(|w| w == B::ZERO)
     }
 
     /// Returns `true` if the set is a superset of another.
