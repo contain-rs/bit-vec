@@ -1224,7 +1224,7 @@ impl<B: BitBlock> BitVec<B> {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         let result = self.process(other, |w1, w2| !(w1 | w2), true);
-        self.fix_last_block();
+        debug_assert!(other.is_last_block_fixed());
         result
     }
 
@@ -1257,7 +1257,7 @@ impl<B: BitBlock> BitVec<B> {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         let result = self.process(other, |w1, w2| !(w1 ^ w2), true);
-        self.fix_last_block();
+        debug_assert!(other.is_last_block_fixed());
         result
     }
 
