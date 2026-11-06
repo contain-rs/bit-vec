@@ -139,8 +139,6 @@ use core::iter::FromIterator;
 use core::ops::*;
 use core::{cmp, fmt, hash, iter, mem, slice};
 
-type MutBlocks<'a, B> = slice::IterMut<'a, B>;
-
 /// Abstracts over a pile of bits (basically unsigned primitives)
 pub trait BitBlock:
     Copy
@@ -665,13 +663,6 @@ impl<B: BitBlock> BitVec<B> {
         changed_bits != B::zero()
     }
 
-    /// Iterator over mutable refs to the underlying blocks of data.
-    #[inline]
-    fn blocks_mut(&mut self) -> MutBlocks<'_, B> {
-        // (2)
-        self.storage.iter_mut()
-    }
-
     /// Iterator over the underlying blocks of data
     #[inline]
     pub fn blocks(&self) -> Blocks<'_, B> {
@@ -731,14 +722,6 @@ impl<B: BitBlock> BitVec<B> {
     fn fix_last_block(&mut self) {
         if let Some((last_block, used_bits)) = self.last_block_mut_with_mask() {
             *last_block = *last_block & used_bits;
-        }
-    }
-
-    /// Operations such as change detection for xnor, nor and nand are easiest
-    /// to implement when unused bits are all set to 1s.
-    fn fix_last_block_with_ones(&mut self) {
-        if let Some((last_block, used_bits)) = self.last_block_mut_with_mask() {
-            *last_block |= !used_bits;
         }
     }
 
