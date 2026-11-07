@@ -645,7 +645,13 @@ impl<B: BitBlock> BitVec<B> {
         assert_eq!(self.len(), that.len());
         debug_assert_eq!(self.storage.len(), that.storage.len());
         let mut changed_bits = B::zero();
-        let full_blocks = self.storage.len().saturating_sub(if tail { 1 } else { 0 });
+        let extra_bits = self.nbits % B::bits();
+        let desired_tail_len = if tail && extra_bits != 0 {
+            1
+        } else {
+            0
+        };
+        let full_blocks = self.storage.len().saturating_sub(desired_tail_len);
         let (a_head, a_tail) = self.storage.split_at_mut(full_blocks);
         let (b_head, b_tail) = that.storage.split_at(full_blocks);
         for (a, b) in a_head.iter_mut().zip(b_head.iter()) {
@@ -654,7 +660,6 @@ impl<B: BitBlock> BitVec<B> {
             *a = w;
         }
         if a_tail.len() == 1 {
-            let extra_bits = self.nbits % B::bits();
             let mask = (B::one() << extra_bits) - B::one();
             let w = op(a_tail[0], b_tail[0]) & mask;
             changed_bits |= a_tail[0] ^ w;
@@ -1173,8 +1178,8 @@ impl<B: BitBlock> BitVec<B> {
     pub fn nand(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        let result = self.process(other, |w1, w2| !(w1 & w2), false);
-        self.fix_last_block();
+        let result = self.process(other, |w1, w2| !(w1 & w2), true);
+        debug_assert!(other.is_last_block_fixed());
         result
     }
 
