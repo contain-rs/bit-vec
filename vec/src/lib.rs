@@ -139,8 +139,6 @@ use core::iter::FromIterator;
 use core::ops::*;
 use core::{cmp, fmt, hash, iter, mem, slice};
 
-type MutBlocks<'a, B> = slice::IterMut<'a, B>;
-
 /// Abstracts over a pile of bits (basically unsigned primitives)
 pub trait BitBlock:
     Copy
@@ -640,26 +638,30 @@ impl<B: BitBlock> BitVec<B> {
     /// self to be the result. This relies on the caller not to corrupt the
     /// last word.
     #[inline]
-    fn process<F>(&mut self, other: &BitVec<B>, mut op: F) -> bool
+    fn process<F>(&mut self, that: &BitVec<B>, mut op: F, tail: bool) -> bool
     where
         F: FnMut(B, B) -> B,
     {
-        assert_eq!(self.len(), other.len());
-        debug_assert_eq!(self.storage.len(), other.storage.len());
+        assert_eq!(self.len(), that.len());
+        debug_assert_eq!(self.storage.len(), that.storage.len());
         let mut changed_bits = B::zero();
-        for (a, b) in self.blocks_mut().zip(other.blocks()) {
-            let w = op(*a, b);
+        let extra_bits = self.nbits % B::bits();
+        let desired_tail_len = if tail && extra_bits != 0 { 1 } else { 0 };
+        let full_blocks = self.storage.len().saturating_sub(desired_tail_len);
+        let (a_head, a_tail) = self.storage.split_at_mut(full_blocks);
+        let (b_head, b_tail) = that.storage.split_at(full_blocks);
+        for (a, b) in a_head.iter_mut().zip(b_head.iter()) {
+            let w = op(*a, *b);
             changed_bits |= *a ^ w;
             *a = w;
         }
+        if a_tail.len() == 1 {
+            let mask = (B::one() << extra_bits) - B::one();
+            let w = op(a_tail[0], b_tail[0]) & mask;
+            changed_bits |= a_tail[0] ^ w;
+            a_tail[0] = w;
+        }
         changed_bits != B::zero()
-    }
-
-    /// Iterator over mutable refs to the underlying blocks of data.
-    #[inline]
-    fn blocks_mut(&mut self) -> MutBlocks<'_, B> {
-        // (2)
-        self.storage.iter_mut()
     }
 
     /// Iterator over the underlying blocks of data
@@ -721,14 +723,6 @@ impl<B: BitBlock> BitVec<B> {
     fn fix_last_block(&mut self) {
         if let Some((last_block, used_bits)) = self.last_block_mut_with_mask() {
             *last_block = *last_block & used_bits;
-        }
-    }
-
-    /// Operations such as change detection for xnor, nor and nand are easiest
-    /// to implement when unused bits are all set to 1s.
-    fn fix_last_block_with_ones(&mut self) {
-        if let Some((last_block, used_bits)) = self.last_block_mut_with_mask() {
-            *last_block |= !used_bits;
         }
     }
 
@@ -1048,7 +1042,9 @@ impl<B: BitBlock> BitVec<B> {
     pub fn or(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| w1 | w2)
+        let result = self.process(other, |w1, w2| w1 | w2, false);
+        debug_assert!(self.is_last_block_fixed());
+        result
     }
 
     /// Calculates the bitwise `and` of two bitvectors.
@@ -1079,7 +1075,7 @@ impl<B: BitBlock> BitVec<B> {
     pub fn and(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| w1 & w2)
+        self.process(other, |w1, w2| w1 & w2, false)
     }
 
     /// Calculates the difference between two bitvectors.
@@ -1118,7 +1114,7 @@ impl<B: BitBlock> BitVec<B> {
     pub fn difference(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| w1 & !w2)
+        self.process(other, |w1, w2| w1 & !w2, false)
     }
 
     /// Calculates the xor of two bitvectors.
@@ -1149,7 +1145,9 @@ impl<B: BitBlock> BitVec<B> {
     pub fn xor(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| w1 ^ w2)
+        let result = self.process(other, |w1, w2| w1 ^ w2, false);
+        debug_assert!(self.is_last_block_fixed());
+        result
     }
 
     /// Calculates the nand of two bitvectors.
@@ -1180,9 +1178,8 @@ impl<B: BitBlock> BitVec<B> {
     pub fn nand(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.fix_last_block_with_ones();
-        let result = self.process(other, |w1, w2| !(w1 & w2));
-        self.fix_last_block();
+        let result = self.process(other, |w1, w2| !(w1 & w2), true);
+        debug_assert!(self.is_last_block_fixed());
         result
     }
 
@@ -1214,9 +1211,8 @@ impl<B: BitBlock> BitVec<B> {
     pub fn nor(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.fix_last_block_with_ones();
-        let result = self.process(other, |w1, w2| !(w1 | w2));
-        self.fix_last_block();
+        let result = self.process(other, |w1, w2| !(w1 | w2), true);
+        debug_assert!(self.is_last_block_fixed());
         result
     }
 
@@ -1248,9 +1244,8 @@ impl<B: BitBlock> BitVec<B> {
     pub fn xnor(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.fix_last_block_with_ones();
-        let result = self.process(other, |w1, w2| !(w1 ^ w2));
-        self.fix_last_block();
+        let result = self.process(other, |w1, w2| !(w1 ^ w2), true);
+        debug_assert!(self.is_last_block_fixed());
         result
     }
 
@@ -3676,6 +3671,50 @@ mod tests {
             assert_eq!(v2.len(), 0);
             assert_eq!(v2.get(0), None);
             assert_eq!(v2, BitVec::new());
+        }
+    }
+
+    #[test]
+    fn test_bitwise_ops_change() {
+        for len in 0..256 {
+            let mut a = BitVec::from_elem(len, false);
+            let mut b = BitVec::from_elem(len, true);
+            if len == 0 {
+                assert!(!a.or(&b));
+                assert!(!a.nor(&b));
+                assert!(!a.xor(&b));
+                assert!(!a.xnor(&b));
+                assert!(!a.nand(&b));
+                assert!(!a.and(&b));
+            } else {
+                assert!(a.or(&b));
+                a.fill(false);
+                assert!(!b.or(&a));
+                b.fill(true);
+                assert!(!a.nor(&b));
+                a.fill(false);
+                assert!(b.nor(&a));
+                b.fill(true);
+                assert!(a.xor(&b));
+                a.fill(false);
+                assert!(!b.xor(&a));
+                b.fill(true);
+                assert!(!a.xnor(&b));
+                a.fill(false);
+                assert!(b.xnor(&a));
+                b.fill(true);
+                assert!(a.nand(&b));
+
+                let b = BitVec::from_elem(len, false);
+
+                let mut a = BitVec::from_elem(len, false);
+                assert!(a.nor(&b));
+                assert_eq!(a, BitVec::from_elem(len, true));
+
+                let mut a = BitVec::from_elem(len, false);
+                assert!(a.xnor(&b));
+                assert_eq!(a, BitVec::from_elem(len, true));
+            }
         }
     }
 }
