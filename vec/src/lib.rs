@@ -646,11 +646,7 @@ impl<B: BitBlock> BitVec<B> {
         debug_assert_eq!(self.storage.len(), that.storage.len());
         let mut changed_bits = B::zero();
         let extra_bits = self.nbits % B::bits();
-        let desired_tail_len = if tail && extra_bits != 0 {
-            1
-        } else {
-            0
-        };
+        let desired_tail_len = if tail && extra_bits != 0 { 1 } else { 0 };
         let full_blocks = self.storage.len().saturating_sub(desired_tail_len);
         let (a_head, a_tail) = self.storage.split_at_mut(full_blocks);
         let (b_head, b_tail) = that.storage.split_at(full_blocks);
@@ -1046,7 +1042,9 @@ impl<B: BitBlock> BitVec<B> {
     pub fn or(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| w1 | w2, false)
+        let result = self.process(other, |w1, w2| w1 | w2, false);
+        debug_assert!(self.is_last_block_fixed());
+        result
     }
 
     /// Calculates the bitwise `and` of two bitvectors.
@@ -1147,7 +1145,9 @@ impl<B: BitBlock> BitVec<B> {
     pub fn xor(&mut self, other: &Self) -> bool {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
-        self.process(other, |w1, w2| w1 ^ w2, false)
+        let result = self.process(other, |w1, w2| w1 ^ w2, false);
+        debug_assert!(self.is_last_block_fixed());
+        result
     }
 
     /// Calculates the nand of two bitvectors.
@@ -1179,7 +1179,7 @@ impl<B: BitBlock> BitVec<B> {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         let result = self.process(other, |w1, w2| !(w1 & w2), true);
-        debug_assert!(other.is_last_block_fixed());
+        debug_assert!(self.is_last_block_fixed());
         result
     }
 
@@ -1212,7 +1212,7 @@ impl<B: BitBlock> BitVec<B> {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         let result = self.process(other, |w1, w2| !(w1 | w2), true);
-        debug_assert!(other.is_last_block_fixed());
+        debug_assert!(self.is_last_block_fixed());
         result
     }
 
@@ -1245,7 +1245,7 @@ impl<B: BitBlock> BitVec<B> {
         self.ensure_invariant();
         debug_assert!(other.is_last_block_fixed());
         let result = self.process(other, |w1, w2| !(w1 ^ w2), true);
-        debug_assert!(other.is_last_block_fixed());
+        debug_assert!(self.is_last_block_fixed());
         result
     }
 
