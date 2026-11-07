@@ -3676,24 +3676,45 @@ mod tests {
 
     #[test]
     fn test_bitwise_ops_change() {
-        for len in 1..256 {
+        for len in 0..256 {
             let mut a = BitVec::from_elem(len, false);
             let mut b = BitVec::from_elem(len, true);
-            assert!(a.or(&b));
-            a.fill(false);
-            assert!(!b.or(&a));
-            b.fill(true);
-            assert!(!a.nor(&b));
-            a.fill(false);
-            assert!(b.nor(&a));
-            b.fill(true);
-            assert!(a.xor(&b));
-            a.fill(false);
-            assert!(!b.xor(&a));
-            b.fill(true);
-            assert!(!a.xnor(&b));
-            a.fill(false);
-            assert!(b.xnor(&a));
+            if len == 0 {
+                assert!(!a.or(&b));
+                assert!(!a.nor(&b));
+                assert!(!a.xor(&b));
+                assert!(!a.xnor(&b));
+                assert!(!a.nand(&b));
+                assert!(!a.and(&b));
+            } else {
+                assert!(a.or(&b));
+                a.fill(false);
+                assert!(!b.or(&a));
+                b.fill(true);
+                assert!(!a.nor(&b));
+                a.fill(false);
+                assert!(b.nor(&a));
+                b.fill(true);
+                assert!(a.xor(&b));
+                a.fill(false);
+                assert!(!b.xor(&a));
+                b.fill(true);
+                assert!(!a.xnor(&b));
+                a.fill(false);
+                assert!(b.xnor(&a));
+                b.fill(true);
+                assert!(a.nand(&b));
+
+                let b = BitVec::from_elem(len, false);
+
+                let mut a = BitVec::from_elem(len, false);
+                assert!(a.nor(&b));
+                assert_eq!(a, BitVec::from_elem(len, true));
+
+                let mut a = BitVec::from_elem(len, false);
+                assert!(a.xnor(&b));
+                assert_eq!(a, BitVec::from_elem(len, true));
+            }
         }
     }
 }
