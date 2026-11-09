@@ -1,0 +1,43 @@
+########################################################################
+#                         Editor Configuration                         #
+#                                                                      #
+# This file controls language-specific settings in text editors that   #
+# understand it, and allows for the project to set its behavior        #
+# universally without requiring that all viewers agree with it.        #
+########################################################################
+
+# All files must be encoded in UTF-8 and use ␊ as the line *terminator*.
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[Justfile]
+indent_size = 8
+indent_style = tab
+
+# Markdown files use two-space indentation.
+[*.md]
+indent_size = 2
+indent_style = space
+
+# Rust files use ␉ indentation at four columns.
+[*.rs]
+indent_size = 4
+indent_style = tab
+
+# Shell scripts use two-space indentation.
+[*.sh]
+indent_size = 2
+indent_style = space
+
+# TOML files use ␉ indentation at eight columns.
+[*.toml]
+indent_size = 8
+indent_style = tab
+
+# YAML files use two-space indentation.
+[*.yml]
+indent_size = 2
+indent_style = space

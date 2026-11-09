@@ -130,6 +130,8 @@ extern crate miniserde;
 #[cfg(feature = "serde")]
 extern crate serde;
 
+#[cfg(feature = "extra")]
+mod extra;
 mod util;
 
 use core::cell::RefCell;
