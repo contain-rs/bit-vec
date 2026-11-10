@@ -1462,7 +1462,8 @@ impl<B: BitBlock> BitVec<B> {
             // Split at block boundary
             other.storage = self.storage.split_off(w);
         } else {
-            other.storage.reserve(self.storage.len() - w);
+            let original_storage_len = self.storage.len();
+            other.storage.reserve(original_storage_len - w);
 
             {
                 let mut iter = self.storage[w..].iter();
@@ -1472,7 +1473,7 @@ impl<B: BitBlock> BitVec<B> {
                     last = cur;
                 }
                 // An unaligned read can span one more block than the result needs.
-                if other.storage.len() < blocks_for_bits::<B>(other.nbits) {
+                if original_storage_len - w <= blocks_for_bits::<B>(other.nbits) {
                     other.storage.push(last >> b);
                 }
             }
