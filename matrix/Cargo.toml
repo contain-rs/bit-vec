@@ -21,7 +21,7 @@ borsh = { version = "1.7.0", optional = true }
 
 [dependencies.bit-vec]
 path = "../vec/"
-version = "0.10.1"
+version = "0.10.2"
 default-features = false
 
 [dev-dependencies]
