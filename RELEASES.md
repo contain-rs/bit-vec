@@ -3,6 +3,15 @@ Version 0.11.0 (TO BE RELEASED)
 
 <a id="v0.11.0"></a>
 
+
+Version 0.10.2
+==========================
+
+<a id="v0.10.2"></a>
+
+- fixed `split_off` bug meaning it returned an invalid value
+- fixed `xnor` and `nor` bug meaning it returned an invalid value
+
 Version 0.10.1
 ==========================
 

@@ -6,7 +6,6 @@ authors = [ "Piotr Czarnecki <pioczarn@gmail.com>" ]
 license = "Apache-2.0 OR MIT"
 description = "Library for bit matrices and vectors."
 repository = "https://github.com/contain-rs/bit-vec"
-homepage = "https://github.com/contain-rs/bit-vec"
 documentation = "https://docs.rs/bit-matrix/latest/bit-matrix/"
 keywords = ["container", "bit", "bitfield", "algebra"]
 readme = "README.md"
@@ -22,7 +21,7 @@ borsh = { version = "1.7.0", optional = true }
 
 [dependencies.bit-vec]
 path = "../vec/"
-version = "0.10.1"
+version = "0.10.2"
 default-features = false
 
 [dev-dependencies]
