@@ -1462,7 +1462,8 @@ impl<B: BitBlock> BitVec<B> {
             // Split at block boundary
             other.storage = self.storage.split_off(w);
         } else {
-            other.storage.reserve(self.storage.len() - w);
+            let original_storage_len = self.storage.len();
+            other.storage.reserve(original_storage_len - w);
 
             {
                 let mut iter = self.storage[w..].iter();
@@ -1471,7 +1472,10 @@ impl<B: BitBlock> BitVec<B> {
                     other.storage.push((last >> b) | (cur << (B::bits() - b)));
                     last = cur;
                 }
-                other.storage.push(last >> b);
+                // An unaligned read can span one more block than the result needs.
+                if original_storage_len - w <= blocks_for_bits::<B>(other.nbits) {
+                    other.storage.push(last >> b);
+                }
             }
 
             self.storage.truncate(w + 1);
@@ -3291,6 +3295,35 @@ mod tests {
             true, true, false, false, true, true, false, true, true, false, true, false, true,
             true, true, false, true, false, true, true, false, true
         ]));
+    }
+
+    #[test]
+    fn test_split_off_storage_boundaries() {
+        for tail_len in [1, 31, 32, 33, 63, 64, 65] {
+            for at in 0..=64 {
+                for pattern in 0..3 {
+                    let bits: Vec<bool> = (0..at + tail_len)
+                        .map(|i| match pattern {
+                            0 => false,
+                            1 => true,
+                            _ => i % 3 == 0,
+                        })
+                        .collect();
+                    let mut a: BitVec<u32> = bits.iter().copied().collect();
+                    let b = a.split_off(at);
+
+                    assert_eq!(a.storage().len(), (at + 31) / 32);
+                    assert_eq!(b.storage().len(), (tail_len + 31) / 32);
+                    assert_eq!(a.iter().collect::<Vec<_>>(), bits[..at]);
+                    assert_eq!(b.iter().collect::<Vec<_>>(), bits[at..]);
+                    assert_eq!(b.all(), bits[at..].iter().all(|&bit| bit));
+                    assert_eq!(
+                        b.count_zeros(),
+                        bits[at..].iter().filter(|&&bit| !bit).count() as u64
+                    );
+                }
+            }
+        }
     }
 
     #[test]
