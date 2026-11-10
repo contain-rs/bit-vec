@@ -23,5 +23,5 @@ debug = false
 
 [workspace.package]
 # shared version of all public crates in the workspace
-version = "0.10.1"
+version = "0.10.2"
 rust-version = "1.85.0"
